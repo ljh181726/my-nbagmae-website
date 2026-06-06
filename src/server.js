@@ -278,7 +278,7 @@ io.on('connection', (socket) => {
         broadcastRoomUpdate(roomId);
         return;
       }
-    } else if (mode === 'wheel' || mode === 'salary_cap' || mode === 'blind' || mode === '15usd') {
+    } else if (mode === 'wheel' || mode === 'salary_cap' || mode === 'salary_cap_legend' || mode === 'blind' || mode === '15usd') {
       playersPool = await getYearPlayers(year);
       if (playersPool.length === 0) {
         socket.emit('error_message', `找不到 ${year} 年的球員數據，請確認資料庫已匯入該年資料！`);
@@ -346,8 +346,11 @@ io.on('connection', (socket) => {
     } else {
       if (mode === 'legend_wheel') {
         room.availableTeams = [...MODERN_TEAMS];
+      } else if (mode === 'salary_cap_legend') {
+        // Salary Cap + Legends: use all modern teams (players from DB year + legends from franchise history)
+        room.availableTeams = [...MODERN_TEAMS];
       } else {
-        // Wheel & Salary Cap Mode: get all unique team abbreviations in the players pool
+        // Wheel, Salary Cap, Blind: get all unique team abbreviations in the players pool
         const teamsSet = new Set(playersPool.map(p => p.team));
         // Map back to standard modern teams config or historical metadata names
         room.availableTeams = Array.from(teamsSet).map(abbr => {
@@ -411,8 +414,8 @@ io.on('connection', (socket) => {
             logo: tempTeam.logo
           });
         }
-      } else if (mode === 'wheel' && room.settings.mode === 'wheel') {
-        // Standard year roster availability check
+      } else if (mode === 'wheel' || mode === 'salary_cap' || mode === 'salary_cap_legend') {
+        // Standard year roster availability check (also applies to salary cap modes)
         const playersAvailable = await hasAvailablePlayersForTeam(room, tempTeam.abbreviation);
         if (playersAvailable) {
           rolledTeam = tempTeam;
@@ -425,7 +428,7 @@ io.on('connection', (socket) => {
           });
         }
       } else {
-        // Salary cap modes / Legend wheel rules: check availability
+        // Other modes: just pick any available team
         rolledTeam = tempTeam;
         break;
       }
