@@ -889,16 +889,19 @@ function updateEvalUI() {
   const evalActions = $('#eval-actions');
   const evalResult = $('#eval-result');
   const btnReplay = $('#btn-replay');
+  const btnLeaveEval = $('#btn-leave-eval');
 
   if (room.evalResult) {
     evalActions.classList.add('hidden');
     evalResult.innerHTML = window.marked.parse(room.evalResult);
     evalResult.classList.remove('hidden');
     btnReplay.classList.remove('hidden');
+    btnLeaveEval.classList.remove('hidden');
   } else {
     evalActions.classList.remove('hidden');
     evalResult.classList.add('hidden');
     btnReplay.classList.add('hidden');
+    btnLeaveEval.classList.add('hidden');
 
     // Only owners can request AI evaluation
     const btnEvaluate = $('#btn-evaluate');
@@ -920,6 +923,27 @@ function requestEvaluation() {
 function playAgain() {
   if (!state.roomId) return;
   socket.emit('play_again', { roomId: state.roomId });
+}
+
+function leaveRoom() {
+  if (confirm('確定要離開此房間嗎？')) {
+    const roomId = state.roomId;
+    const playerName = state.playerName;
+    
+    // Clear local storage session
+    localStorage.removeItem('nba_room_id');
+    localStorage.removeItem('nba_player_name');
+    state.roomId = null;
+    state.playerName = null;
+    state.room = null;
+    state.isOwner = false;
+    
+    // Notify server to leave room
+    socket.emit('leave_room', { roomId, playerName });
+    
+    // Go back to setup screen
+    showScreen('screen-setup');
+  }
 }
 
 // ── Confetti Particle Effect ────────────────
@@ -951,7 +975,8 @@ window.__app = {
   enterPickPhase,
   toggleRosterView,
   requestEvaluation,
-  playAgain
+  playAgain,
+  leaveRoom
 };
 
 // ── Setup Page Visibility Toggles ───────────

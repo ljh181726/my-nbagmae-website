@@ -705,7 +705,40 @@ io.on('connection', (socket) => {
     callback(filtered);
   });
 
-  // 11. Disconnect Event
+  // 11. Leave Room Event
+  socket.on('leave_room', async ({ roomId, playerName }) => {
+    const room = activeRooms.get(roomId);
+    if (!room) return;
+
+    // Remove player
+    room.players = room.players.filter(p => p.name !== playerName);
+    socket.leave(roomId);
+
+    if (room.players.length === 0) {
+      activeRooms.delete(roomId);
+      try {
+        const db = await connectDB();
+        await db.collection('active_rooms').deleteOne({ _id: roomId });
+      } catch (err) {
+        console.error(`Error deleting room ${roomId} from DB:`, err);
+      }
+      console.log(`🏠 Room ${roomId} is empty and has been removed.`);
+    } else {
+      // Re-assign owner if owner left
+      const hasOwner = room.players.some(p => p.isOwner);
+      if (!hasOwner && room.players.length > 0) {
+        room.players[0].isOwner = true;
+      }
+
+      await saveRoomToDB(roomId, room);
+      broadcastRoomUpdate(roomId);
+      
+      // Let others know someone left
+      io.to(roomId).emit('error_message', `👋 玩家 ${playerName} 已離開房間。`);
+    }
+  });
+
+  // 12. Disconnect Event
   socket.on('disconnect', async () => {
     console.log(`🔌 Client disconnected: ${socket.id}`);
     
