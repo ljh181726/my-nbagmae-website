@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="NBA Draft Showdown – 即時連線對戰、時空大亂鬥、多種進階選秀模式與 Gemini AI 繁體中文戰力評估。" />
+  <title>NBA Draft Showdown 🏀 時空大亂鬥</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Socket.io client script served by the backend server -->
+  <script src="/socket.io/socket.io.js"></script>
+  <link rel="stylesheet" href="style.css" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans:    ['Inter', 'system-ui', 'sans-serif'],
+            display: ['Outfit', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            surface:  '#1a1726',
+            card:     '#231f33',
+            elevated: '#2d2844',
+            accent:   '#8b5cf6',
+            'accent-hot': '#a78bfa',
+            gold:     '#f59e0b',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen">
+  <div class="bg-blob"></div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-5 right-5 z-50 bg-red-500 text-white px-5 py-3 rounded-lg shadow-lg hidden transition-all duration-300 transform translate-y-[-20px] opacity-0">
+    <span id="toast-message"></span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 1 — SETUP (Create / Join Room)
+       ═══════════════════════════════════════════ -->
+  <section id="screen-setup" class="screen active flex-col items-center justify-center min-h-screen px-4 py-12">
+    <div class="glass-panel max-w-lg w-full p-8 md:p-10 text-center">
+      <div class="mb-6">
+        <div class="text-5xl mb-3">🏀</div>
+        <h1 class="font-display text-4xl md:text-5xl font-black bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent leading-tight">
+          NBA Draft<br/>Showdown
+        </h1>
+        <p class="text-gray-400 mt-2 text-sm">即時連線對戰 · 多元選秀模式 · 時空大亂鬥</p>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="flex border-b border-purple-950 mb-6">
+        <button id="tab-create" class="flex-1 py-3 text-sm font-bold border-b-2 border-purple-500 text-purple-400" onclick="window.__app.switchTab('create')">
+          建立房間 (Create)
+        </button>
+        <button id="tab-join" class="flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-400" onclick="window.__app.switchTab('join')">
+          加入房間 (Join)
+        </button>
+      </div>
+
+      <!-- Tab Content 1: Create Room -->
+      <div id="panel-create" class="block text-left space-y-5">
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">玩家名稱</label>
+          <input type="text" id="create-player-name" class="input-field" placeholder="輸入你的暱稱" value="Player 1" maxlength="15" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">遊戲模式</label>
+          <select id="create-mode" class="input-field cursor-pointer">
+            <option value="wheel">🎪 轉盤選秀模式 (標準年)</option>
+            <option value="legend_wheel">🎪 傳奇隊史轉盤 (跨時空傳奇)</option>
+            <option value="15usd">💵 經典 15 元選秀 (現役預設)</option>
+            <option value="legend_15usd">👑 歷史傳奇 15 元選秀 (經典歷史)</option>
+            <option value="salary_cap">⚖️ 薪資上限挑戰模式 (標準年薪資)</option>
+            <option value="salary_cap_legend">🪐 薪資上限 + 傳奇球星模式</option>
+            <option value="blind">🕵️ 盲選數據模式 (數據卡片選秀)</option>
+          </select>
+        </div>
+
+        <!-- Blind Draft Sub-mode (Only shown for blind mode) -->
+        <div id="blind-submode-container" class="hidden">
+          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">盲選子模式</label>
+          <select id="create-blind-submode" class="input-field cursor-pointer">
+            <option value="single">📅 制度 A: 單一年份盲選</option>
+            <option value="decade">📅 制度 B: 十年區間盲選</option>
+          </select>
+        </div>
+
+        <!-- Decade selector (Only shown for blind mode + decade sub-mode) -->
+        <div id="decade-selector-container" class="hidden">
+          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">選擇十年區間</label>
+          <select id="create-decade" class="input-field cursor-pointer">
+            <option value="1980s">1980 年代 (1980-1989)</option>
+            <option value="1990s">1990 年代 (1990-1999)</option>
+            <option value="2000s">2000 年代 (2000-2009)</option>
+            <option value="2010s">2010 年代 (2010-2019)</option>
+            <option value="2020s">2020 年代 (2020-2026)</option>
+          </select>
+        </div>
+
+        <!-- Year slider (Hidden for 15 USD modes since they are hardcoded) -->
+        <div id="year-slider-container">
+          <div class="flex justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+            <span>時空年份限制</span>
+            <span id="year-val" class="text-purple-400 font-bold">2026</span>
+          </div>
+          <input type="range" id="create-year" min="1977" max="2026" value="2026" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500" oninput="document.getElementById('year-val').innerText = this.value" />
+          <div class="flex justify-between text-[10px] text-gray-500 mt-1">
+            <span>1977 ABA合併</span>
+            <span>2026 最新賽季</span>
+          </div>
+        </div>
+
+        <!-- Advance filters -->
+        <div id="adv-filters-container" class="grid grid-cols-2 gap-4">
+          <label class="flex items-center gap-2 cursor-pointer bg-card/50 p-3 rounded-lg border border-purple-950 hover:border-purple-800 transition">
+            <input type="checkbox" id="create-ban-stars" class="w-4 h-4 accent-purple-500 rounded" />
+            <span class="text-xs font-medium text-gray-300 select-none">🚫 禁止明星賽球員</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer bg-card/50 p-3 rounded-lg border border-purple-950 hover:border-purple-800 transition">
+            <input type="checkbox" id="create-rookie-only" class="w-4 h-4 accent-purple-500 rounded" />
+            <span class="text-xs font-medium text-gray-300 select-none">👶 僅限新秀合約</span>
+          </label>
+        </div>
+
+        <button class="spin-btn w-full mt-6" onclick="window.__app.createRoom()">
+          🏠 建立房間並進入大廳
+        </button>
+      </div>
+
+      <!-- Tab Content 2: Join Room -->
+      <div id="panel-join" class="hidden text-left space-y-5">
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">玩家名稱</label>
+          <input type="text" id="join-player-name" class="input-field" placeholder="輸入你的暱稱" value="Player 2" maxlength="15" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">輸入房號 (Room Code)</label>
+          <input type="text" id="join-room-id" class="input-field text-center text-xl font-bold tracking-widest uppercase" placeholder="4位數房號" maxlength="6" />
+        </div>
+
+        <button class="spin-btn w-full mt-6" onclick="window.__app.joinRoom()">
+          🚪 加入連線房間
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 2 — LOBBY
+       ═══════════════════════════════════════════ -->
+  <section id="screen-lobby" class="screen flex-col items-center justify-center min-h-screen px-4 py-12">
+    <div class="glass-panel max-w-xl w-full p-8 md:p-10 text-center">
+      <div class="mb-6">
+        <span class="text-xs font-semibold tracking-wider text-purple-400 uppercase bg-purple-950/50 px-3 py-1.5 rounded-full">連線大廳 Lobby</span>
+        <h2 class="font-display text-4xl font-black text-white mt-3 flex items-center justify-center gap-3">
+          房號：<span id="lobby-room-code" class="text-yellow-400 tracking-wider">----</span>
+          <button onclick="window.__app.copyRoomCode()" class="text-sm bg-purple-900/40 hover:bg-purple-800 p-1.5 rounded border border-purple-500/20 text-gray-300">📋 複製</button>
+        </h2>
+        <p class="text-gray-400 text-xs mt-2">分享房號邀請其他玩家加入，最多支援 4 人對戰</p>
+      </div>
+
+      <!-- Settings overview -->
+      <div class="bg-card/40 border border-purple-950/50 rounded-xl p-4 text-left mb-6 space-y-2">
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">房間選秀設定</h3>
+        <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+          <div>🎮 模式：<span id="lobby-setting-mode" class="font-semibold text-purple-300">--</span></div>
+          <div>📅 時空年份：<span id="lobby-setting-year" class="font-semibold text-purple-300">--</span></div>
+          <div>🌟 全明星限制：<span id="lobby-setting-stars" class="font-semibold text-purple-300">--</span></div>
+          <div>👶 新秀限制：<span id="lobby-setting-rookie" class="font-semibold text-purple-300">--</span></div>
+        </div>
+      </div>
+
+      <!-- Player list -->
+      <div class="mb-8 text-left">
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">連線玩家列表 (<span id="lobby-player-count">0</span>/4)</h3>
+        <div id="lobby-players-container" class="space-y-2.5">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div id="lobby-owner-controls" class="hidden">
+        <button id="btn-lobby-start" class="spin-btn w-full" onclick="window.__app.startDraft()">
+          🎯 開始選秀大亂鬥
+        </button>
+      </div>
+      <div id="lobby-guest-message" class="text-center text-sm text-gray-400 py-3 bg-purple-950/20 rounded-lg border border-purple-950/30">
+        ⌛ 等待房主開始遊戲...
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 3 — DRAFT (Wheel + Pick + Grids combined)
+       ═══════════════════════════════════════════ -->
+  <section id="screen-draft" class="screen flex-col min-h-screen px-4 py-6">
+    <!-- Turn banner -->
+    <div class="turn-banner mx-auto max-w-4xl w-full mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="text-center md:text-left">
+        <p class="text-xs text-gray-400">目前選秀順序：<span id="draft-flow-order" class="text-purple-300 font-medium"></span></p>
+        <h2 class="font-display text-xl md:text-2xl font-bold mt-1">
+          <span id="draft-player-name" class="text-white">Player 1</span>
+          <span class="text-gray-400 mx-1">·</span>
+          <span id="draft-phase-label" class="text-purple-400">Spin the Wheel!</span>
+        </h2>
+      </div>
+      <div class="flex items-center gap-3 bg-purple-950/40 px-4 py-2 rounded-xl border border-purple-500/10">
+        <span class="text-xs font-semibold text-gray-400">當前回合</span>
+        <span id="draft-pick-badge" class="font-display text-lg font-black text-yellow-400">1 / 5</span>
+      </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto w-full flex-1">
+      <!-- Left: Interactive area (wheel or pick list or 5x5 grids) -->
+      <div class="flex-1 order-2 lg:order-1 glass-panel p-6 flex flex-col justify-center min-h-[500px]">
+
+        <!-- A. WHEEL PHASE -->
+        <div id="draft-wheel-phase" class="flex flex-col items-center gap-6">
+          <div class="wheel-wrapper">
+            <canvas id="wheel-canvas" class="wheel-canvas" width="380" height="380" style="width:380px;height:380px;"></canvas>
+          </div>
+          <button id="btn-spin" class="spin-btn" onclick="window.__app.spinWheel()">
+            🎯 SPIN THE WHEEL!
+          </button>
+          
+          <div id="wheel-result" class="glass-panel p-5 text-center hidden max-w-sm w-full border border-purple-500/30">
+            <p class="text-gray-400 text-sm">轉盤選中球隊：</p>
+            <h3 class="font-display text-3xl font-black text-white mt-1" id="wheel-result-name"></h3>
+            <button class="spin-btn mt-4 text-sm w-full" onclick="window.__app.enterPickPhase()">
+              進入球員挑選面版 →
+            </button>
+          </div>
+        </div>
+
+        <!-- B. PICK LIST PHASE (Standard Yearly Pool) -->
+        <div id="draft-pick-phase" class="hidden flex-1 flex flex-col">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-purple-950 pb-4 mb-4 gap-3">
+            <div class="flex items-center gap-3">
+              <span id="pick-team-logo" class="text-3xl"></span>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">
+                  <span id="pick-team-name">Team</span> 陣容名單
+                </h3>
+                <p class="text-xs text-gray-400">點擊球員卡片進行選秀</p>
+              </div>
+            </div>
+            <!-- Switch between standard yearly roster and legends if allowed -->
+            <div id="legend-toggle-container" class="hidden">
+              <div class="flex bg-card p-1 rounded-lg border border-purple-950">
+                <button id="btn-roster-normal" class="px-3 py-1.5 text-xs font-bold rounded bg-purple-600 text-white" onclick="window.__app.toggleRosterView('normal')">當年陣容</button>
+                <button id="btn-roster-legend" class="px-3 py-1.5 text-xs font-semibold rounded text-gray-400" onclick="window.__app.toggleRosterView('legend')">隊史傳奇</button>
+              </div>
+            </div>
+          </div>
+          <div id="player-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 overflow-y-auto max-h-[500px] pr-2">
+            <!-- Roster cards populated dynamically -->
+          </div>
+        </div>
+
+        <!-- C. 5x5 GRID DRAFT PHASE ($15 Mode) -->
+        <div id="draft-grid-phase" class="hidden flex-1 flex flex-col">
+          <div class="border-b border-purple-950 pb-4 mb-4 flex justify-between items-center">
+            <div>
+              <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">💰 $15 金額選秀面版</h3>
+              <p class="text-xs text-gray-400">在 $15 預算內挑選 5 名球員 (點擊球員進行選秀)</p>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-gray-400">剩餘預算</span>
+              <div class="font-display text-2xl font-black text-yellow-400" id="grid-budget-display">$15 / $15</div>
+            </div>
+          </div>
+          <!-- 5x5 table container -->
+          <div class="overflow-x-auto">
+            <div class="min-w-[550px] space-y-2">
+              <!-- Header Row -->
+              <div class="grid grid-cols-6 gap-2 text-center text-xs font-bold uppercase text-gray-400 pb-1 border-b border-purple-950/40">
+                <div>預算</div>
+                <div>位置一</div>
+                <div>位置二</div>
+                <div>位置三</div>
+                <div>位置四</div>
+                <div>位置五</div>
+              </div>
+              <div id="grid-rows-container" class="space-y-2">
+                <!-- Programmatically populated grid rows ($5, $4, $3, $2, $1) -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- D. BLIND RESUME DRAFT PHASE (Stats-only Mode) -->
+        <div id="draft-blind-phase" class="hidden flex-1 flex flex-col">
+          <div class="border-b border-purple-950 pb-4 mb-4">
+            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">🕵️ 盲選數據選秀</h3>
+            <p class="text-xs text-gray-400">隱藏姓名與頭像，請根據場均數據、位置等評估你的戰術拼圖</p>
+          </div>
+          <div id="blind-cards-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 overflow-y-auto max-h-[500px] pr-2">
+            <!-- Blind statistic cards -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: Roster panels showing all players' rosters side-by-side -->
+      <div id="roster-panels" class="lg:w-80 xl:w-96 order-1 lg:order-2 flex flex-col gap-4 lg:max-h-[85vh] lg:overflow-y-auto">
+        <!-- Roster lists for each joined player populated by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 4 — EVALUATION
+       ═══════════════════════════════════════════ -->
+  <section id="screen-eval" class="screen flex-col items-center min-h-screen px-4 py-10">
+    <span class="text-xs font-semibold tracking-wider text-purple-400 uppercase bg-purple-950/50 px-3 py-1.5 rounded-full mb-2">選秀對戰結束 Draft Complete</span>
+    <h2 class="font-display text-4xl font-black text-center bg-gradient-to-r from-yellow-400 via-pink-400 to-red-400 bg-clip-text text-transparent mb-8">
+      ⚖️ Gemini AI 時空對戰評估
+    </h2>
+
+    <div id="eval-rosters" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl w-full mb-10">
+      <!-- Player rosters results -->
+    </div>
+
+    <!-- AI Evaluation Trigger -->
+    <div id="eval-actions" class="text-center w-full max-w-lg">
+      <button id="btn-evaluate" class="evaluate-btn pulsing w-full" onclick="window.__app.requestEvaluation()">
+        🤖 啟動 Gemini AI 戰力分析
+      </button>
+    </div>
+
+    <!-- Loading state -->
+    <div id="eval-loading" class="hidden flex flex-col items-center gap-4 mt-8">
+      <div class="spinner"></div>
+      <p class="text-purple-300 text-sm font-semibold animate-pulse" id="eval-loading-status">Gemini 正在分析時空戰術中...</p>
+    </div>
+
+    <!-- Evaluation Output -->
+    <div id="eval-result" class="ai-result max-w-4xl w-full mt-8 hidden border border-purple-500/30 shadow-2xl">
+      <!-- Markdown analysis rendered here -->
+    </div>
+
+    <!-- Play again -->
+    <button id="btn-replay" class="spin-btn mt-8 hidden" onclick="window.__app.playAgain()">
+      🔄 重啟下一局選秀
+    </button>
+  </section>
+
+  <div id="confetti-container" class="confetti-container"></div>
+
+  <!-- Main client app module script -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>

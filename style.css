@@ -1,0 +1,401 @@
+/* ─────────────────────────────────────────────
+   style.css  –  Custom styles for NBA Draft Showdown
+   ───────────────────────────────────────────── */
+
+/* ── Fonts ────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap');
+
+:root {
+  --bg-primary:   #0f0d1a;
+  --bg-surface:   #1a1726;
+  --bg-card:      #231f33;
+  --bg-elevated:  #2d2844;
+  --border-dim:   rgba(139,92,246,0.15);
+  --border-glow:  rgba(139,92,246,0.4);
+  --text-primary: #f1f0f5;
+  --text-muted:   #9b97ad;
+  --accent:       #8b5cf6;
+  --accent-hot:   #a78bfa;
+  --gold:         #f59e0b;
+  --gold-light:   #fbbf24;
+  --success:      #34d399;
+  --danger:       #f43f5e;
+  --legend-glow:  linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+  --star-glow:    linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+  --rising-glow:  linear-gradient(135deg, #06b6d4 0%, #34d399 100%);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', 'Inter', sans-serif;
+}
+
+/* ── Screen management ────────────────────── */
+.screen { display: none; }
+.screen.active { display: flex; }
+
+/* ── Background gradient blob ─────────────── */
+.bg-blob {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 600px 600px at 20% 30%, rgba(139,92,246,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 500px at 80% 70%, rgba(245,158,11,0.06) 0%, transparent 70%),
+    var(--bg-primary);
+}
+
+/* ── Lucky Wheel ──────────────────────────── */
+.wheel-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wheel-canvas {
+  border-radius: 50%;
+  filter: drop-shadow(0 0 40px rgba(139,92,246,0.2));
+  cursor: pointer;
+  transition: filter 0.3s;
+}
+.wheel-canvas:hover {
+  filter: drop-shadow(0 0 50px rgba(139,92,246,0.35));
+}
+.wheel-canvas.spinning {
+  cursor: not-allowed;
+}
+
+/* ── Spin button ──────────────────────────── */
+.spin-btn {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  color: white;
+  border: none;
+  padding: 14px 48px;
+  border-radius: 14px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: all 0.25s;
+  box-shadow: 0 4px 24px rgba(139,92,246,0.35);
+  text-transform: uppercase;
+}
+.spin-btn:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 32px rgba(139,92,246,0.5);
+}
+.spin-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Player draft button grid ─────────────── */
+.player-btn {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 12px;
+  padding: 12px 10px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  overflow: hidden;
+}
+.player-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.08), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.player-btn:hover:not(:disabled)::before {
+  opacity: 1;
+}
+.player-btn:hover:not(:disabled) {
+  border-color: var(--border-glow);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139,92,246,0.2);
+}
+.player-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: transparent;
+  text-decoration: line-through;
+}
+.player-btn .pos-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(139,92,246,0.2);
+  color: var(--accent-hot);
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* ── Tooltip ──────────────────────────────── */
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-glow);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 100;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+.player-btn:hover .tooltip {
+  opacity: 1;
+}
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--border-glow);
+}
+
+/* ── Roster card ──────────────────────────── */
+.roster-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 14px;
+  padding: 14px 16px;
+  animation: cardIn 0.4s ease-out;
+  transition: border-color 0.3s;
+}
+.roster-card:hover {
+  border-color: var(--border-glow);
+}
+.roster-card .tier-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.tier-badge.legend { background: var(--legend-glow); color: white; }
+.tier-badge.star   { background: var(--star-glow);   color: white; }
+.tier-badge.rising { background: var(--rising-glow);  color: #0f172a; }
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Empty roster slot ────────────────────── */
+.roster-slot-empty {
+  border: 2px dashed rgba(139,92,246,0.2);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  min-height: 74px;
+}
+
+/* ── Turn banner ──────────────────────────── */
+.turn-banner {
+  background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
+  border: 1px solid var(--border-glow);
+  border-radius: 16px;
+  padding: 16px 28px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(139,92,246,0.12);
+  animation: bannerPulse 2s ease-in-out infinite;
+}
+@keyframes bannerPulse {
+  0%, 100% { box-shadow: 0 0 30px rgba(139,92,246,0.12); }
+  50%      { box-shadow: 0 0 40px rgba(139,92,246,0.25); }
+}
+
+/* ── Evaluate button ──────────────────────── */
+.evaluate-btn {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: white;
+  border: none;
+  padding: 16px 48px;
+  border-radius: 14px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: all 0.3s;
+  box-shadow: 0 4px 20px rgba(245,158,11,0.35);
+}
+.evaluate-btn:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 10px 36px rgba(245,158,11,0.5);
+}
+.evaluate-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.evaluate-btn.pulsing {
+  animation: evalPulse 1.6s ease-in-out infinite;
+}
+@keyframes evalPulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(245,158,11,0.35); }
+  50%      { box-shadow: 0 8px 40px rgba(245,158,11,0.65); transform: scale(1.03); }
+}
+
+/* ── AI result container ──────────────────── */
+.ai-result {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  border-radius: 16px;
+  padding: 24px 28px;
+  line-height: 1.75;
+  font-size: 0.95rem;
+}
+.ai-result h1, .ai-result h2, .ai-result h3 {
+  color: var(--gold);
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+}
+.ai-result strong { color: var(--accent-hot); }
+.ai-result ul, .ai-result ol {
+  padding-left: 1.4em;
+  margin: 0.6em 0;
+}
+.ai-result li { margin-bottom: 0.3em; }
+.ai-result p { margin: 0.6em 0; }
+
+/* ── Confetti particles ───────────────────── */
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  animation: confettiFall 2.5s ease-in forwards;
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── Input styling ────────────────────────── */
+.input-field {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+.input-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+}
+.input-field::placeholder {
+  color: var(--text-muted);
+}
+
+/* ── Number selector ──────────────────────── */
+.num-selector {
+  display: flex;
+  gap: 8px;
+}
+.num-selector button {
+  background: var(--bg-card);
+  border: 2px solid var(--border-dim);
+  border-radius: 10px;
+  color: var(--text-primary);
+  width: 48px;
+  height: 48px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.num-selector button:hover {
+  border-color: var(--accent);
+}
+.num-selector button.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+  box-shadow: 0 4px 16px rgba(139,92,246,0.35);
+}
+
+/* ── Loading spinner ──────────────────────── */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(139,92,246,0.15);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Responsive ───────────────────────────── */
+@media (max-width: 768px) {
+  .wheel-canvas {
+    width: 280px !important;
+    height: 280px !important;
+  }
+}
+
+/* ── Glass panel ──────────────────────────── */
+.glass-panel {
+  background: rgba(35,31,51,0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-dim);
+  border-radius: 20px;
+}
+
+/* ── Scrollbar ────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }

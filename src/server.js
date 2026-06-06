@@ -1,0 +1,728 @@
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const cors = require('cors');
+const path = require('path');
+const dotenv = require('dotenv');
+
+dotenv.config();
+
+const { connectDB } = require('./db');
+const { getYearPlayers } = require('./cache');
+const { queueEvaluation } = require('./gemini');
+const {
+  generateRoomId,
+  saveRoomToDB,
+  loadRoomFromDB,
+  generateSnakeDraftOrder,
+  getAvailablePlayersForRoom,
+  getHistoricalTeamAbbr,
+  HISTORICAL_TEAMS_META,
+  activeRooms,
+  generateDynamic15UsdGrid,
+  MODERN_TEAMS,
+  getFranchiseLegendsFromDB
+} = require('./lobby');
+
+const { getLegendsForTeam } = require('./legends_pool');
+
+// Salary Cap lookup
+const SALARY_CAPS = {
+  1977: 2000000,   1978: 2100000,   1979: 2200000,   1980: 2300000,
+  1981: 2400000,   1982: 2500000,   1983: 2600000,   1984: 2700000,
+  1985: 3600000,   1986: 4233000,   1987: 4945000,   1988: 6164000,
+  1989: 7232000,   1990: 9802000,   1991: 11871000,  1992: 12500000,
+  1993: 14000000,  1994: 15175000,  1995: 15964000,  1996: 23000000,
+  1997: 24363000,  1998: 26900000,  1999: 30000000,  2000: 34000000,
+  2001: 35500000,  2002: 42500000,  2003: 40271000,  2004: 43840000,
+  2005: 49500000,  2006: 49500000,  2007: 53135000,  2008: 55630000,
+  2009: 58680000,  2010: 57700000,  2011: 58044000,  2012: 58044000,
+  2013: 58044000,  2014: 58679000,  2015: 63065000,  2016: 70000000,
+  2017: 94143000,  2018: 99093000,  2019: 101869000, 2020: 109140000,
+  2021: 109140000, 2022: 112414000, 2023: 123655000, 2024: 136021000,
+  2025: 140588000, 2026: 154647000
+};
+
+const app = express();
+const port = process.env.PORT || 7860;
+
+// Enable CORS for Hugging Face Space iframe embedding
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
+
+app.use(express.json());
+
+// Serve static client files from root directory
+app.use(express.static(path.join(__dirname, '..')));
+
+// Express Routes
+app.get('/healthz', (req, res) => {
+  res.json({ status: 'ok', time: new Date() });
+});
+
+app.get('/api/config', (req, res) => {
+  res.json({
+    hasGeminiKey: !!process.env.GEMINI_API_KEY
+  });
+});
+
+const server = http.createServer(app);
+
+// Configure Socket.io with optimized heartbeats to defend against HF Spaces network timeouts
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  pingInterval: 5000,  // Check connection every 5s
+  pingTimeout: 10000   // Disconnect if no response after 10s
+});
+
+// Helper: Broadcast room state update to all room members
+function broadcastRoomUpdate(roomId) {
+  const room = activeRooms.get(roomId);
+  if (!room) return;
+  io.to(roomId).emit('room_update', room);
+}
+
+// Helper: Check if a team has any draftable players remaining for a room
+async function hasAvailablePlayersForTeam(room, teamAbbr) {
+  const allPlayers = await getYearPlayers(room.settings.year);
+  const targetAbbr = getHistoricalTeamAbbr(teamAbbr, room.settings.year);
+
+  return allPlayers.some(p => {
+    // Must match team
+    if (p.team !== targetAbbr) return false;
+    // Exclude drafted players
+    if (room.draftedIds.includes(p.name)) return false;
+    // Apply Star Bans
+    if (room.settings.banAllStars && p.is_allstar) return false;
+    // Apply Rookie Only filter
+    if (room.settings.rookieOnly && !p.is_rookie) return false;
+    return true;
+  });
+}
+
+// Socket.io Connection Logic
+io.on('connection', (socket) => {
+  console.log(`🔌 New client connected: ${socket.id}`);
+
+  // 1. Create Room Event
+  socket.on('create_room', async ({ settings, playerName }) => {
+    const roomId = generateRoomId();
+    const room = {
+      id: roomId,
+      settings: {
+        year: parseInt(settings.year) || 2026,
+        banAllStars: !!settings.banAllStars,
+        rookieOnly: !!settings.rookieOnly,
+        mode: settings.mode || 'wheel', // 'wheel', 'legend_wheel', '15usd', ...
+        blindSubmode: settings.blindSubmode || 'single',
+        decade: settings.decade || '1990s'
+      },
+      players: [{
+        socketId: socket.id,
+        name: playerName || 'Host',
+        roster: [],
+        isOwner: true,
+        isOnline: true
+      }],
+      draftOrder: [],
+      draftIndex: 0,
+      draftedIds: [],
+      currentTeam: null,
+      blindPool: [],
+      phase: 'lobby',
+      evalResult: null,
+      availableTeams: [],
+      sheetIndex: null // For 15 USD modes, tells clients which pregenerated 5x5 grid to render
+    };
+
+    activeRooms.set(roomId, room);
+    socket.join(roomId);
+    await saveRoomToDB(roomId, room);
+
+    socket.emit('room_created', { roomId, room });
+    console.log(`🏠 Room ${roomId} created by ${playerName}`);
+  });
+
+  // 2. Join Room Event
+  socket.on('join_room', async ({ roomId, playerName }) => {
+    let room = activeRooms.get(roomId);
+
+    // If not in memory, attempt to recover from MongoDB Atlas
+    if (!room) {
+      room = await loadRoomFromDB(roomId);
+      if (room) {
+        // Hydrate back into in-memory cache
+        activeRooms.set(roomId, room);
+      }
+    }
+
+    if (!room) {
+      socket.emit('error_message', '找不到此房號，請確認後再輸入。');
+      return;
+    }
+
+    if (room.phase !== 'lobby' && !room.players.some(p => p.name === playerName)) {
+      socket.emit('error_message', '遊戲已經開始，無法中途加入！');
+      return;
+    }
+
+    if (room.players.length >= 4 && !room.players.some(p => p.name === playerName)) {
+      socket.emit('error_message', '房間已滿（上限 4 人）！');
+      return;
+    }
+
+    // Check if player is already in this room (reconnect case)
+    const existingPlayer = room.players.find(p => p.name === playerName);
+    if (existingPlayer) {
+      existingPlayer.socketId = socket.id;
+      existingPlayer.isOnline = true;
+    } else {
+      room.players.push({
+        socketId: socket.id,
+        name: playerName,
+        roster: [],
+        isOwner: false,
+        isOnline: true
+      });
+    }
+
+    socket.join(roomId);
+    await saveRoomToDB(roomId, room);
+    broadcastRoomUpdate(roomId);
+
+    console.log(`👤 Player ${playerName} joined room ${roomId}`);
+  });
+
+  // 3. Reconnect/Rejoin Event
+  socket.on('rejoin_room', async ({ roomId, playerName }) => {
+    let room = activeRooms.get(roomId);
+
+    // If server restarted, read room state from MongoDB Atlas
+    if (!room) {
+      room = await loadRoomFromDB(roomId);
+      if (room) {
+        activeRooms.set(roomId, room);
+      }
+    }
+
+    if (room) {
+      const player = room.players.find(p => p.name === playerName);
+      if (player) {
+        player.socketId = socket.id;
+        player.isOnline = true;
+        socket.join(roomId);
+        console.log(`🔄 Session restored: ${playerName} rejoined Room ${roomId}`);
+        await saveRoomToDB(roomId, room);
+        broadcastRoomUpdate(roomId);
+      } else {
+        socket.emit('rejoin_failed');
+      }
+    } else {
+      socket.emit('rejoin_failed');
+    }
+  });
+
+  // 4. Start Game Event
+  socket.on('start_game', async ({ roomId }) => {
+    const room = activeRooms.get(roomId);
+    if (!room) return;
+
+    room.phase = 'draft';
+    room.draftIndex = 0;
+    room.draftedIds = [];
+    room.evalResult = null;
+    room.currentTeam = null;
+
+    // Randomize player draft order (Snake draft)
+    const shuntedPlayers = [...room.players];
+    // Shuffle players order
+    for (let i = shuntedPlayers.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuntedPlayers[i], shuntedPlayers[j]] = [shuntedPlayers[j], shuntedPlayers[i]];
+    }
+    // Update players in room with new order
+    room.players = shuntedPlayers;
+    room.draftOrder = generateSnakeDraftOrder(room.players.length);
+
+    const year = room.settings.year;
+    const mode = room.settings.mode;
+
+    console.log(`🚀 Starting draft for room ${roomId} in mode ${mode} (${year})`);
+
+    // Fetch players for the chosen year, decade or legend pool (triggers cache populate from DB if needed)
+    let playersPool = [];
+    if (mode === 'blind' && room.settings.blindSubmode === 'decade') {
+      const decade = room.settings.decade || '1990s';
+      let startYear, endYear;
+      if (decade === '1980s') { startYear = 1980; endYear = 1989; }
+      else if (decade === '1990s') { startYear = 1990; endYear = 1999; }
+      else if (decade === '2000s') { startYear = 2000; endYear = 2009; }
+      else if (decade === '2010s') { startYear = 2010; endYear = 2019; }
+      else if (decade === '2020s') { startYear = 2020; endYear = 2026; }
+      else { startYear = 1990; endYear = 1999; }
+
+      try {
+        const years = [];
+        for (let y = startYear; y <= endYear; y++) years.push(y);
+        const allYearsPlayers = await Promise.all(years.map(y => getYearPlayers(y)));
+        playersPool = allYearsPlayers.flat();
+      } catch (err) {
+        socket.emit('error_message', `無法讀取 ${decade} 年代球員數據！`);
+        room.phase = 'lobby';
+        broadcastRoomUpdate(roomId);
+        return;
+      }
+    } else if (mode === 'wheel' || mode === 'salary_cap' || mode === 'blind' || mode === '15usd') {
+      playersPool = await getYearPlayers(year);
+      if (playersPool.length === 0) {
+        socket.emit('error_message', `找不到 ${year} 年的球員數據，請確認資料庫已匯入該年資料！`);
+        room.phase = 'lobby';
+        broadcastRoomUpdate(roomId);
+        return;
+      }
+    }
+
+    // Handle game mode initializations
+    if (mode === '15usd') {
+      try {
+        room.dynamicGrid = await generateDynamic15UsdGrid(year);
+        room.sheetIndex = null;
+      } catch (err) {
+        socket.emit('error_message', `無法動態生成 5x5 表格，請確認資料庫中已匯入 ${year} 年資料！`);
+        room.phase = 'lobby';
+        broadcastRoomUpdate(roomId);
+        return;
+      }
+    } else if (mode === 'legend_15usd') {
+      room.sheetIndex = Math.floor(Math.random() * 40);
+      room.dynamicGrid = null;
+    } else if (mode === 'blind') {
+      // Filter out invalid players (All-Star/Rookie constraints if applicable)
+      const allowedPlayers = playersPool.filter(p => {
+        if (room.settings.banAllStars && p.is_allstar) return false;
+        if (room.settings.rookieOnly && !p.is_rookie) return false;
+        return true;
+      });
+
+      // Sample (players.length * 5) random players for the shared pool
+      const sampleSize = room.players.length * 5;
+      if (allowedPlayers.length < sampleSize) {
+        socket.emit('error_message', `可選球員不足！符合篩選條件的球員只有 ${allowedPlayers.length} 名。`);
+        room.phase = 'lobby';
+        broadcastRoomUpdate(roomId);
+        return;
+      }
+
+      // Shuffle and slice
+      const shuffled = [...allowedPlayers];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const rawSample = shuffled.slice(0, sampleSize);
+
+      // Hide identities in the pool sent to clients
+      room.blindPool = rawSample.map((p, idx) => ({
+        blindId: `B-${idx}`,
+        pts: p.pts,
+        trb: p.trb,
+        ast: p.ast,
+        position: p.position,
+        salary: p.salary,
+        is_allstar: p.is_allstar,
+        is_rookie: p.is_rookie,
+        decade: room.settings.blindSubmode === 'decade' ? `${Math.floor(p.year / 10) * 10}s` : null,
+        // Backend keeps real name/team/year
+        realName: p.name,
+        realTeam: p.team,
+        realYear: p.year
+      }));
+    } else {
+      if (mode === 'legend_wheel') {
+        room.availableTeams = [...MODERN_TEAMS];
+      } else {
+        // Wheel & Salary Cap Mode: get all unique team abbreviations in the players pool
+        const teamsSet = new Set(playersPool.map(p => p.team));
+        // Map back to standard modern teams config or historical metadata names
+        room.availableTeams = Array.from(teamsSet).map(abbr => {
+          const meta = HISTORICAL_TEAMS_META[abbr] || {};
+          return {
+            abbreviation: abbr,
+            name: meta.name || `${abbr} Team`,
+            logo: meta.logo || '🏀',
+            primaryColor: meta.primaryColor || '#4b5563',
+            secondaryColor: meta.secondaryColor || '#9ca3af'
+          };
+        });
+      }
+    }
+
+    await saveRoomToDB(roomId, room);
+    io.to(roomId).emit('game_started', room);
+    broadcastRoomUpdate(roomId);
+  });
+
+  // 5. Spin Wheel Event
+  socket.on('spin_wheel', async ({ roomId }) => {
+    const room = activeRooms.get(roomId);
+    if (!room) return;
+
+    const activePlayerIdx = room.draftOrder[room.draftIndex];
+    const activePlayer = room.players[activePlayerIdx];
+
+    if (activePlayer.socketId !== socket.id) {
+      socket.emit('error_message', '目前不是你的回合，無法旋轉轉盤！');
+      return;
+    }
+
+    const mode = room.settings.mode;
+    const year = room.settings.year;
+
+    // Relocated / Relabeled franchise list
+    let rolledTeam = null;
+
+    // Spin retry protection (max 10 attempts to find a team with players)
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const idx = Math.floor(Math.random() * room.availableTeams.length);
+      const tempTeam = room.availableTeams[idx];
+      
+      if (mode === 'legend_15usd' || mode === '15usd') {
+        // Grids do not spin
+        break;
+      }
+
+      // Special rule: Franchise Legends Mode (Allows any historical player of this team)
+      if (mode === 'legend_wheel') {
+        const legends = await getFranchiseLegendsFromDB(tempTeam.abbreviation);
+        const availableLegends = legends.filter(p => !room.draftedIds.includes(p.name));
+        if (availableLegends.length > 0) {
+          rolledTeam = tempTeam;
+          break;
+        } else {
+          // Trigger automatic re-spin notification
+          io.to(roomId).emit('auto_respin_alert', {
+            teamName: tempTeam.name,
+            logo: tempTeam.logo
+          });
+        }
+      } else if (mode === 'wheel' && room.settings.mode === 'wheel') {
+        // Standard year roster availability check
+        const playersAvailable = await hasAvailablePlayersForTeam(room, tempTeam.abbreviation);
+        if (playersAvailable) {
+          rolledTeam = tempTeam;
+          break;
+        } else {
+          // Trigger automatic re-spin notification
+          io.to(roomId).emit('auto_respin_alert', {
+            teamName: tempTeam.name,
+            logo: tempTeam.logo
+          });
+        }
+      } else {
+        // Salary cap modes / Legend wheel rules: check availability
+        rolledTeam = tempTeam;
+        break;
+      }
+    }
+
+    if (!rolledTeam) {
+      // Fallback in case every single team is depleted (should not happen in normal drafts)
+      rolledTeam = room.availableTeams[Math.floor(Math.random() * room.availableTeams.length)];
+    }
+
+    room.currentTeam = rolledTeam;
+    room.phase = 'pick';
+    await saveRoomToDB(roomId, room);
+
+    io.to(roomId).emit('wheel_spun', { team: rolledTeam, room });
+    broadcastRoomUpdate(roomId);
+  });
+
+  // 6. Draft Player Event
+  socket.on('draft_player', async ({ roomId, playerSelection }) => {
+    const room = activeRooms.get(roomId);
+    if (!room) return;
+
+    const activePlayerIdx = room.draftOrder[room.draftIndex];
+    const activePlayer = room.players[activePlayerIdx];
+
+    if (activePlayer.socketId !== socket.id) {
+      socket.emit('error_message', '目前不是你的回合，無法選擇球員！');
+      return;
+    }
+
+    const mode = room.settings.mode;
+    const year = room.settings.year;
+
+    let draftedPlayerDoc = null;
+
+    if (mode === '15usd' || mode === 'legend_15usd') {
+      // Hardcoded 5x5 Grid Draft: selection has name, price, pts, trb, ast, position, team
+      draftedPlayerDoc = {
+        name: playerSelection.name,
+        pts: playerSelection.pts,
+        trb: playerSelection.trb,
+        ast: playerSelection.ast,
+        position: playerSelection.positions,
+        team: playerSelection.team,
+        salary: playerSelection.price, // Map $ price tier as salary
+        is_allstar: !!playerSelection.is_allstar,
+        is_rookie: !!playerSelection.is_rookie
+      };
+
+      // Check budget
+      const currentSpent = activePlayer.roster.reduce((sum, p) => sum + p.salary, 0);
+      if (currentSpent + draftedPlayerDoc.salary > 15) {
+        socket.emit('error_message', `預算超出限制！目前已花費 $${currentSpent}，該球員需要 $${draftedPlayerDoc.salary}，但上限只有 $15。`);
+        return;
+      }
+
+      if (room.draftedIds.includes(draftedPlayerDoc.name)) {
+        socket.emit('error_message', '該球員已被其他人選走！');
+        return;
+      }
+
+      activePlayer.roster.push(draftedPlayerDoc);
+      room.draftedIds.push(draftedPlayerDoc.name);
+
+    } else if (mode === 'blind') {
+      // Blind mode selection: selection is the blindId
+      const poolItem = room.blindPool.find(p => p.blindId === playerSelection.blindId);
+      if (!poolItem) {
+        socket.emit('error_message', '無效的盲選卡片！');
+        return;
+      }
+
+      if (room.draftedIds.includes(poolItem.realName)) {
+        socket.emit('error_message', '此球員已在盲選中被揭曉選走！');
+        return;
+      }
+
+      draftedPlayerDoc = {
+        name: poolItem.realName,
+        pts: poolItem.pts,
+        trb: poolItem.trb,
+        ast: poolItem.ast,
+        position: poolItem.position,
+        team: poolItem.realTeam,
+        salary: poolItem.salary,
+        is_allstar: poolItem.is_allstar,
+        is_rookie: poolItem.is_rookie,
+        year: poolItem.realYear,
+        peak_year: poolItem.realYear
+      };
+
+      activePlayer.roster.push(draftedPlayerDoc);
+      room.draftedIds.push(draftedPlayerDoc.name);
+
+      // Tell players who was just revealed!
+      io.to(roomId).emit('blind_reveal', {
+        playerName: activePlayer.name,
+        realName: draftedPlayerDoc.name,
+        realTeam: draftedPlayerDoc.team,
+        blindId: poolItem.blindId
+      });
+
+    } else {
+      // Wheel or Salary Cap Modes (Roster database)
+      // Can be a standard player or legend player (relocated franchise or legendary peak sharding)
+      const isLegendPick = !!playerSelection.isLegend;
+      
+      if (isLegendPick) {
+        // Load peak stats from legends pool
+        draftedPlayerDoc = {
+          name: playerSelection.name,
+          pts: playerSelection.pts,
+          trb: playerSelection.trb,
+          ast: playerSelection.ast,
+          position: playerSelection.position,
+          team: playerSelection.team,
+          salary: playerSelection.salary,
+          is_allstar: !!playerSelection.is_allstar,
+          is_rookie: !!playerSelection.is_rookie,
+          is_legend: true,
+          peak_year: playerSelection.year
+        };
+      } else {
+        // Standard database load
+        const yearPlayers = await getYearPlayers(year);
+        const match = yearPlayers.find(p => p.name === playerSelection.name && p.team === playerSelection.team);
+        if (!match) {
+          socket.emit('error_message', '找不到選取的球員！');
+          return;
+        }
+        draftedPlayerDoc = {
+          name: match.name,
+          pts: match.pts,
+          trb: match.trb,
+          ast: match.ast,
+          position: match.position,
+          team: match.team,
+          salary: match.salary,
+          is_allstar: match.is_allstar,
+          is_rookie: match.is_rookie
+        };
+      }
+
+      if (room.draftedIds.includes(draftedPlayerDoc.name)) {
+        socket.emit('error_message', '該球員已被其他人選走！');
+        return;
+      }
+
+      // Check Salary Cap limit
+      if (mode === 'salary_cap') {
+        const teamCap = SALARY_CAPS[year] || 154647000;
+        const currentSalary = activePlayer.roster.reduce((sum, p) => sum + p.salary, 0);
+        
+        if (currentSalary + draftedPlayerDoc.salary > teamCap) {
+          socket.emit('error_message', `薪資空間不足！目前薪資：$${currentSalary.toLocaleString()}，該球員薪水：$${draftedPlayerDoc.salary.toLocaleString()}，總薪資上限：$${teamCap.toLocaleString()}`);
+          return;
+        }
+      }
+
+      activePlayer.roster.push(draftedPlayerDoc);
+      room.draftedIds.push(draftedPlayerDoc.name);
+    }
+
+    // Move to next turn
+    room.draftIndex++;
+    room.currentTeam = null;
+
+    if (room.draftIndex >= room.draftOrder.length) {
+      room.phase = 'eval';
+      console.log(`🏁 Draft completed for room ${roomId}. Entering evaluation...`);
+    } else {
+      room.phase = 'wheel';
+    }
+
+    await saveRoomToDB(roomId, room);
+    broadcastRoomUpdate(roomId);
+  });
+
+  // 7. Request AI Evaluation Event
+  socket.on('request_evaluation', async ({ roomId }) => {
+    const room = activeRooms.get(roomId);
+    if (!room) return;
+
+    // Mark AI evaluating and broadcast
+    io.to(roomId).emit('ai_evaluating');
+
+    try {
+      console.log(`🤖 Queuing Gemini AI evaluation for Room ${roomId}...`);
+      const evaluationText = await queueEvaluation(room);
+      
+      room.evalResult = evaluationText;
+      await saveRoomToDB(roomId, room);
+      
+      io.to(roomId).emit('eval_result', evaluationText);
+      broadcastRoomUpdate(roomId);
+      console.log(`✅ Room ${roomId} evaluation complete.`);
+    } catch (err) {
+      console.error(`❌ Evaluation error for room ${roomId}:`, err);
+      io.to(roomId).emit('eval_error', err.message || 'AI 評估失敗，請點擊重試。');
+    }
+  });
+
+  // 8. Replay / Restart Room Event
+  socket.on('play_again', async ({ roomId }) => {
+    const room = activeRooms.get(roomId);
+    if (!room) return;
+
+    // Reset room phase and state
+    room.phase = 'lobby';
+    room.draftIndex = 0;
+    room.draftOrder = [];
+    room.draftedIds = [];
+    room.currentTeam = null;
+    room.blindPool = [];
+    room.evalResult = null;
+    room.sheetIndex = null;
+    room.availableTeams = [];
+
+    // Clear rosters
+    room.players.forEach(p => {
+      p.roster = [];
+    });
+
+    await saveRoomToDB(roomId, room);
+    broadcastRoomUpdate(roomId);
+  });
+
+  // 9. Fetch Franchise Legends Pick Pool Event
+  socket.on('get_team_legends', ({ teamAbbr }, callback) => {
+    const legends = getLegendsForTeam(teamAbbr);
+    callback(legends);
+  });
+
+  // 10. Fetch Team Roster Event / Dynamic Franchise Legends
+  socket.on('get_team_roster', async ({ roomId, teamAbbr }, callback) => {
+    const room = activeRooms.get(roomId);
+    if (!room) return callback([]);
+
+    const mode = room.settings.mode;
+
+    if (mode === 'legend_wheel') {
+      try {
+        const legends = await getFranchiseLegendsFromDB(teamAbbr);
+        const filtered = legends.filter(p => {
+          // Exclude drafted players
+          if (room.draftedIds.includes(p.name)) return false;
+          // Apply Star Bans
+          if (room.settings.banAllStars && p.is_allstar) return false;
+          // Apply Rookie Only filter
+          if (room.settings.rookieOnly && !p.is_rookie) return false;
+          return true;
+        });
+        return callback(filtered);
+      } catch (err) {
+        console.error(`❌ Error fetching franchise legends for ${teamAbbr}:`, err);
+        return callback([]);
+      }
+    }
+
+    const year = room.settings.year;
+    const allPlayers = await getYearPlayers(year);
+    const targetAbbr = getHistoricalTeamAbbr(teamAbbr, year);
+
+    const filtered = allPlayers.filter(p => {
+      // Match team
+      if (p.team !== targetAbbr) return false;
+      // Exclude drafted players
+      if (room.draftedIds.includes(p.name)) return false;
+      // Apply Star Bans
+      if (room.settings.banAllStars && p.is_allstar) return false;
+      // Apply Rookie Only filter
+      if (room.settings.rookieOnly && !p.is_rookie) return false;
+      return true;
+    });
+
+    callback(filtered);
+  });
+
+  // 11. Disconnect Event
+  socket.on('disconnect', async () => {
+    console.log(`🔌 Client disconnected: ${socket.id}`);
+    
+    // Find rooms containing the player and mark them as offline
+    for (const [roomId, room] of activeRooms.entries()) {
+      const player = room.players.find(p => p.socketId === socket.id);
+      if (player) {
+        player.isOnline = false;
+        console.log(`👤 Player ${player.name} went offline in Room ${roomId}`);
+        await saveRoomToDB(roomId, room);
+        broadcastRoomUpdate(roomId);
+      }
+    }
+  });
+});
+
+// Run server
+server.listen(port, () => {
+  console.log(`🚀 NBA Draft Showdown Server running on port ${port}`);
+});

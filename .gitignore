@@ -1,0 +1,24 @@
+# ─── Dependencies ───
+node_modules/
+
+# ─── Credentials (NEVER commit) ───
+.env
+firebase_config.js
+serviceAccountKey.json
+*.json.key
+
+# ─── Cache ───
+players_cache.json
+
+# ─── Python ───
+__pycache__/
+*.pyc
+
+# ─── OS ───
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── IDE ───
+.vscode/
+.idea/
