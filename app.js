@@ -1685,8 +1685,9 @@ if (state.user) {
   }, 100);
 }
 
-// Initialize Firebase on load
+// Initialize Firebase and UI on load
 initFirebase();
+updateOAuthUI();
 
 
 
@@ -2523,7 +2524,7 @@ window.__app = {
   playAgain,
   leaveRoom,
   loginWithGoogle,
-  loginWithFacebook,
+  loginAsGuest,
   logout,
   triggerCheckIn,
   claimCheckIn,
@@ -2536,8 +2537,6 @@ window.__app = {
   startPVEGame,
   showPVPForm,
   savePreBans,
-  submitEmailAuth,
-  toggleRegisterMode,
   openLeaderboard,
   closeLeaderboard,
   switchLeaderboardTab
