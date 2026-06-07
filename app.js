@@ -641,6 +641,12 @@ function onSpinStopped(team) {
   // Notify server: animation done, switch to pick phase
   if (isMyTurn) {
     socket.emit('spin_done', { roomId: state.roomId });
+  } else {
+    // For spectators, if the server has already transitioned, update UI now
+    if (room.phase === 'pick') {
+      showScreen('screen-draft');
+      updateDraftUI();
+    }
   }
 }
 
