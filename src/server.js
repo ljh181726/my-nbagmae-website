@@ -89,6 +89,27 @@ function broadcastRoomUpdate(roomId) {
   io.to(roomId).emit('room_update', room);
 }
 
+const fs = require('fs');
+const vm = require('vm');
+
+let ACTIVE_5X5_GRIDS = [];
+let LEGENDS_5X5_GRIDS = [];
+
+try {
+  const dataJsPath = path.join(__dirname, '../data.js');
+  if (fs.existsSync(dataJsPath)) {
+    const dataJsContent = fs.readFileSync(dataJsPath, 'utf8');
+    const code = dataJsContent.replace(/export\s+/g, '');
+    const sandbox = {};
+    vm.createContext(sandbox);
+    vm.runInContext(code, sandbox);
+    ACTIVE_5X5_GRIDS = sandbox.ACTIVE_5X5_GRIDS || [];
+    LEGENDS_5X5_GRIDS = sandbox.LEGENDS_5X5_GRIDS || [];
+  }
+} catch (err) {
+  console.error('⚠️ Failed to load 5x5 grids from data.js:', err);
+}
+
 const roomTimers = new Map();
 
 // Helper: Start/Reset the 30-second turn timer for draft phase
@@ -126,6 +147,7 @@ function clearRoomTurnTimer(roomId) {
 }
 
 // Helper: Trigger AFK Penalty Auto-Draft
+// Helper: Trigger AFK Penalty Auto-Draft
 async function triggerAFKPenalty(roomId) {
   const room = activeRooms.get(roomId);
   if (!room) return;
@@ -139,29 +161,61 @@ async function triggerAFKPenalty(roomId) {
   let teamLogo = '🏀';
   let teamName = '';
 
-  // 1. Determine team if not already rolled
+  // 1. Determine selection based on mode
   if (mode === '15usd' || mode === 'legend_15usd') {
     // For 15usd modes, pick any player from grid that is within price limit and not drafted
     let availableGridPlayers = [];
     if (room.dynamicGrid) {
       availableGridPlayers = room.dynamicGrid;
+    } else {
+      const gridsPool = mode === 'legend_15usd' ? LEGENDS_5X5_GRIDS : ACTIVE_5X5_GRIDS;
+      if (room.sheetIndex !== null && gridsPool && gridsPool[room.sheetIndex]) {
+        availableGridPlayers = gridsPool[room.sheetIndex];
+      }
     }
     
     const spent = activePlayer.roster.reduce((sum, p) => sum + (p.salary || 0), 0);
     const remainingBudget = 15 - spent;
     
-    if (availableGridPlayers.length > 0) {
+    if (availableGridPlayers && availableGridPlayers.length > 0) {
       let candidates = availableGridPlayers.filter(p => !room.draftedIds.includes(p.name) && p.price <= remainingBudget);
       let penaltyCandidates = candidates.filter(p => !p.is_allstar);
       if (penaltyCandidates.length === 0) penaltyCandidates = candidates;
       penaltyCandidates.sort((a, b) => (a.pts || 0) - (b.pts || 0));
-      selectedPlayer = penaltyCandidates[0];
+      if (penaltyCandidates.length > 0) {
+        selectedPlayer = penaltyCandidates[0];
+      }
+    }
+  } else if (mode === 'blind') {
+    // For blind mode, pick the worst card from blindPool
+    if (room.blindPool && room.blindPool.length > 0) {
+      let candidates = room.blindPool.filter(p => !room.draftedIds.includes(p.realName));
+      let penaltyCandidates = candidates.filter(p => !p.is_allstar);
+      if (penaltyCandidates.length === 0) penaltyCandidates = candidates;
+      penaltyCandidates.sort((a, b) => (a.pts || 0) - (b.pts || 0));
+      if (penaltyCandidates.length > 0) {
+        const candidate = penaltyCandidates[0];
+        selectedPlayer = {
+          name: candidate.realName,
+          team: candidate.realTeam,
+          pts: candidate.pts,
+          trb: candidate.trb,
+          ast: candidate.ast,
+          position: candidate.position,
+          salary: candidate.salary,
+          is_allstar: candidate.is_allstar,
+          is_rookie: candidate.is_rookie,
+          year: candidate.realYear,
+          is_blind: true,
+          blindId: candidate.blindId
+        };
+      }
     }
   } else {
     // Wheel-based modes (wheel, salary_cap, salary_cap_legend, etc.)
     let rolledTeam = room.currentTeam;
     
-    if (!rolledTeam) {
+    if (!rolledTeam && room.availableTeams && room.availableTeams.length > 0) {
       const idx = Math.floor(Math.random() * room.availableTeams.length);
       rolledTeam = room.availableTeams[idx];
       room.currentTeam = rolledTeam;
@@ -220,7 +274,7 @@ async function triggerAFKPenalty(roomId) {
   // 3. Fallback to any random player in case team is empty or salary cap too low to afford anyone
   if (!selectedPlayer) {
     console.log(`⚠️ Low cap or empty pool fallback for Room ${roomId}`);
-    let generalPool = await getYearPlayers(room.settings.year);
+    let generalPool = await getYearPlayers(room.settings.year || 2026);
     
     let available = generalPool.filter(p => {
       if (room.draftedIds.includes(p.name)) return false;
@@ -267,6 +321,16 @@ async function triggerAFKPenalty(roomId) {
       playerNameAssigned: draftedPlayerDoc.name,
       logo: teamLogo
     });
+
+    // If it was a blind draft, also broadcast the blind reveal!
+    if (selectedPlayer.is_blind) {
+      io.to(roomId).emit('blind_reveal', {
+        playerName: activePlayer.name,
+        realName: draftedPlayerDoc.name,
+        realTeam: draftedPlayerDoc.team,
+        blindId: selectedPlayer.blindId
+      });
+    }
   }
 
   // Move to next turn
