@@ -255,6 +255,10 @@ socket.on('room_update', (room) => {
   }
 
   if (room.phase === 'lobby') {
+    if (state.typewriterInterval) {
+      clearInterval(state.typewriterInterval);
+      state.typewriterInterval = null;
+    }
     showScreen('screen-lobby');
     updateLobbyUI();
   } else if (room.phase === 'draft' || room.phase === 'wheel' || room.phase === 'pick') {
@@ -335,11 +339,40 @@ socket.on('eval_result', (evaluationText) => {
   $('#eval-loading').classList.add('hidden');
   
   const resultDiv = $('#eval-result');
-  resultDiv.innerHTML = window.marked.parse(evaluationText);
+  resultDiv.innerHTML = '';
   resultDiv.classList.remove('hidden');
   
-  $('#btn-replay').classList.remove('hidden');
-  fireConfetti();
+  const btnReplay = $('#btn-replay');
+  const btnLeaveEval = $('#btn-leave-eval');
+  if (btnReplay) btnReplay.classList.add('hidden');
+  if (btnLeaveEval) btnLeaveEval.classList.add('hidden');
+
+  if (state.typewriterInterval) {
+    clearInterval(state.typewriterInterval);
+    state.typewriterInterval = null;
+  }
+
+  let i = 0;
+  const speed = 20; // ms per tick
+  const stepSize = 4; // characters per tick for smooth yet fast typing
+  
+  state.typewriterInterval = setInterval(() => {
+    i += stepSize;
+    if (i >= evaluationText.length) {
+      i = evaluationText.length;
+      clearInterval(state.typewriterInterval);
+      state.typewriterInterval = null;
+      
+      resultDiv.innerHTML = window.marked.parse(evaluationText);
+      if (btnReplay) btnReplay.classList.remove('hidden');
+      if (btnLeaveEval) btnLeaveEval.classList.remove('hidden');
+      fireConfetti();
+    } else {
+      resultDiv.innerHTML = window.marked.parse(evaluationText.substring(0, i));
+    }
+    // Scroll container/window to the bottom smoothly
+    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, speed);
 });
 
 socket.on('eval_error', (errorMsg) => {
@@ -370,6 +403,8 @@ function createRoom() {
   const rookieOnly = $('#create-rookie-only');
   const blindSubmodeSelect = $('#create-blind-submode');
   const decadeSelect = $('#create-decade');
+  const allStarCapInput = $('#create-allstar-cap');
+  const rookieFloorInput = $('#create-rookie-floor');
 
   const playerName = nameInput.value.trim();
   if (!playerName) {
@@ -384,7 +419,9 @@ function createRoom() {
       banAllStars: banStars.checked,
       rookieOnly: rookieOnly.checked,
       blindSubmode: blindSubmodeSelect.value,
-      decade: decadeSelect.value
+      decade: decadeSelect.value,
+      allStarCap: parseInt(allStarCapInput.value) !== undefined ? parseInt(allStarCapInput.value) : 5,
+      rookieFloor: parseInt(rookieFloorInput.value) !== undefined ? parseInt(rookieFloorInput.value) : 0
     },
     playerName
   });
@@ -451,8 +488,17 @@ function updateLobbyUI() {
   } else {
     $('#lobby-setting-year').textContent = `${room.settings.year} 年`;
   }
-  $('#lobby-setting-stars').textContent = room.settings.banAllStars ? '禁止明星賽球員' : '無限制';
-  $('#lobby-setting-rookie').textContent = room.settings.rookieOnly ? '僅限新秀合約' : '無限制';
+  let starsText = room.settings.banAllStars ? '禁止明星賽球員' : '無限制';
+  if (room.settings.allStarCap !== undefined && room.settings.allStarCap !== 5) {
+    starsText = `上限 ${room.settings.allStarCap} 人`;
+  }
+  $('#lobby-setting-stars').textContent = starsText;
+
+  let rookieText = room.settings.rookieOnly ? '僅限新秀合約' : '無限制';
+  if (room.settings.rookieFloor !== undefined && room.settings.rookieFloor !== 0) {
+    rookieText = `下限 ${room.settings.rookieFloor} 人`;
+  }
+  $('#lobby-setting-rookie').textContent = rookieText;
 
   const container = $('#lobby-players-container');
   container.innerHTML = '';
@@ -739,6 +785,59 @@ function toggleRosterView(view) {
   renderPickCards();
 }
 
+// ── Check Player Draft Eligibility ──────────
+function checkPlayerDraftEligibility(room, activePlayer, p, priceOrSalary) {
+  const isDrafted = room.draftedIds.includes(p.name);
+  if (isDrafted) return { isDisabled: true, isConstraintDisabled: false };
+
+  // Calculate constraints
+  const remainingPicks = 5 - activePlayer.roster.length;
+  const currentRookies = activePlayer.roster.filter(pr => pr.is_rookie).length;
+  const rookieFloor = room.settings.rookieFloor || 0;
+  const rookieDeficit = rookieFloor - currentRookies;
+  const mustPickRookie = rookieDeficit > 0 && remainingPicks <= rookieDeficit;
+
+  const currentAllStars = activePlayer.roster.filter(pr => pr.is_allstar).length;
+  const allStarCap = room.settings.allStarCap !== undefined ? room.settings.allStarCap : 5;
+  const cannotPickAllStar = currentAllStars >= allStarCap;
+
+  // Check rookie constraint
+  if (mustPickRookie && !p.is_rookie) {
+    return { isDisabled: true, isConstraintDisabled: true };
+  }
+
+  // Check all-star constraint
+  if (cannotPickAllStar && p.is_allstar) {
+    return { isDisabled: true, isConstraintDisabled: true };
+  }
+
+  // Check budget constraint (only for 15usd modes)
+  const mode = room.settings.mode;
+  if (mode === '15usd' || mode === 'legend_15usd') {
+    const spent = activePlayer.roster.reduce((sum, pr) => sum + pr.salary, 0);
+    const maxAffordable = (15 - spent) - (remainingPicks - 1);
+    
+    // Check if safety net is active
+    const gridsPool = mode === 'legend_15usd' ? LEGENDS_5X5_GRIDS : ACTIVE_5X5_GRIDS;
+    const gridData = room.dynamicGrid || (room.sheetIndex !== null ? gridsPool[room.sheetIndex] : null);
+    const affordableCount = gridData ? gridData.filter(pr => !room.draftedIds.includes(pr.name) && pr.price <= maxAffordable).length : 0;
+    const isSafetyNetActive = (affordableCount < remainingPicks);
+
+    if (!isSafetyNetActive && priceOrSalary > maxAffordable) {
+      return { isDisabled: true, isConstraintDisabled: false };
+    }
+  } else if (mode.includes('salary_cap')) {
+    // Salary cap mode budget
+    const teamCap = SALARY_CAPS[room.settings.year] || 154647000;
+    const spent = activePlayer.roster.reduce((sum, pr) => sum + pr.salary, 0);
+    if (spent + priceOrSalary > teamCap) {
+      return { isDisabled: true, isConstraintDisabled: false };
+    }
+  }
+
+  return { isDisabled: false, isConstraintDisabled: false };
+}
+
 // ── Render standard list cards ─────────────
 function renderPickCards() {
   const grid = $('#player-grid');
@@ -762,7 +861,13 @@ function renderPickCards() {
     
     const card = document.createElement('button');
     card.className = 'player-btn relative flex flex-col items-center justify-between text-center min-h-[82px] py-3 px-2';
-    card.disabled = isDrafted || !isMyTurn;
+    const eligible = checkPlayerDraftEligibility(room, activePlayer, p, p.salary || 0);
+    let isDisabled = eligible.isDisabled || !isMyTurn;
+    card.disabled = isDisabled;
+    if (eligible.isConstraintDisabled) {
+      card.style.textDecoration = 'none';
+      card.classList.add('opacity-40');
+    }
 
     const posHTML = p.position.map(pos => `<span class="pos-badge">${pos}</span>`).join('');
     const allStarBadge = p.is_allstar ? `<span class="allstar-badge text-[10px] text-yellow-400 font-bold">⭐ All-Star</span>` : '';
@@ -803,7 +908,7 @@ function renderPickCards() {
       </div>
     `;
 
-    if (!isDrafted && isMyTurn) {
+    if (!isDisabled && isMyTurn) {
       card.addEventListener('click', () => {
         socket.emit('draft_player_request', {
           roomId: state.roomId,
@@ -847,6 +952,22 @@ function render5x5Grid() {
   const spent = me ? me.roster.reduce((sum, p) => sum + p.salary, 0) : 0;
   $('#grid-budget-display').textContent = `$${15 - spent} / $15`;
 
+  // Check safety net
+  const remainingPicks = me ? 5 - me.roster.length : 5;
+  const maxAffordable = (15 - spent) - (remainingPicks - 1);
+  const affordableCount = gridData.filter(pr => !room.draftedIds.includes(pr.name) && pr.price <= maxAffordable).length;
+  const isSafetyNetActive = (affordableCount < remainingPicks);
+
+  const safetyAlert = $('#grid-safety-net-alert');
+  if (safetyAlert) {
+    if (isSafetyNetActive && isMyTurn) {
+      safetyAlert.textContent = `⚠️ 剩餘低價球員不足，已啟動低保補貼機制（所有剩餘球員價格降為 $1）`;
+      safetyAlert.classList.remove('hidden');
+    } else {
+      safetyAlert.classList.add('hidden');
+    }
+  }
+
   const rowsContainer = $('#grid-rows-container');
   rowsContainer.innerHTML = '';
 
@@ -866,7 +987,14 @@ function render5x5Grid() {
       const isDrafted = room.draftedIds.includes(p.name);
       const btn = document.createElement('button');
       btn.className = 'player-btn py-2 px-1 text-xs flex flex-col justify-center items-center h-full min-h-[58px]';
-      btn.disabled = isDrafted || !isMyTurn || (spent + price > 15);
+
+      const eligible = checkPlayerDraftEligibility(room, activePlayer, p, price);
+      let isDisabled = eligible.isDisabled || !isMyTurn;
+      btn.disabled = isDisabled;
+      if (eligible.isConstraintDisabled) {
+        btn.style.textDecoration = 'none';
+        btn.classList.add('opacity-40');
+      }
 
       btn.innerHTML = `
         <div class="font-bold text-gray-200 leading-tight">${p.name}</div>
@@ -880,7 +1008,7 @@ function render5x5Grid() {
         </div>
       `;
 
-      if (!isDrafted && isMyTurn && (spent + price <= 15)) {
+      if (!isDisabled && isMyTurn) {
         btn.addEventListener('click', () => {
           socket.emit('draft_player_request', {
             roomId: state.roomId,
@@ -1080,6 +1208,36 @@ function updateEvalUI() {
       statsSummaryHTML = `<div class="text-xs text-yellow-500 mt-1 font-semibold">總薪資：$${spent.toLocaleString()}</div>`;
     }
 
+    const ratings = (room.ratings && room.ratings[player.name]) || { offense: 0, defense: 0, overall: 0 };
+    
+    function getRingHTML(score, label, strokeColor) {
+      const radius = 20;
+      const strokeWidth = 3;
+      const circumference = 2 * Math.PI * radius;
+      const strokeDashoffset = circumference * (1 - score / 100);
+      return `
+        <div class="flex flex-col items-center">
+          <div class="relative w-11 h-11 flex items-center justify-center">
+            <svg class="w-full h-full transform -rotate-90">
+              <circle cx="22" cy="22" r="${radius}" stroke="rgba(255,255,255,0.06)" stroke-width="${strokeWidth}" fill="transparent" />
+              <circle cx="22" cy="22" r="${radius}" stroke="${strokeColor}" stroke-width="${strokeWidth}" fill="transparent"
+                      stroke-dasharray="${circumference}" stroke-dashoffset="${strokeDashoffset}" stroke-linecap="round" />
+            </svg>
+            <span class="absolute text-[10px] font-black text-white">${score}</span>
+          </div>
+          <span class="text-[9px] text-gray-400 mt-1 font-semibold">${label}</span>
+        </div>
+      `;
+    }
+
+    const ratingsHTML = `
+      <div class="flex items-center justify-around bg-purple-950/15 border border-purple-900/10 rounded-xl p-2.5 mb-4">
+        ${getRingHTML(ratings.offense, '進攻', '#f43f5e')}
+        ${getRingHTML(ratings.defense, '防守', '#34d399')}
+        ${getRingHTML(ratings.overall, '總評', '#f59e0b')}
+      </div>
+    `;
+
     col.innerHTML = `
       <div>
         <div class="flex items-center gap-2.5 mb-4 pb-2 border-b border-purple-950">
@@ -1089,6 +1247,7 @@ function updateEvalUI() {
             ${statsSummaryHTML}
           </div>
         </div>
+        ${ratingsHTML}
         <div class="space-y-2.5">
           ${player.roster.map(p => {
             const logo = NBA_TEAMS.find(t => t.abbreviation === getModernEquivalent(p.team))?.logo || '🏀';
@@ -1118,10 +1277,12 @@ function updateEvalUI() {
 
   if (room.evalResult) {
     evalActions.classList.add('hidden');
-    evalResult.innerHTML = window.marked.parse(room.evalResult);
-    evalResult.classList.remove('hidden');
-    btnReplay.classList.remove('hidden');
-    btnLeaveEval.classList.remove('hidden');
+    if (!state.typewriterInterval) {
+      evalResult.innerHTML = window.marked.parse(room.evalResult);
+      evalResult.classList.remove('hidden');
+      btnReplay.classList.remove('hidden');
+      btnLeaveEval.classList.remove('hidden');
+    }
   } else {
     evalActions.classList.remove('hidden');
     evalResult.classList.add('hidden');
@@ -1166,6 +1327,10 @@ function leaveRoom() {
     if (draftTimerInterval) {
       clearInterval(draftTimerInterval);
       draftTimerInterval = null;
+    }
+    if (state.typewriterInterval) {
+      clearInterval(state.typewriterInterval);
+      state.typewriterInterval = null;
     }
     
     // Notify server to leave room
@@ -1236,6 +1401,16 @@ function updateSetupVisibility() {
     yearSliderContainer.classList.add('hidden');
   } else {
     yearSliderContainer.classList.remove('hidden');
+  }
+
+  // Wheel constraint sliders (shown for wheel, legend_wheel, salary_cap, salary_cap_legend)
+  const wheelConstraintSliders = $('#wheel-constraint-sliders');
+  if (wheelConstraintSliders) {
+    if (mode === 'wheel' || mode === 'legend_wheel' || mode === 'salary_cap' || mode === 'salary_cap_legend') {
+      wheelConstraintSliders.classList.remove('hidden');
+    } else {
+      wheelConstraintSliders.classList.add('hidden');
+    }
   }
 }
 

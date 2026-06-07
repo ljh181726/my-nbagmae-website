@@ -8,8 +8,6 @@ const { connectDB } = require('./db');
 const MANUAL_PATCHES = [
   // Zion: 2021(入選), 2023(入選) -> 在 y2021+ 都應標 true
   { name: 'Zion Williamson', years: [2021, 2022, 2023, 2024, 2025, 2026] },
-  // Austin Reaves: 2025 All-Star
-  { name: 'Austin Reaves', years: [2025, 2026] },
   // Scottie Barnes: 2025 All-Star
   { name: 'Scottie Barnes', years: [2025, 2026] },
   // Ja Morant: 2022, 2023 All-Star -> y2022+ 應標 true

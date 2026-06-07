@@ -169,6 +169,9 @@ async function saveRoomToDB(roomId, room) {
       currentTurnPlayerId: room.currentTurnPlayerId || null,
       turnExpiresAt: room.turnExpiresAt || null,
       evalResult: room.evalResult,
+      ratings: room.ratings || null,
+      dynamicGrid: room.dynamicGrid || null,
+      sheetIndex: room.sheetIndex !== undefined ? room.sheetIndex : null,
       updatedAt: new Date()
     };
     await db.collection('active_rooms').updateOne(
@@ -199,7 +202,10 @@ async function loadRoomFromDB(roomId) {
       roomState: doc.roomState || 'LOBBY',
       currentTurnPlayerId: doc.currentTurnPlayerId || null,
       turnExpiresAt: doc.turnExpiresAt || null,
-      evalResult: doc.evalResult
+      evalResult: doc.evalResult,
+      ratings: doc.ratings || null,
+      dynamicGrid: doc.dynamicGrid || null,
+      sheetIndex: doc.sheetIndex !== undefined ? doc.sheetIndex : null
     };
   } catch (err) {
     console.error(`❌ Error loading room ${roomId} from DB:`, err);

@@ -12,7 +12,7 @@ const ALLSTAR_2025_PLAYERS = [
   'Nikola Jokic', 'Anthony Davis',
   // West reserves
   'Stephen Curry', 'Devin Booker', 'Kawhi Leonard', 'Draymond Green',
-  'Jaren Jackson', 'Karl-Anthony Towns', 'Austin Reaves',
+  'Jaren Jackson', 'Karl-Anthony Towns',
   // East starters  
   'Giannis Antetokounmpo', 'Donovan Mitchell', 'Jaylen Brown',
   'Evan Mobley', 'Tyrese Haliburton',
@@ -26,7 +26,6 @@ const ALLSTAR_2025_PLAYERS = [
 // 以下是 2025-26 賽季目前還在打球且曾是全明星的球員（額外補充）
 const ADDITIONAL_CAREER_ALLSTARS_IN_Y2026 = [
   // 這些球員曾是全明星但 BBR y2026 或歷史掃描時可能漏掉
-  'Austin Reaves',   // 2025 All-Star
   'Scottie Barnes',  // 2025 All-Star
   'Evan Mobley',     // 2025 + 2026 All-Star
   'Jaren Jackson',   // 2025 All-Star (Jaren Jackson Jr.)

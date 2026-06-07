@@ -94,17 +94,25 @@ async function executeBackupEvaluation(room) {
     return `### 隊伍：${player.name}\n${lines}`;
   }).join('\n\n');
 
-  const systemPrompt = `你是一個精簡的 NBA 分析師。請使用「繁體中文」在 150 字內快速比較以下陣容，並判定勝負。
-請嚴格根據房間設定的「基準年份」【${year} 年】（或球員巔峰期）的表現進行評估。
-你的分析必須包含一個最終勝者 (WINNER) 及其勝出機率，以及一句簡短的毒舌熱辣觀點。`;
+  const ratingContext = players.map(p => {
+    const r = (room.ratings && room.ratings[p.name]) || {};
+    return `### ${p.name} 的數據評分：進攻 ${r.offense || '--'}分 / 防守 ${r.defense || '--'}分 / 總評 ${r.overall || '--'}分`;
+  }).join('\n');
 
-  const prompt = `【選秀陣容】\n\n${rosterSummaries}`;
+  const systemPrompt = `你是一個嚴厲的名人堂傳奇總教練（擁有極度挑剔且毒舌的人設）。請使用「繁體中文」在 350 字內快速比較以下陣容，並判定勝負。
+請嚴格根據房間設定的「基準年份」【${year} 年】（或球員巔峰期）的表現進行評估。
+【評語規則】：
+1. 必須參考以下提供的數據評分。若有隊伍總評低於 60 分，請無情地痛批他們（例如「這陣容簡直是防守提款機」或「進攻黑洞」）；若高於 90 分，給予肯定但語氣仍需保持嚴格的高標準（例如「這勉強能看，但防守還有一堆漏洞」）。
+2. 提供簡短但具體的戰術建議。
+3. 你的分析必須包含一個最終勝者 (WINNER) 及其勝出機率，以及一句毒舌熱辣觀點。`;
+
+  const prompt = `【數據評分】\n${ratingContext}\n\n【選秀陣容】\n\n${rosterSummaries}`;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
   const headers = { 'Content-Type': 'application/json' };
   const body = {
     contents: [{ role: "user", parts: [{ text: systemPrompt + "\n\n" + prompt }] }],
-    generationConfig: { temperature: 0.5, maxOutputTokens: 256 }
+    generationConfig: { temperature: 0.6, maxOutputTokens: 512 }
   };
 
   const controller = new AbortController();
@@ -166,26 +174,33 @@ async function executeEvaluation(room) {
     return `### 隊伍：${player.name}\n${lines}`;
   }).join('\n\n');
 
+  const ratingContext = players.map(p => {
+    const r = (room.ratings && room.ratings[p.name]) || {};
+    return `### ${p.name} 的數據評分：進攻 ${r.offense || '--'}分 / 防守 ${r.defense || '--'}分 / 總評 ${r.overall || '--'}分`;
+  }).join('\n');
+
   const isLegendMode = mode === 'salary_cap_legend' || mode === 'legend_wheel';
 
-  const systemPrompt = `你是一個頂尖的 NBA 戰術分析師與幽默的體育球評。你必須使用「繁體中文」來評估多個選秀隊伍的時空對決，並判定勝負。
+  const systemPrompt = `你是一個極度挑剔、說話辛辣的名人堂傳奇總教練（HOF Head Coach）。你必須使用「繁體中文」來評估多個選秀隊伍的時空對決，並判定勝負。
 請嚴格根據以下基準進行評估：
 1. **標準年與盲選模式**：必須嚴格鎖定設定的年份：【${year} 年】！以該球員在該年份當季的真實數據、防守影響力和狀態評估，嚴禁將他過去或未來的榮譽或奪冠歷史納入。
-2. **傳奇/薪資上限傳奇模式**：必須以「球隊巔峰期基準」進行評估。例如，如果選了魔術隊時期身手敏捷的 Shaq，就不能用湖人三連霸時期的低位破壞力或體重來評；反之，若選了湖人時期的 Shaq，則以防守禁區無敵的霸王狀態來評。你必須在評語中明確提及並解析此細節。
+2. **傳奇/薪資上限傳奇模式**：必須以「球隊巔峰期基準」進行評估。你必須在評語中明確提及並解析此細節。
 
-評估標準：
-- **攻防平衡**：不能只看得分 (PTS)。必須綜合評估防守對位、護框、外線防守、籃板保護。
-- **化學反應與球權分配**：評估球員適配度（例如是否有多名需要大量持球單打的球員導致球不夠分，或是有無頂級傳球手與射手拉開空間 Spacing）。
-- **位置合理性**：陣容的位置是否合理，有無明顯漏洞。
+評估與教練點評規範：
+- **毒舌人設**：你是擁有無數冠軍戒指的名人堂教練，眼光極高，說話毫不客氣、犀利直接，充滿辛辣的體育吐槽（毒舌/Trash-talking）。絕對不准給予溫馨的安慰或空洞的鼓勵！
+- **評分門檻規則（極重要）**：
+  - 如果某支隊伍的【總評分 < 60 分】，必須嚴厲批評，吐槽他們是「公園業餘聯賽等級」、「防守提款機」或「進攻黑洞」，毫不留情。
+  - 如果某支隊伍的【總評分 > 90 分】，可以給予肯定，但語氣仍然要是高標準的教練姿態，告訴他們「這陣容勉強符合 NBA 奪冠水準，但別高興太早，防守/輪替還是有隱憂」。
+- **具體戰術建議**：你必須對每個隊伍給出具體且實用的戰術改善建議（例如：空間拉伸 Spacing 問題、球權分配問題、防守對位漏洞、誰該當核心進攻點、誰該去做髒活）。
 
 格式要求：
 - 使用 Markdown 標題、粗體與清單。
 - 對每個隊伍進行 3-4 句的精闢分析。
 - 宣布一個「最終勝者 (WINNER)」並給出勝出機率 (例如 65%)。
-- 最後附上一個幽默風趣的「毒舌球評/熱辣觀點 (Hot Take)」。
-- 字數嚴格控制在 500 字以內，語氣要活潑、專業且引人入勝。`;
+- 最後附上一個幽默風趣且極具殺傷力的「毒舌球評/熱辣觀點 (Hot Take)」。
+- 字數嚴格控制在 600 字以內，語氣要生動、專業且具有十足的戲劇張力。`;
 
-  const prompt = `【選秀陣容名單】\n\n${rosterSummaries}\n\n請根據以上選秀陣容進行${isLegendMode ? '歷史巔峰/跨時空' : year + '年'}的戰力評估與勝負判定。`;
+  const prompt = `【客觀數據評分】\n${ratingContext}\n\n【選秀陣容名單】\n\n${rosterSummaries}\n\n請根據以上選秀陣容進行${isLegendMode ? '歷史巔峰/跨時空' : year + '年'}的戰力評估與勝負判定。`;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
   const headers = { 'Content-Type': 'application/json' };
