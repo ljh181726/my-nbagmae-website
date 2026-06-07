@@ -33,8 +33,8 @@ function getModernEquivalent(abbr) {
 const socket = io();
 
 const state = {
-  roomId: localStorage.getItem('nba_room_id') || null,
-  playerName: localStorage.getItem('nba_player_name') || null,
+  roomId: sessionStorage.getItem('nba_room_id') || null,
+  playerName: sessionStorage.getItem('nba_player_name') || null,
   isOwner: false,
   room: null,
   activeRosterView: 'normal', // 'normal' | 'legend'
@@ -210,8 +210,8 @@ socket.on('room_created', ({ roomId, room }) => {
   state.isOwner = true;
   state.room = room;
 
-  localStorage.setItem('nba_room_id', roomId);
-  localStorage.setItem('nba_player_name', state.playerName);
+  sessionStorage.setItem('nba_room_id', roomId);
+  sessionStorage.setItem('nba_player_name', state.playerName);
 
   showScreen('screen-lobby');
   updateLobbyUI();
@@ -227,8 +227,8 @@ socket.on('room_update', (room) => {
     state.isOwner = me.isOwner;
     state.playerName = me.name;
     state.roomId = room.id;
-    localStorage.setItem('nba_room_id', room.id);
-    localStorage.setItem('nba_player_name', me.name);
+    sessionStorage.setItem('nba_room_id', room.id);
+    sessionStorage.setItem('nba_player_name', me.name);
   }
 
   // Update timer countdown anyway
@@ -283,15 +283,27 @@ socket.on('wheel_start_spin', ({ team, roomSnapshot }) => {
 
   // Locate the canvas Lucky Wheel instance and trigger spinning
   const canvas = $('#wheel-canvas');
+  
+  // Always recreate the LuckyWheel instance to ensure we use the latest available teams list
   if (state.wheel) {
-    const btnSpin = $('#btn-spin');
-    if (btnSpin) btnSpin.disabled = true;
-    canvas.classList.add('spinning');
-    state.wheel.spinTo(team);
+    state.wheel.destroy();
+  }
+  
+  state.wheel = new LuckyWheel(canvas, roomSnapshot.availableTeams, (t) => onSpinStopped(t));
+  state.wheel._teamsKey = (roomSnapshot.availableTeams || []).map(t => t.abbreviation).join(',');
+  
+  const btnSpin = $('#btn-spin');
+  if (btnSpin) btnSpin.disabled = true;
+  canvas.classList.add('spinning');
+  
+  // Safety check: if the team is missing in the available teams, trigger fallback
+  const targetIndex = roomSnapshot.availableTeams.findIndex(t => t.abbreviation === team.abbreviation);
+  if (targetIndex === -1) {
+    console.warn(`⚠️ Team ${team.abbreviation} not found in availableTeams! Ending spin...`);
+    setTimeout(() => {
+      onSpinStopped(team);
+    }, 500);
   } else {
-    // Wheel not ready: init now then spin
-    state.wheel = new LuckyWheel(canvas, roomSnapshot.availableTeams, (t) => onSpinStopped(t));
-    state.wheel._teamsKey = (roomSnapshot.availableTeams || []).map(t => t.abbreviation).join(',');
     state.wheel.spinTo(team);
   }
 });
@@ -342,8 +354,8 @@ socket.on('error_message', (msg) => {
 });
 
 socket.on('rejoin_failed', () => {
-  localStorage.removeItem('nba_room_id');
-  localStorage.removeItem('nba_player_name');
+  sessionStorage.removeItem('nba_room_id');
+  sessionStorage.removeItem('nba_player_name');
   state.roomId = null;
   state.playerName = null;
   showScreen('screen-setup');
@@ -1142,8 +1154,8 @@ function leaveRoom() {
     const playerName = state.playerName;
     
     // Clear local storage session
-    localStorage.removeItem('nba_room_id');
-    localStorage.removeItem('nba_player_name');
+    sessionStorage.removeItem('nba_room_id');
+    sessionStorage.removeItem('nba_player_name');
     state.roomId = null;
     state.playerName = null;
     state.room = null;

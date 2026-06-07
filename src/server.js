@@ -705,6 +705,28 @@ io.on('connection', (socket) => {
 
     // Lock the room state
     room.roomState = 'WHEEL_SPINNING';
+    room.turnExpiresAt = null; // Hide timer during spin
+
+    // Clear active turn timer
+    clearRoomTurnTimer(roomId);
+
+    // Start a 6-second backup timer to auto-transition to pick phase if client gets stuck/backgrounded
+    const backupTimer = setTimeout(async () => {
+      try {
+        const currentRoom = activeRooms.get(roomId);
+        if (currentRoom && currentRoom.phase === 'wheel' && currentRoom.roomState === 'WHEEL_SPINNING') {
+          console.log(`⏰ Backup spin timer expired for Room ${roomId}. Transitioning to pick phase...`);
+          currentRoom.phase = 'pick';
+          currentRoom.roomState = 'DRAFTING';
+          await saveRoomToDB(roomId, currentRoom);
+          broadcastRoomUpdate(roomId);
+          startRoomTurnTimer(roomId); // Start fresh 30s timer for pick
+        }
+      } catch (err) {
+        console.error(`Error in backup spin timer for room ${roomId}:`, err);
+      }
+    }, 6000);
+    roomTimers.set(roomId, backupTimer);
 
     const mode = room.settings.mode;
     const year = room.settings.year;
@@ -771,10 +793,16 @@ io.on('connection', (socket) => {
     const activePlayer = room.players[activePlayerIdx];
     if (activePlayer && activePlayer.socketId !== socket.id) return;
 
+    // Clear backup timer
+    clearRoomTurnTimer(roomId);
+
     room.phase = 'pick';
     room.roomState = 'DRAFTING'; // Allow picking
     await saveRoomToDB(roomId, room);
     broadcastRoomUpdate(roomId);
+
+    // Start fresh 30s timer for picking phase!
+    startRoomTurnTimer(roomId);
   });
 
   // 6. Draft Player Event
