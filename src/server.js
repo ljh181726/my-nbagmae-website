@@ -77,6 +77,280 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+// Load players_cache.json on server startup
+let playersCacheData = null;
+try {
+  const cachePath = path.join(__dirname, '../players_cache.json');
+  if (fs.existsSync(cachePath)) {
+    const raw = fs.readFileSync(cachePath, 'utf8');
+    playersCacheData = JSON.parse(raw);
+    console.log('✅ Loaded players_cache.json for jersey number lookup');
+  }
+} catch (err) {
+  console.error('⚠️ Failed to load players_cache.json:', err);
+}
+
+// Helper: Resolve player jersey number
+function getPlayerJerseyNumber(playerName, teamAbbr) {
+  if (playersCacheData && playersCacheData.data && playersCacheData.data.playersByTeam) {
+    const teamPlayers = playersCacheData.data.playersByTeam[teamAbbr] || [];
+    const found = teamPlayers.find(p => p.name.toLowerCase() === playerName.toLowerCase());
+    if (found && found.jerseyNumber) {
+      return found.jerseyNumber;
+    }
+  }
+
+  // Custom historical legends list
+  const legendsJerseys = {
+    "Michael Jordan": { "CHI": "23" },
+    "Magic Johnson": { "LAL": "32" },
+    "Larry Bird": { "BOS": "33" },
+    "Kobe Bryant": { "LAL": "24" },
+    "Shaquille O'Neal": { "LAL": "34", "ORL": "32", "MIA": "32" },
+    "LeBron James": { "LAL": "23", "CLE": "23", "MIA": "6" },
+    "Stephen Curry": { "GSW": "30" },
+    "Kevin Durant": { "PHX": "35", "GSW": "35", "BKN": "7", "OKC": "35" },
+    "Giannis Antetokounmpo": { "MIL": "34" },
+    "Nikola Jokic": { "DEN": "15" },
+    "Joel Embiid": { "PHI": "21" },
+    "Luka Doncic": { "DAL": "77", "LAL": "77" },
+    "Jayson Tatum": { "BOS": "0" },
+    "Jaylen Brown": { "BOS": "7" },
+    "Allen Iverson": { "PHI": "3" },
+    "Yao Ming": { "HOU": "11" },
+    "Tim Duncan": { "SAS": "21" },
+    "Dwyane Wade": { "MIA": "3" },
+    "Dirk Nowitzki": { "DAL": "41" },
+    "Hakeem Olajuwon": { "HOU": "34" },
+    "Kareem Abdul-Jabbar": { "LAL": "33", "MIL": "33" },
+    "Bill Russell": { "BOS": "6" },
+    "Wilt Chamberlain": { "PHI": "13", "LAL": "13" }
+  };
+
+  const nameMatch = Object.keys(legendsJerseys).find(k => k.toLowerCase() === playerName.toLowerCase());
+  if (nameMatch) {
+    const teamsObj = legendsJerseys[nameMatch];
+    if (teamsObj[teamAbbr]) {
+      return teamsObj[teamAbbr];
+    }
+    return Object.values(teamsObj)[0];
+  }
+
+  // Deterministic fallback string hash
+  const cleanName = playerName.toLowerCase().replace(/[^a-z]/g, '');
+  let hash = 0;
+  for (let i = 0; i < cleanName.length; i++) {
+    hash = (hash * 31 + cleanName.charCodeAt(i)) % 100;
+  }
+  return (hash % 99).toString();
+}
+
+// Helper: Find player by team & jersey number
+function lookupPlayerByTeamAndJersey(teamAbbr, jersey) {
+  if (playersCacheData && playersCacheData.data && playersCacheData.data.playersByTeam) {
+    const teamPlayers = playersCacheData.data.playersByTeam[teamAbbr] || [];
+    const found = teamPlayers.find(p => p.jerseyNumber === jersey);
+    if (found) {
+      const isAllStar = found.allStarCount > 0 || found.is_allstar === true;
+      return { name: found.name, isAllStar };
+    }
+  }
+
+  const legendsList = [
+    { name: "Michael Jordan", team: "CHI", jersey: "23", isAllStar: true },
+    { name: "Magic Johnson", team: "LAL", jersey: "32", isAllStar: true },
+    { name: "Larry Bird", team: "BOS", jersey: "33", isAllStar: true },
+    { name: "Kobe Bryant", team: "LAL", jersey: "24", isAllStar: true },
+    { name: "Kobe Bryant", team: "LAL", jersey: "8", isAllStar: true },
+    { name: "Shaquille O'Neal", team: "LAL", jersey: "34", isAllStar: true },
+    { name: "Shaquille O'Neal", team: "ORL", jersey: "32", isAllStar: true },
+    { name: "Shaquille O'Neal", team: "MIA", jersey: "32", isAllStar: true },
+    { name: "LeBron James", team: "LAL", jersey: "23", isAllStar: true },
+    { name: "LeBron James", team: "CLE", jersey: "23", isAllStar: true },
+    { name: "LeBron James", team: "MIA", jersey: "6", isAllStar: true },
+    { name: "Stephen Curry", team: "GSW", jersey: "30", isAllStar: true },
+    { name: "Kevin Durant", team: "PHX", jersey: "35", isAllStar: true },
+    { name: "Kevin Durant", team: "GSW", jersey: "35", isAllStar: true },
+    { name: "Kevin Durant", team: "BKN", jersey: "7", isAllStar: true },
+    { name: "Kevin Durant", team: "OKC", jersey: "35", isAllStar: true },
+    { name: "Giannis Antetokounmpo", team: "MIL", jersey: "34", isAllStar: true },
+    { name: "Nikola Jokic", team: "DEN", jersey: "15", isAllStar: true },
+    { name: "Joel Embiid", team: "PHI", jersey: "21", isAllStar: true },
+    { name: "Luka Doncic", team: "DAL", jersey: "77", isAllStar: true },
+    { name: "Luka Doncic", team: "LAL", jersey: "77", isAllStar: true },
+    { name: "Jayson Tatum", team: "BOS", jersey: "0", isAllStar: true },
+    { name: "Jaylen Brown", team: "BOS", jersey: "7", isAllStar: true },
+    { name: "Allen Iverson", team: "PHI", jersey: "3", isAllStar: true },
+    { name: "Yao Ming", team: "HOU", jersey: "11", isAllStar: true },
+    { name: "Tim Duncan", team: "SAS", jersey: "21", isAllStar: true },
+    { name: "Dwyane Wade", team: "MIA", jersey: "3", isAllStar: true },
+    { name: "Dirk Nowitzki", team: "DAL", jersey: "41", isAllStar: true },
+    { name: "Hakeem Olajuwon", team: "HOU", jersey: "34", isAllStar: true },
+    { name: "Kareem Abdul-Jabbar", team: "LAL", jersey: "33", isAllStar: true },
+    { name: "Kareem Abdul-Jabbar", team: "MIL", jersey: "33", isAllStar: true },
+    { name: "Bill Russell", team: "BOS", jersey: "6", isAllStar: true },
+    { name: "Wilt Chamberlain", team: "PHI", jersey: "13", isAllStar: true },
+    { name: "Wilt Chamberlain", team: "LAL", jersey: "13", isAllStar: true }
+  ];
+  
+  const leg = legendsList.find(l => l.team === teamAbbr && l.jersey === jersey);
+  if (leg) {
+    return { name: leg.name, isAllStar: leg.isAllStar };
+  }
+
+  return { name: `${teamAbbr} #${jersey} 球員`, isAllStar: false };
+}
+
+// Helper: Generate HOF Coach critique for pre-banned list updates
+function generateCoachCritiqueForPrebans(preBannedPlayers) {
+  let starsCount = 0;
+  let benchesCount = 0;
+  let starsNames = [];
+  let benchesNames = [];
+  
+  for (const pb of preBannedPlayers) {
+    if (!pb.team || !pb.jersey) continue;
+    const jerseyNum = pb.jersey.replace('#', '');
+    const playerInfo = lookupPlayerByTeamAndJersey(pb.team, jerseyNum);
+    
+    if (playerInfo.isAllStar) {
+      starsCount++;
+      starsNames.push(playerInfo.name);
+    } else {
+      benchesCount++;
+      benchesNames.push(playerInfo.name || `${pb.team} #${jerseyNum}`);
+    }
+  }
+  
+  if (starsCount === 0 && benchesCount === 0) {
+    return "你一個人都沒禁用？是準備空手套白狼，還是對自己的垃圾防守太有自信了？別怪我沒警告你，上了場被射穿了可別哭鼻子！";
+  }
+  
+  if (starsCount > 0 && benchesCount === 0) {
+    const namesStr = starsNames.join('、');
+    return `算你聰明，把 ${namesStr} 禁掉，不然你今天又要被射穿了。防守這些怪物確實得動動腦子。`;
+  }
+  
+  if (benchesCount > 0 && starsCount === 0) {
+    const namesStr = benchesNames.join('、');
+    return `你竟然花了虛擬幣去禁一個像 ${namesStr} 這樣的板凳角色？看來你的腦袋跟你的防守一樣需要修理。你是在逗我笑嗎？`;
+  }
+  
+  const starsStr = starsNames.join('、');
+  const benchesStr = benchesNames.join('、');
+  return `禁用 ${starsStr} 還算有點戰術眼光，但你禁用 ${benchesStr} 是什麼操作？難道你怕他們坐在板凳上把對方的開水喝光嗎？`;
+}
+
+// Process room pre-bans when draft begins
+async function processRoomPreBans(room) {
+  room.bannedPlayerNames = room.bannedPlayerNames || [];
+  room.preBanResults = room.preBanResults || {};
+
+  const db = await connectDB();
+  const collection = db.collection('users');
+  const year = room.settings.year || 2026;
+
+  for (const player of room.players) {
+    if (!player.uid || player.isCPU) continue;
+
+    const user = await collection.findOne({ uid: player.uid });
+    if (!user) continue;
+
+    const preBans = user.pre_banned_players || [];
+    if (preBans.length === 0) continue;
+
+    let balance = user.virtual_currency || 0;
+    const candidates = [];
+
+    for (const pb of preBans) {
+      if (!pb.team || !pb.jersey) continue;
+
+      const targetTeamAbbr = getHistoricalTeamAbbr(pb.team, year);
+      const jerseyNum = pb.jersey.replace('#', '');
+
+      // Check current year pool
+      const allPlayers = await getYearPlayers(year);
+      const match = allPlayers.find(p => {
+        const pTeam = p.team || '';
+        return pTeam.toUpperCase() === targetTeamAbbr.toUpperCase() &&
+               getPlayerJerseyNumber(p.name, p.team) === jerseyNum;
+      });
+
+      if (match) {
+        const cost = match.is_allstar ? 2 : 1;
+        candidates.push({
+          name: match.name,
+          cost,
+          isAllStar: match.is_allstar,
+          team: pb.team,
+          jersey: pb.jersey
+        });
+      } else {
+        const lookup = lookupPlayerByTeamAndJersey(pb.team, jerseyNum);
+        if (lookup.name) {
+          const cost = lookup.isAllStar ? 2 : 1;
+          candidates.push({
+            name: lookup.name,
+            cost,
+            isAllStar: lookup.isAllStar,
+            team: pb.team,
+            jersey: pb.jersey
+          });
+        }
+      }
+    }
+
+    if (candidates.length === 0) continue;
+
+    // Prioritize All-Stars (cost 2) over general players (cost 1)
+    candidates.sort((a, b) => b.cost - a.cost);
+
+    const successfulBans = [];
+    const failedBans = [];
+    let spent = 0;
+
+    for (const cand of candidates) {
+      if (balance >= cand.cost) {
+        balance -= cand.cost;
+        spent += cand.cost;
+        successfulBans.push(cand);
+        if (!room.bannedPlayerNames.includes(cand.name)) {
+          room.bannedPlayerNames.push(cand.name);
+        }
+      } else {
+        failedBans.push(cand);
+      }
+    }
+
+    // Update user balance in database
+    await collection.updateOne(
+      { uid: player.uid },
+      { $set: { virtual_currency: balance } }
+    );
+
+    // Update Coach Critique on failure due to insufficient funds
+    if (failedBans.length > 0) {
+      const roasts = [
+        "連全明星的禁用費都付不起？看來你除了球技不及格，連錢包都很骨感，還不快滾去多刷幾場 PVE 賺錢！",
+        "想要預防針卻買不起？錢包空空還想學人家玩禁用。老老實實去 PVE 模式搬磚刷幣吧，別在這裡丟人現眼了！",
+        "沒錢還敢設定預先禁用？當這裡是慈善機構？回去看看你的餘額，連一個一般球員的禁用費都快出不起了！"
+      ];
+      const selectedRoast = roasts[Math.floor(Math.random() * roasts.length)];
+      await collection.updateOne(
+        { uid: player.uid },
+        { $set: { coach_critique: selectedRoast } }
+      );
+    }
+
+    room.preBanResults[player.name] = {
+      successful: successfulBans.map(b => b.name),
+      failed: failedBans.map(b => b.name),
+      spent,
+      balance
+    };
+  }
+}
+
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { uid, name, avatar, provider } = req.body;
@@ -87,6 +361,59 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({ user });
   } catch (err) {
     console.error('Error in /api/auth/login:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/users/preban', async (req, res) => {
+  try {
+    const { uid, pre_banned_players } = req.body;
+    if (!uid || !Array.isArray(pre_banned_players) || pre_banned_players.length !== 3) {
+      return res.status(400).json({ error: 'Invalid payload' });
+    }
+    
+    const validated = [];
+    const teamRegex = /^[A-Za-z]{3}$/;
+    const jerseyRegex = /^#\d+$/;
+    
+    for (const pb of pre_banned_players) {
+      if (!pb.team && !pb.jersey) {
+        validated.push({ team: '', jersey: '' });
+      } else {
+        const teamNormalized = pb.team.trim().toUpperCase();
+        const jerseyNormalized = pb.jersey.trim();
+        
+        if (!teamRegex.test(teamNormalized) || !jerseyRegex.test(jerseyNormalized)) {
+          return res.status(400).json({ error: '輸入格式有誤！球隊必須為三字英文代碼 (如 BOS)，背號必須包含井字號 (如 #0)。' });
+        }
+        
+        validated.push({ team: teamNormalized, jersey: jerseyNormalized });
+      }
+    }
+    
+    const db = await connectDB();
+    const collection = db.collection('users');
+    const user = await collection.findOne({ uid });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const critique = generateCoachCritiqueForPrebans(validated);
+    
+    await collection.updateOne(
+      { uid },
+      { 
+        $set: { 
+          pre_banned_players: validated,
+          coach_critique: critique
+        } 
+      }
+    );
+    
+    const updatedUser = await collection.findOne({ uid });
+    res.json({ success: true, user: updatedUser });
+  } catch (err) {
+    console.error('Error in /api/users/preban:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -115,9 +442,8 @@ app.post('/api/users/pve/unlock', async (req, res) => {
     if (!uid || !level) {
       return res.status(400).json({ error: 'Missing uid or level' });
     }
-    await updatePVEProgress(uid, level);
-    const user = await getUserByUid(uid);
-    res.json({ success: true, user });
+    const result = await updatePVEProgress(uid, level);
+    res.json({ success: true, user: result.user, firstClear: result.firstClear, coinsAwarded: result.coinsAwarded });
   } catch (err) {
     console.error('Error in /api/users/pve/unlock:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -311,7 +637,17 @@ async function completeDraft(room) {
         if (room.pveWin) {
           console.log(`🏆 Player won PVE level ${room.levelId}! Unlocking next level...`);
           if (player.uid) {
-            await updatePVEProgress(player.uid, room.levelId + 1);
+            const dbResult = await updatePVEProgress(player.uid, room.levelId + 1);
+            if (dbResult && dbResult.success) {
+              if (dbResult.firstClear) {
+                room.pveFirstClearAward = {
+                  clearedLevel: dbResult.clearedLevel,
+                  coinsAwarded: dbResult.coinsAwarded
+                };
+              }
+              // Send the updated user back to the client
+              io.to(player.socketId).emit('user_update', dbResult.user);
+            }
           }
         }
       }
@@ -630,11 +966,15 @@ async function hasAvailablePlayersForTeam(room, teamAbbr) {
   const allStarCap = room.settings.allStarCap !== undefined ? room.settings.allStarCap : 5;
   const cannotPickAllStar = currentAllStars >= allStarCap;
 
+  const banned = room.bannedPlayerNames || [];
+
   return allPlayers.some(p => {
     // Must match team
     if (p.team !== targetAbbr) return false;
     // Exclude drafted players
     if (room.draftedIds.includes(p.name)) return false;
+    // Exclude room pre-banned players
+    if (banned.includes(p.name)) return false;
     // Apply Star Bans
     if (room.settings.banAllStars && p.is_allstar) return false;
     // Apply Rookie Only filter
@@ -833,6 +1173,13 @@ io.on('connection', (socket) => {
     room.evalResult = null;
     room.currentTeam = null;
 
+    // Process pre-bans & deduct currency first
+    try {
+      await processRoomPreBans(room);
+    } catch (err) {
+      console.error('Error processing room pre-bans:', err);
+    }
+
     if (room.isPVE) {
       const levelConfig = PVE_LEVELS[room.levelId - 1];
       if (levelConfig) {
@@ -908,7 +1255,7 @@ io.on('connection', (socket) => {
     // Handle game mode initializations
     if (mode === '15usd') {
       try {
-        room.dynamicGrid = await generateDynamic15UsdGrid(year);
+        room.dynamicGrid = await generateDynamic15UsdGrid(year, room.bannedPlayerNames);
         room.sheetIndex = null;
       } catch (err) {
         socket.emit('error_message', `無法動態生成 5x5 表格，請確認資料庫中已匯入 ${year} 年資料！`);
@@ -1413,6 +1760,7 @@ io.on('connection', (socket) => {
     if (!room) return callback([]);
 
     const mode = room.settings.mode;
+    const banned = room.bannedPlayerNames || [];
 
     if (mode === 'legend_wheel') {
       try {
@@ -1420,6 +1768,8 @@ io.on('connection', (socket) => {
         const filtered = legends.filter(p => {
           // Exclude drafted players
           if (room.draftedIds.includes(p.name)) return false;
+          // Exclude room pre-banned players
+          if (banned.includes(p.name)) return false;
           // Apply Star Bans
           if (room.settings.banAllStars && p.is_allstar) return false;
           // Apply Rookie Only filter
@@ -1442,6 +1792,8 @@ io.on('connection', (socket) => {
       if (p.team !== targetAbbr) return false;
       // Exclude drafted players
       if (room.draftedIds.includes(p.name)) return false;
+      // Exclude room pre-banned players
+      if (banned.includes(p.name)) return false;
       // Apply Star Bans
       if (room.settings.banAllStars && p.is_allstar) return false;
       // Apply Rookie Only filter

@@ -510,3 +510,31 @@ h1, h2, h3, h4, h5, h6 {
   from { stroke-dashoffset: 283; }
   to { stroke-dashoffset: var(--dashoffset); }
 }
+
+/* ── Sign-in Progress Streak Bubbles ─────── */
+.streak-bubble {
+  flex: 1;
+  text-align: center;
+  padding: 4px 0;
+  border-radius: 6px;
+  background: rgba(30, 27, 46, 0.7);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  font-size: 9px;
+  font-weight: bold;
+  color: #9ca3af;
+  transition: all 0.3s ease;
+}
+.streak-bubble.active {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+  color: #fbbf24;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+.streak-bubble.today {
+  animation: pulse-gold 2s infinite;
+}
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 4px rgba(245, 158, 11, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(245, 158, 11, 0.6); }
+}
+

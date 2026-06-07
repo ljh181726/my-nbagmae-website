@@ -236,9 +236,12 @@ function generateSnakeDraftOrder(numPlayers) {
 // Filter player list based on room configuration settings
 async function getAvailablePlayersForRoom(room) {
   const allPlayers = await getYearPlayers(room.settings.year);
+  const banned = room.bannedPlayerNames || [];
   return allPlayers.filter(p => {
     // Exclude drafted players
     if (room.draftedIds.includes(p.name)) return false;
+    // Exclude room pre-banned players
+    if (banned.includes(p.name)) return false;
     // Apply Star Bans
     if (room.settings.banAllStars && p.is_allstar) return false;
     // Apply Rookie Only filter
@@ -247,8 +250,9 @@ async function getAvailablePlayersForRoom(room) {
   });
 }
 
-async function generateDynamic15UsdGrid(year) {
+async function generateDynamic15UsdGrid(year, bannedPlayerNames = []) {
   const allPlayers = await getYearPlayers(year);
+  const filteredPlayers = allPlayers.filter(p => !bannedPlayerNames.includes(p.name));
   
   const pools = {
     "PG": [],
@@ -258,7 +262,7 @@ async function generateDynamic15UsdGrid(year) {
     "C": []
   };
   
-  allPlayers.forEach(p => {
+  filteredPlayers.forEach(p => {
     if (!p.position || !Array.isArray(p.position)) return;
     p.position.forEach(pos => {
       const upperPos = pos.toUpperCase();

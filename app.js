@@ -285,6 +285,32 @@ socket.on('game_started', (room) => {
   showScreen('screen-draft');
   updateDraftUI();
   showToast('🎮 遊戲開始！排好你的選秀順序！');
+
+  // Display pre-ban results if applicable
+  if (state.user && room.preBanResults && room.preBanResults[state.playerName]) {
+    const res = room.preBanResults[state.playerName];
+    if (res.balance !== undefined) {
+      state.user.virtual_currency = res.balance;
+      updateOAuthUI();
+    }
+    if (res.successful && res.successful.length > 0) {
+      showToast(`⚔️ 成功禁用球員：${res.successful.join('、')}，扣除 💰 ${res.spent} 元。`);
+    }
+    if (res.failed && res.failed.length > 0) {
+      showToast(`⚠️ 餘額不足以禁用：${res.failed.join('、')}。`);
+      // Update coach settings critique to show poverty roast
+      const roasts = [
+        "連全明星的禁用費都付不起？看來你除了球技不及格，連錢包都很骨感，還不快滾去多刷幾場 PVE 賺錢！",
+        "想要預防針卻買不起？錢包空空還想學人家玩禁用。老老實實去 PVE 模式搬磚刷幣吧，別在這裡丟人現眼了！",
+        "沒錢還敢設定預先禁用？當這裡是慈善機構？回去看看你的餘額，連一個一般球員的禁用費都快出不起了！"
+      ];
+      state.user.coach_critique = roasts[0];
+      const critiqueEl = $('#coach-settings-critique');
+      if (critiqueEl) {
+        critiqueEl.textContent = roasts[0];
+      }
+    }
+  }
 });
 
 socket.on('wheel_start_spin', ({ team, roomSnapshot }) => {
@@ -393,6 +419,13 @@ socket.on('eval_error', (errorMsg) => {
 
 socket.on('error_message', (msg) => {
   showToast(msg);
+});
+
+socket.on('user_update', (user) => {
+  if (state.user && state.user.uid === user.uid) {
+    state.user = user;
+    updateOAuthUI();
+  }
 });
 
 socket.on('rejoin_failed', () => {
@@ -995,8 +1028,25 @@ function render5x5Grid() {
 
     rowPlayers.forEach(p => {
       const isDrafted = room.draftedIds.includes(p.name);
+      const isBanned = room.bannedPlayerNames && room.bannedPlayerNames.includes(p.name);
+      
       const btn = document.createElement('button');
       btn.className = 'player-btn py-2 px-1 text-xs flex flex-col justify-center items-center h-full min-h-[58px]';
+
+      if (isBanned) {
+        btn.disabled = true;
+        btn.classList.add('opacity-30');
+        btn.innerHTML = `
+          <div class="font-bold text-red-400 leading-tight">❌ 已禁用</div>
+          <div class="text-[9px] text-gray-600 uppercase mt-0.5">${p.team} · ${p.positions ? p.positions.join('/') : ''}</div>
+          <div class="tooltip">
+            <div class="font-bold mb-1">${p.name}</div>
+            <div class="text-red-400 font-bold">此球員已在帳號設定中被預先禁用</div>
+          </div>
+        `;
+        rowEl.appendChild(btn);
+        return;
+      }
 
       const eligible = checkPlayerDraftEligibility(room, activePlayer, p, price);
       let isDisabled = eligible.isDisabled || !isMyTurn;
@@ -1229,7 +1279,12 @@ function updateEvalUI() {
     const banner = document.createElement('div');
     banner.id = 'pve-result-banner';
     banner.className = `w-full max-w-4xl text-center py-4 mb-6 rounded-xl font-display font-black text-xl border ${room.pveWin ? 'bg-green-500/20 border-green-500/40 text-green-400 shadow-[0_0_15px_rgba(52,211,153,0.3)]' : 'bg-red-500/20 border-red-500/40 text-red-400 shadow-[0_0_15px_rgba(244,63,94,0.3)]'}`;
-    banner.textContent = room.pveWin ? '🏆 挑戰成功 (VICTORY)！解鎖下一關卡' : '❌ 挑戰失敗 (DEFEAT)！請重試';
+    
+    let resultText = room.pveWin ? '🏆 挑戰成功 (VICTORY)！解鎖下一關卡' : '❌ 挑戰失敗 (DEFEAT)！請重試';
+    if (room.pveWin && room.pveFirstClearAward) {
+      resultText = `🏆 挑戰成功 (VICTORY)！解鎖下一關卡 (首通獲得 💰 ${room.pveFirstClearAward.coinsAwarded} 元虛擬幣！)`;
+    }
+    banner.textContent = resultText;
     container.parentNode.insertBefore(banner, container);
 
     // Save PVE level unlock
@@ -1514,14 +1569,66 @@ async function sendLoginPayload(profile) {
 function updateOAuthUI() {
   const loggedOutEl = $('#oauth-logged-out');
   const loggedInEl = $('#oauth-logged-in');
+  const settingsPanel = $('#account-settings-panel');
   if (state.user) {
     loggedOutEl.classList.add('hidden');
     loggedInEl.classList.remove('hidden');
+    if (settingsPanel) settingsPanel.classList.remove('hidden');
     
     $('#user-avatar').src = state.user.avatar;
     $('#user-name').textContent = state.user.name;
-    $('#badge-streak').textContent = `🔥 ${state.user.checkInStreak || 0}天`;
-    $('#user-points').textContent = `🪙 ${state.user.points || 0} 積分`;
+    $('#badge-streak').textContent = `🔥 ${state.user.continuous_days || 0}天`;
+    $('#user-points').textContent = `🪙 ${state.user.points || 0} 積分 | 💰 ${state.user.virtual_currency || 0} 元`;
+    
+    // Settings panel updates
+    const coinsDisplay = $('#user-coins-display');
+    const streakDisplay = $('#user-streak-display');
+    if (coinsDisplay) coinsDisplay.textContent = `${state.user.virtual_currency || 0} 元`;
+    if (streakDisplay) streakDisplay.textContent = `🔥 ${state.user.continuous_days || 0} 天`;
+    
+    // Generate sign-in streak progress bar (7 bubbles)
+    const streakBar = $('#signin-streak-bar');
+    if (streakBar) {
+      streakBar.innerHTML = '';
+      const currentStreak = state.user.continuous_days || 0;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isAlreadyCheckedIn = state.user.last_sign_in_date === todayStr;
+      
+      for (let day = 1; day <= 7; day++) {
+        const bubble = document.createElement('div');
+        bubble.className = 'streak-bubble';
+        bubble.textContent = `D${day}`;
+        if (day <= currentStreak) {
+          bubble.classList.add('active');
+        }
+        if (day === currentStreak && isAlreadyCheckedIn) {
+          bubble.classList.add('today');
+        }
+        if (day === currentStreak + 1 && !isAlreadyCheckedIn) {
+          bubble.classList.add('today');
+        }
+        streakBar.appendChild(bubble);
+      }
+    }
+
+    // Populate pre-bans inputs
+    const prebans = state.user.pre_banned_players || [];
+    for (let i = 0; i < 3; i++) {
+      const teamInput = $(`#preban-team-${i+1}`);
+      const jerseyInput = $(`#preban-jersey-${i+1}`);
+      if (teamInput && (document.activeElement !== teamInput)) {
+        teamInput.value = (prebans[i] && prebans[i].team) || '';
+      }
+      if (jerseyInput && (document.activeElement !== jerseyInput)) {
+        jerseyInput.value = (prebans[i] && prebans[i].jersey) || '';
+      }
+    }
+
+    // Update coach critique
+    const critiqueEl = $('#coach-settings-critique');
+    if (critiqueEl) {
+      critiqueEl.textContent = state.user.coach_critique || '“你一個人都沒禁用？是準備空手套白狼，還是對自己的垃圾防守太有自信了？”';
+    }
     
     const pveProgressEl = $('#pve-user-progress');
     if (pveProgressEl) {
@@ -1530,6 +1637,7 @@ function updateOAuthUI() {
   } else {
     loggedOutEl.classList.remove('hidden');
     loggedInEl.classList.add('hidden');
+    if (settingsPanel) settingsPanel.classList.add('hidden');
   }
 }
 
@@ -1546,6 +1654,15 @@ function logout() {
   state.unlockedLevel = parseInt(localStorage.getItem('pve_unlocked_level') || '1');
   
   updateOAuthUI();
+  
+  // Clear preban inputs manually when logged out
+  for (let i = 1; i <= 3; i++) {
+    const t = $(`#preban-team-${i}`);
+    const j = $(`#preban-jersey-${i}`);
+    if (t) t.value = '';
+    if (j) j.value = '';
+  }
+  
   showToast('👋 已成功登出。');
 }
 
@@ -1555,19 +1672,19 @@ function triggerCheckIn() {
   const gridEl = $('#checkin-grid');
   gridEl.innerHTML = '';
   
-  const currentStreak = state.user.checkInStreak || 0;
+  const currentStreak = state.user.continuous_days || 0;
   const todayStr = new Date().toISOString().split('T')[0];
-  const isAlreadyCheckedIn = state.user.lastCheckInDate === todayStr;
+  const isAlreadyCheckedIn = state.user.last_sign_in_date === todayStr;
   
   for (let day = 1; day <= 7; day++) {
     const card = document.createElement('div');
     card.className = 'checkin-day';
     
     let icon = '🪙';
-    let reward = 100 * day;
+    let reward = 3;
     if (day === 7) {
       icon = '🎁';
-      reward += 500;
+      reward += 10;
     }
     
     let status = 'locked';
@@ -1583,20 +1700,20 @@ function triggerCheckIn() {
       card.innerHTML = `
         <span class="text-xs font-semibold text-gray-400">第 ${day} 天</span>
         <span class="text-xl my-1">✅</span>
-        <span class="text-[10px] text-green-400">+${reward}</span>
+        <span class="text-[10px] text-green-400">+${reward} 元</span>
       `;
     } else if (status === 'ready') {
       card.classList.add('ready');
       card.innerHTML = `
         <span class="text-xs font-bold text-yellow-400">第 ${day} 天</span>
         <span class="text-xl my-1 animate-bounce">${icon}</span>
-        <span class="text-[10px] font-bold text-yellow-400">+${reward}</span>
+        <span class="text-[10px] font-bold text-yellow-400">+${reward} 元</span>
       `;
     } else {
       card.innerHTML = `
         <span class="text-xs text-gray-500">第 ${day} 天</span>
         <span class="text-xl my-1 opacity-50">${icon}</span>
-        <span class="text-[10px] text-gray-500">+${reward}</span>
+        <span class="text-[10px] text-gray-500">+${reward} 元</span>
       `;
     }
     
@@ -1606,13 +1723,19 @@ function triggerCheckIn() {
   const statusMsgEl = $('#checkin-status-msg');
   const btnActionEl = $('#btn-checkin-action');
   
+  // Display permanent passive status if cleared all 60 stages
+  let passiveMsg = "";
+  if (state.user.pve_cleared_stages && state.user.pve_cleared_stages.length >= 60) {
+    passiveMsg = " (已解鎖全通關每日加成福利 +5 元！)";
+  }
+
   if (isAlreadyCheckedIn) {
-    statusMsgEl.textContent = `🎉 今日簽到成功！連續簽到第 ${currentStreak} 天`;
+    statusMsgEl.textContent = `🎉 今日簽到成功！連續簽到第 ${currentStreak} 天${passiveMsg}`;
     btnActionEl.disabled = true;
     btnActionEl.textContent = '今日已領取';
     btnActionEl.className = 'w-full py-3 bg-gray-700 text-gray-400 font-bold rounded-xl cursor-not-allowed';
   } else {
-    statusMsgEl.textContent = `💡 今日可簽到領取第 ${currentStreak + 1} 天獎勵！`;
+    statusMsgEl.textContent = `💡 今日可簽到領取第 ${currentStreak + 1} 天獎勵！${passiveMsg}`;
     btnActionEl.disabled = false;
     btnActionEl.textContent = '🪙 立即簽到領取獎勵';
     btnActionEl.className = 'w-full py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white font-bold rounded-xl shadow-lg transition';
@@ -1634,7 +1757,8 @@ async function claimCheckIn() {
       state.user = data.user;
       updateOAuthUI();
       triggerCheckIn();
-      showToast(`🎁 簽到成功！獲得 🪙 ${data.pointsGained} 積分！`);
+      let passiveAlert = data.hasAllClearPassive ? " (包含全通關福利 +5 元)" : "";
+      showToast(`🎁 簽到成功！獲得 💰 ${data.coinsGained} 元虛擬幣！${passiveAlert}`);
       fireConfetti();
     } else {
       showToast(`⚠️ ${data.message || '簽到失敗'}`);
@@ -1805,6 +1929,51 @@ function startPVEGame() {
   socket.emit('create_room', payload);
 }
 
+async function savePreBans() {
+  if (!state.user) {
+    showToast('⚠️ 請先登入帳號！');
+    return;
+  }
+  
+  const pre_banned_players = [];
+  const teamRegex = /^[A-Za-z]{3}$/;
+  const jerseyRegex = /^#\d+$/;
+  
+  for (let i = 1; i <= 3; i++) {
+    const team = $(`#preban-team-${i}`).value.trim();
+    const jersey = $(`#preban-jersey-${i}`).value.trim();
+    
+    if (team || jersey) {
+      if (!teamRegex.test(team) || !jerseyRegex.test(jersey)) {
+        showToast(`❌ 欄位 ${i} 格式有誤！球隊為3字代碼 (如 BOS)，背號包含井字號 (如 #0)`);
+        return;
+      }
+      pre_banned_players.push({ team: team.toUpperCase(), jersey });
+    } else {
+      pre_banned_players.push({ team: '', jersey: '' });
+    }
+  }
+  
+  try {
+    const res = await fetch('/api/users/preban', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: state.user.uid, pre_banned_players })
+    });
+    const data = await res.json();
+    if (data.error) {
+      showToast(`❌ ${data.error}`);
+    } else {
+      state.user = data.user;
+      updateOAuthUI();
+      showToast('✅ 禁用設定儲存成功！已更新教練點評。');
+    }
+  } catch (err) {
+    console.error('Error saving pre-bans:', err);
+    showToast('❌ 儲存失敗，請檢查網路連線。');
+  }
+}
+
 function showPVPForm() {
   const pvpSection = $('#pvp-section');
   if (pvpSection.classList.contains('hidden')) {
@@ -1840,7 +2009,8 @@ window.__app = {
   closePVEModal,
   goBackFromPVE,
   startPVEGame,
-  showPVPForm
+  showPVPForm,
+  savePreBans
 };
 
 // ── Setup Page Visibility Toggles ───────────
