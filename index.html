@@ -215,6 +215,10 @@
           <span class="text-gray-400 mx-1">·</span>
           <span id="draft-phase-label" class="text-purple-400">Spin the Wheel!</span>
         </h2>
+        <!-- Countdown Timer -->
+        <div id="draft-timer-container" class="hidden flex items-center gap-1.5 mt-2 bg-red-950/40 border border-red-500/30 rounded-full px-3 py-1 text-xs text-red-400 font-bold max-w-max">
+          ⏱️ 限時倒數：<span id="draft-timer-seconds">30</span> 秒
+        </div>
       </div>
       <div class="flex items-center gap-3 bg-purple-950/40 px-4 py-2 rounded-xl border border-purple-500/10">
         <span class="text-xs font-semibold text-gray-400">當前回合</span>
@@ -225,7 +229,13 @@
 
     <div class="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto w-full flex-1">
       <!-- Left: Interactive area (wheel or pick list or 5x5 grids) -->
-      <div class="flex-1 order-2 lg:order-1 glass-panel p-6 flex flex-col justify-center min-h-[500px]">
+      <div class="flex-1 order-2 lg:order-1 glass-panel p-6 flex flex-col justify-center min-h-[500px] relative">
+        <!-- Spectator Overlay Mask -->
+        <div id="spectator-mask" class="absolute inset-0 bg-black/70 backdrop-blur-[2px] z-30 flex flex-col items-center justify-center text-center p-6 rounded-2xl hidden">
+          <div class="text-5xl animate-bounce mb-4">⌛</div>
+          <h3 id="spectator-mask-title" class="font-display text-xl font-bold text-purple-300">等待其他玩家操作中...</h3>
+          <p id="spectator-mask-desc" class="text-gray-400 text-sm mt-2 max-w-md">請配合回合進程，當前行動者正在選秀或旋轉轉盤。</p>
+        </div>
 
         <!-- A. WHEEL PHASE -->
         <div id="draft-wheel-phase" class="flex flex-col items-center gap-6">

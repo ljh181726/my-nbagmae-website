@@ -89,6 +89,211 @@ function broadcastRoomUpdate(roomId) {
   io.to(roomId).emit('room_update', room);
 }
 
+const roomTimers = new Map();
+
+// Helper: Start/Reset the 30-second turn timer for draft phase
+function startRoomTurnTimer(roomId) {
+  if (roomTimers.has(roomId)) {
+    clearTimeout(roomTimers.get(roomId));
+    roomTimers.delete(roomId);
+  }
+
+  const room = activeRooms.get(roomId);
+  if (!room || room.phase === 'lobby' || room.phase === 'eval') return;
+
+  // Set expiration time
+  room.turnExpiresAt = Date.now() + 30000;
+
+  // Setup timeout callback
+  const timer = setTimeout(async () => {
+    try {
+      console.log(`🚨 AFK timeout for Room ${roomId}. Running penalty draft...`);
+      await triggerAFKPenalty(roomId);
+    } catch (err) {
+      console.error(`Error in AFK Penalty for Room ${roomId}:`, err);
+    }
+  }, 30000);
+
+  roomTimers.set(roomId, timer);
+}
+
+// Helper: Clear timer
+function clearRoomTurnTimer(roomId) {
+  if (roomTimers.has(roomId)) {
+    clearTimeout(roomTimers.get(roomId));
+    roomTimers.delete(roomId);
+  }
+}
+
+// Helper: Trigger AFK Penalty Auto-Draft
+async function triggerAFKPenalty(roomId) {
+  const room = activeRooms.get(roomId);
+  if (!room) return;
+
+  const activePlayerIdx = room.draftOrder[room.draftIndex];
+  const activePlayer = room.players[activePlayerIdx];
+  if (!activePlayer) return;
+
+  const mode = room.settings.mode;
+  let selectedPlayer = null;
+  let teamLogo = '🏀';
+  let teamName = '';
+
+  // 1. Determine team if not already rolled
+  if (mode === '15usd' || mode === 'legend_15usd') {
+    // For 15usd modes, pick any player from grid that is within price limit and not drafted
+    let availableGridPlayers = [];
+    if (room.dynamicGrid) {
+      availableGridPlayers = room.dynamicGrid;
+    }
+    
+    const spent = activePlayer.roster.reduce((sum, p) => sum + (p.salary || 0), 0);
+    const remainingBudget = 15 - spent;
+    
+    if (availableGridPlayers.length > 0) {
+      let candidates = availableGridPlayers.filter(p => !room.draftedIds.includes(p.name) && p.price <= remainingBudget);
+      let penaltyCandidates = candidates.filter(p => !p.is_allstar);
+      if (penaltyCandidates.length === 0) penaltyCandidates = candidates;
+      penaltyCandidates.sort((a, b) => (a.pts || 0) - (b.pts || 0));
+      selectedPlayer = penaltyCandidates[0];
+    }
+  } else {
+    // Wheel-based modes (wheel, salary_cap, salary_cap_legend, etc.)
+    let rolledTeam = room.currentTeam;
+    
+    if (!rolledTeam) {
+      const idx = Math.floor(Math.random() * room.availableTeams.length);
+      rolledTeam = room.availableTeams[idx];
+      room.currentTeam = rolledTeam;
+    }
+
+    if (rolledTeam) {
+      teamName = rolledTeam.name;
+      teamLogo = rolledTeam.logo;
+
+      // Fetch all eligible players for this team
+      let pool = [];
+      if (mode === 'legend_wheel') {
+        const legends = await getFranchiseLegendsFromDB(rolledTeam.abbreviation);
+        pool = legends;
+      } else if (mode === 'salary_cap_legend') {
+        const yearPlayers = await getYearPlayers(room.settings.year);
+        const targetAbbr = getHistoricalTeamAbbr(rolledTeam.abbreviation, room.settings.year);
+        const teamYearPlayers = yearPlayers.filter(p => p.team === targetAbbr);
+        const legends = await getFranchiseLegendsFromDB(rolledTeam.abbreviation);
+        pool = [...teamYearPlayers, ...legends];
+      } else {
+        const allPlayers = await getYearPlayers(room.settings.year);
+        const targetAbbr = getHistoricalTeamAbbr(rolledTeam.abbreviation, room.settings.year);
+        pool = allPlayers.filter(p => p.team === targetAbbr);
+      }
+
+      // Filter drafted players and active constraints
+      let available = pool.filter(p => {
+        if (room.draftedIds.includes(p.name)) return false;
+        if (room.settings.banAllStars && p.is_allstar) return false;
+        if (room.settings.rookieOnly && !p.is_rookie) return false;
+        return true;
+      });
+
+      // Special Salary Cap Modes: filter players within remaining salary cap!
+      if (mode.includes('salary_cap')) {
+        const totalSalaryCap = SALARY_CAPS[room.settings.year] || 154647000;
+        const currentSpent = activePlayer.roster.reduce((sum, p) => sum + (p.salary || 0), 0);
+        const remainingCap = totalSalaryCap - currentSpent;
+        available = available.filter(p => (p.salary || 0) <= remainingCap);
+      }
+
+      // Penalty constraints:
+      // 1. Force exclude allstars: is_allstar === false
+      let penaltyCandidates = available.filter(p => !p.is_allstar);
+      if (penaltyCandidates.length === 0) {
+        penaltyCandidates = available; // Fallback
+      }
+
+      // 2. Sort by PTS ASC, select the worst player
+      penaltyCandidates.sort((a, b) => (a.pts || 0) - (b.pts || 0));
+      selectedPlayer = penaltyCandidates[0];
+    }
+  }
+
+  // 3. Fallback to any random player in case team is empty or salary cap too low to afford anyone
+  if (!selectedPlayer) {
+    console.log(`⚠️ Low cap or empty pool fallback for Room ${roomId}`);
+    let generalPool = await getYearPlayers(room.settings.year);
+    
+    let available = generalPool.filter(p => {
+      if (room.draftedIds.includes(p.name)) return false;
+      if (room.settings.banAllStars && p.is_allstar) return false;
+      if (room.settings.rookieOnly && !p.is_rookie) return false;
+      return true;
+    });
+
+    if (mode.includes('salary_cap')) {
+      const totalSalaryCap = SALARY_CAPS[room.settings.year] || 154647000;
+      const currentSpent = activePlayer.roster.reduce((sum, p) => sum + (p.salary || 0), 0);
+      const remainingCap = totalSalaryCap - currentSpent;
+      available = available.filter(p => (p.salary || 0) <= remainingCap);
+    }
+
+    let penaltyCandidates = available.filter(p => !p.is_allstar);
+    if (penaltyCandidates.length === 0) penaltyCandidates = available;
+    penaltyCandidates.sort((a, b) => (a.pts || 0) - (b.pts || 0));
+    selectedPlayer = penaltyCandidates[0];
+  }
+
+  if (selectedPlayer) {
+    const draftedPlayerDoc = {
+      name: selectedPlayer.name,
+      team: selectedPlayer.team || selectedPlayer.realTeam || 'UNK',
+      pts: selectedPlayer.pts || 0,
+      trb: selectedPlayer.trb || 0,
+      ast: selectedPlayer.ast || 0,
+      position: selectedPlayer.positions || selectedPlayer.position || ['G'],
+      salary: selectedPlayer.salary || 0,
+      is_allstar: !!selectedPlayer.is_allstar,
+      is_rookie: !!selectedPlayer.is_rookie,
+      peak_year: selectedPlayer.year || room.settings.year,
+      is_legend: mode.includes('legend') || selectedPlayer.is_legend || false
+    };
+
+    activePlayer.roster.push(draftedPlayerDoc);
+    room.draftedIds.push(draftedPlayerDoc.name);
+
+    // Broadcast AFK Penalty event
+    io.to(roomId).emit('afk_penalty_trigger', {
+      playerName: activePlayer.name,
+      teamName: teamName || draftedPlayerDoc.team,
+      playerNameAssigned: draftedPlayerDoc.name,
+      logo: teamLogo
+    });
+  }
+
+  // Move to next turn
+  room.draftIndex++;
+  room.currentTeam = null;
+
+  if (room.draftIndex >= room.draftOrder.length) {
+    room.phase = 'eval';
+    room.roomState = 'GAME_OVER';
+    console.log(`🏁 Draft completed via AFK for room ${roomId}. Entering evaluation...`);
+    clearRoomTurnTimer(roomId);
+  } else {
+    // Switch turn
+    room.phase = 'wheel';
+    room.roomState = 'DRAFTING';
+    const nextPlayerIdx = room.draftOrder[room.draftIndex];
+    const nextPlayer = room.players[nextPlayerIdx];
+    room.currentTurnPlayerId = nextPlayer ? nextPlayer.socketId : null;
+    
+    // Start timer for the next turn
+    startRoomTurnTimer(roomId);
+  }
+
+  await saveRoomToDB(roomId, room);
+  broadcastRoomUpdate(roomId);
+}
+
 // Helper: Check if a team has any draftable players remaining for a room
 async function hasAvailablePlayersForTeam(room, teamAbbr) {
   const allPlayers = await getYearPlayers(room.settings.year);
@@ -183,6 +388,14 @@ io.on('connection', (socket) => {
     if (existingPlayer) {
       existingPlayer.socketId = socket.id;
       existingPlayer.isOnline = true;
+      // Update turn player socket ID if active
+      if (room.draftOrder && room.draftOrder.length > 0) {
+        const activePlayerIdx = room.draftOrder[room.draftIndex];
+        const activePlayer = room.players[activePlayerIdx];
+        if (activePlayer && activePlayer.name === playerName) {
+          room.currentTurnPlayerId = socket.id;
+        }
+      }
     } else {
       room.players.push({
         socketId: socket.id,
@@ -218,6 +431,14 @@ io.on('connection', (socket) => {
         player.socketId = socket.id;
         player.isOnline = true;
         socket.join(roomId);
+        // Update turn player socket ID if active
+        if (room.draftOrder && room.draftOrder.length > 0) {
+          const activePlayerIdx = room.draftOrder[room.draftIndex];
+          const activePlayer = room.players[activePlayerIdx];
+          if (activePlayer && activePlayer.name === playerName) {
+            room.currentTurnPlayerId = socket.id;
+          }
+        }
         console.log(`🔄 Session restored: ${playerName} rejoined Room ${roomId}`);
         await saveRoomToDB(roomId, room);
         broadcastRoomUpdate(roomId);
@@ -388,28 +609,42 @@ io.on('connection', (socket) => {
       }
     }
 
+    const activePlayerIdx = room.draftOrder[0];
+    const activePlayer = room.players[activePlayerIdx];
+    room.currentTurnPlayerId = activePlayer ? activePlayer.socketId : null;
+    room.roomState = 'DRAFTING';
+
     await saveRoomToDB(roomId, room);
     io.to(roomId).emit('game_started', room);
     broadcastRoomUpdate(roomId);
+
+    startRoomTurnTimer(roomId);
   });
 
   // 5. Spin Wheel Event
-  socket.on('spin_wheel', async ({ roomId }) => {
+  socket.on('spin_wheel_request', async ({ roomId }) => {
     const room = activeRooms.get(roomId);
     if (!room) return;
 
     const activePlayerIdx = room.draftOrder[room.draftIndex];
     const activePlayer = room.players[activePlayerIdx];
 
-    if (activePlayer.socketId !== socket.id) {
+    if (!activePlayer || activePlayer.socketId !== socket.id) {
       socket.emit('error_message', '目前不是你的回合，無法旋轉轉盤！');
       return;
     }
 
+    if (room.roomState !== 'DRAFTING') {
+      socket.emit('error_message', '轉盤目前正在旋轉中，請勿重複操作。');
+      return;
+    }
+
+    // Lock the room state
+    room.roomState = 'WHEEL_SPINNING';
+
     const mode = room.settings.mode;
     const year = room.settings.year;
 
-    // Relocated / Relabeled franchise list
     let rolledTeam = null;
 
     // Spin retry protection (max 10 attempts to find a team with players)
@@ -418,11 +653,9 @@ io.on('connection', (socket) => {
       const tempTeam = room.availableTeams[idx];
       
       if (mode === 'legend_15usd' || mode === '15usd') {
-        // Grids do not spin
         break;
       }
 
-      // Special rule: Franchise Legends Mode (Allows any historical player of this team)
       if (mode === 'legend_wheel') {
         const legends = await getFranchiseLegendsFromDB(tempTeam.abbreviation);
         const availableLegends = legends.filter(p => !room.draftedIds.includes(p.name));
@@ -430,65 +663,71 @@ io.on('connection', (socket) => {
           rolledTeam = tempTeam;
           break;
         } else {
-          // Trigger automatic re-spin notification
           io.to(roomId).emit('auto_respin_alert', {
             teamName: tempTeam.name,
             logo: tempTeam.logo
           });
         }
       } else if (mode === 'wheel' || mode === 'salary_cap' || mode === 'salary_cap_legend') {
-        // Standard year roster availability check (also applies to salary cap modes)
         const playersAvailable = await hasAvailablePlayersForTeam(room, tempTeam.abbreviation);
         if (playersAvailable) {
           rolledTeam = tempTeam;
           break;
         } else {
-          // Trigger automatic re-spin notification
           io.to(roomId).emit('auto_respin_alert', {
             teamName: tempTeam.name,
             logo: tempTeam.logo
           });
         }
       } else {
-        // Other modes: just pick any available team
         rolledTeam = tempTeam;
         break;
       }
     }
 
     if (!rolledTeam) {
-      // Fallback in case every single team is depleted (should not happen in normal drafts)
       rolledTeam = room.availableTeams[Math.floor(Math.random() * room.availableTeams.length)];
     }
 
     room.currentTeam = rolledTeam;
-    // Keep phase as 'wheel' during animation; client will emit 'spin_done' when animation completes
     room.phase = 'wheel';
     await saveRoomToDB(roomId, room);
 
-    io.to(roomId).emit('wheel_spun', { team: rolledTeam, room });
-    // Do NOT broadcastRoomUpdate here — the room_update would jump to pick UI immediately
+    // Broadcast spin start to everyone!
+    io.to(roomId).emit('wheel_start_spin', { team: rolledTeam, roomSnapshot: room });
   });
 
   // 5b. Client notifies server animation is done -> switch to pick phase
   socket.on('spin_done', async ({ roomId }) => {
     const room = activeRooms.get(roomId);
     if (!room || room.phase !== 'wheel') return;
+
+    // Only allow active player to trigger spin_done (anti-spam / safety)
+    const activePlayerIdx = room.draftOrder[room.draftIndex];
+    const activePlayer = room.players[activePlayerIdx];
+    if (activePlayer && activePlayer.socketId !== socket.id) return;
+
     room.phase = 'pick';
+    room.roomState = 'DRAFTING'; // Allow picking
     await saveRoomToDB(roomId, room);
     broadcastRoomUpdate(roomId);
   });
 
   // 6. Draft Player Event
-  socket.on('draft_player', async ({ roomId, playerSelection }) => {
+  socket.on('draft_player_request', async ({ roomId, playerSelection }) => {
     const room = activeRooms.get(roomId);
     if (!room) return;
 
     const activePlayerIdx = room.draftOrder[room.draftIndex];
     const activePlayer = room.players[activePlayerIdx];
 
-    if (activePlayer.socketId !== socket.id) {
+    if (!activePlayer || activePlayer.socketId !== socket.id) {
       socket.emit('error_message', '目前不是你的回合，無法選擇球員！');
+      return;
+    }
+
+    if (room.roomState === 'WHEEL_SPINNING') {
+      socket.emit('error_message', '目前轉盤正在旋轉，請等候旋轉結束再選人！');
       return;
     }
 
@@ -625,15 +864,27 @@ io.on('connection', (socket) => {
       room.draftedIds.push(draftedPlayerDoc.name);
     }
 
+    // Clear turn timer
+    clearRoomTurnTimer(roomId);
+
     // Move to next turn
     room.draftIndex++;
     room.currentTeam = null;
 
     if (room.draftIndex >= room.draftOrder.length) {
       room.phase = 'eval';
+      room.roomState = 'GAME_OVER';
       console.log(`🏁 Draft completed for room ${roomId}. Entering evaluation...`);
+      clearRoomTurnTimer(roomId);
     } else {
       room.phase = 'wheel';
+      room.roomState = 'DRAFTING';
+      const nextPlayerIdx = room.draftOrder[room.draftIndex];
+      const nextPlayer = room.players[nextPlayerIdx];
+      room.currentTurnPlayerId = nextPlayer ? nextPlayer.socketId : null;
+      
+      // Start timer for the next turn
+      startRoomTurnTimer(roomId);
     }
 
     await saveRoomToDB(roomId, room);
@@ -671,6 +922,7 @@ io.on('connection', (socket) => {
 
     // Reset room phase and state
     room.phase = 'lobby';
+    room.roomState = 'LOBBY';
     room.draftIndex = 0;
     room.draftOrder = [];
     room.draftedIds = [];
@@ -679,6 +931,11 @@ io.on('connection', (socket) => {
     room.evalResult = null;
     room.sheetIndex = null;
     room.availableTeams = [];
+    room.currentTurnPlayerId = null;
+    room.turnExpiresAt = null;
+
+    // Clear timers
+    clearRoomTurnTimer(roomId);
 
     // Clear rosters
     room.players.forEach(p => {

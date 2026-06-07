@@ -49,6 +49,102 @@ const state = {
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
+let draftTimerInterval = null;
+
+function startLocalCountdown() {
+  // Clear any existing interval
+  if (draftTimerInterval) {
+    clearInterval(draftTimerInterval);
+    draftTimerInterval = null;
+  }
+
+  const room = state.room;
+  if (!room || !room.turnExpiresAt || room.phase === 'lobby' || room.phase === 'eval') {
+    const timerContainer = $('#draft-timer-container');
+    if (timerContainer) timerContainer.classList.add('hidden');
+    return;
+  }
+
+  const timerSecondsEl = $('#draft-timer-seconds');
+  const timerContainer = $('#draft-timer-container');
+  if (timerContainer) timerContainer.classList.remove('hidden');
+
+  function updateSecs() {
+    const now = Date.now();
+    const remainingMs = room.turnExpiresAt - now;
+    const remainingSecs = Math.max(0, Math.ceil(remainingMs / 1000));
+    
+    if (timerSecondsEl) {
+      timerSecondsEl.textContent = remainingSecs;
+    }
+
+    if (remainingSecs <= 5) {
+      if (timerContainer) {
+        timerContainer.classList.remove('bg-red-950/40', 'border-red-500/30', 'text-red-400');
+        timerContainer.classList.add('bg-red-600', 'border-red-700', 'text-white', 'animate-pulse');
+      }
+    } else {
+      if (timerContainer) {
+        timerContainer.classList.add('bg-red-950/40', 'border-red-500/30', 'text-red-400');
+        timerContainer.classList.remove('bg-red-600', 'border-red-700', 'text-white', 'animate-pulse');
+      }
+    }
+
+    if (remainingSecs <= 0) {
+      clearInterval(draftTimerInterval);
+      draftTimerInterval = null;
+    }
+  }
+
+  // Run immediately once
+  updateSecs();
+  // Tick every 200ms
+  draftTimerInterval = setInterval(updateSecs, 200);
+}
+
+function syncTurnUI() {
+  const room = state.room;
+  if (!room) return;
+
+  const mask = $('#spectator-mask');
+  const timerContainer = $('#draft-timer-container');
+
+  if (room.phase === 'lobby' || room.phase === 'eval') {
+    if (mask) mask.classList.add('hidden');
+    if (timerContainer) timerContainer.classList.add('hidden');
+    return;
+  }
+
+  // Under drafting phase
+  const activePlayerIdx = room.draftOrder[room.draftIndex];
+  const activePlayer = room.players[activePlayerIdx];
+  const isMyTurn = activePlayer && (activePlayer.socketId === socket.id || activePlayer.name === state.playerName);
+
+  if (isMyTurn) {
+    if (mask) mask.classList.add('hidden');
+  } else {
+    if (mask) {
+      mask.classList.remove('hidden');
+      const maskTitle = $('#spectator-mask-title');
+      const maskDesc = $('#spectator-mask-desc');
+      
+      const activeName = activePlayer ? activePlayer.name : '對手';
+      
+      if (room.roomState === 'WHEEL_SPINNING' || room.phase === 'wheel') {
+        if (maskTitle) maskTitle.textContent = '等待轉盤旋轉...';
+        if (maskDesc) maskDesc.textContent = `當前行動者 ${activeName} 正在旋轉轉盤以決定球隊。`;
+      } else {
+        if (maskTitle) maskTitle.textContent = '等待選取球員...';
+        if (maskDesc) maskDesc.textContent = `當前行動者 ${activeName} 正在選秀或挑選球員。`;
+      }
+    }
+  }
+
+  if (timerContainer) {
+    timerContainer.classList.remove('hidden');
+  }
+}
+
 // ── Screen Management ──────────────────────
 function showScreen(id) {
   $$('.screen').forEach(s => s.classList.remove('active'));
@@ -126,8 +222,16 @@ socket.on('room_update', (room) => {
     state.playerName = me.name;
   }
 
-  // If wheel is currently animating, don't let room_update switch the UI
-  if (state.wheelSpinning) return;
+  // Update timer countdown anyway
+  if (room.phase === 'draft' || room.phase === 'wheel' || room.phase === 'pick') {
+    startLocalCountdown();
+  }
+
+  // If wheel is currently animating, don't let room_update switch the UI layout
+  if (state.wheelSpinning) {
+    syncTurnUI();
+    return;
+  }
 
   if (room.phase === 'lobby') {
     showScreen('screen-lobby');
@@ -149,22 +253,30 @@ socket.on('game_started', (room) => {
   showToast('🎮 遊戲開始！排好你的選秀順序！');
 });
 
-socket.on('wheel_spun', ({ team, room }) => {
-  state.room = room;
+socket.on('wheel_start_spin', ({ team, roomSnapshot }) => {
+  state.room = roomSnapshot;
   state.wheelSpinning = true; // Block room_update from switching UI during animation
   
+  // Sync the mask overlay immediately to show spinning state
+  syncTurnUI();
+
   // Locate the canvas Lucky Wheel instance and trigger spinning
   const canvas = $('#wheel-canvas');
   if (state.wheel) {
-    $('#btn-spin').disabled = true;
+    const btnSpin = $('#btn-spin');
+    if (btnSpin) btnSpin.disabled = true;
     canvas.classList.add('spinning');
     state.wheel.spinTo(team);
   } else {
     // Wheel not ready: init now then spin
-    state.wheel = new LuckyWheel(canvas, room.availableTeams, (t) => onSpinStopped(t));
-    state.wheel._teamsKey = (room.availableTeams || []).map(t => t.abbreviation).join(',');
+    state.wheel = new LuckyWheel(canvas, roomSnapshot.availableTeams, (t) => onSpinStopped(t));
+    state.wheel._teamsKey = (roomSnapshot.availableTeams || []).map(t => t.abbreviation).join(',');
     state.wheel.spinTo(team);
   }
+});
+
+socket.on('afk_penalty_trigger', ({ playerName, teamName, playerNameAssigned, logo }) => {
+  showToast(`🚨 超時懲罰！${playerName} 超時未操作，自動指派 [${logo} ${teamName}] 中 PTS 最差球員：${playerNameAssigned}！`);
 });
 
 socket.on('auto_respin_alert', ({ teamName, logo }) => {
@@ -352,12 +464,15 @@ function updateDraftUI() {
   // Active turn tracking
   const activePlayerIdx = room.draftOrder[room.draftIndex];
   const activePlayer = room.players[activePlayerIdx];
+  if (!activePlayer) return;
   const isMyTurn = activePlayer.socketId === socket.id || activePlayer.name === state.playerName;
 
   // Render player name banner
   const turnBannerName = $('#draft-player-name');
-  turnBannerName.textContent = activePlayer.name;
-  turnBannerName.className = isMyTurn ? 'text-purple-400 font-black' : 'text-white';
+  if (turnBannerName) {
+    turnBannerName.textContent = activePlayer.name;
+    turnBannerName.className = isMyTurn ? 'text-purple-400 font-black' : 'text-white';
+  }
 
   const pickBadge = $('#draft-pick-badge');
   const currentPickNum = Math.floor(room.draftIndex / room.players.length) + 1;
@@ -483,6 +598,10 @@ function updateDraftUI() {
       }
     }
   }
+
+  // Sync spectator mask and local countdown
+  syncTurnUI();
+  startLocalCountdown();
 }
 
 // ── Spin Stop Callback ─────────────────────
@@ -493,26 +612,41 @@ function onSpinStopped(team) {
   state.wheelSpinning = false; // Allow room_update to update UI again
 
   const canvas = $('#wheel-canvas');
-  canvas.classList.remove('spinning');
+  if (canvas) canvas.classList.remove('spinning');
 
-  $('#btn-spin').classList.add('hidden');
-  $('#wheel-result').classList.remove('hidden');
+  const btnSpin = $('#btn-spin');
+  if (btnSpin) btnSpin.classList.add('hidden');
+  const wheelResult = $('#wheel-result');
+  if (wheelResult) wheelResult.classList.remove('hidden');
   
-  $('#wheel-result-name').textContent = `${team.logo} ${team.name}`;
-  $('#wheel-result-name').style.color = team.secondaryColor || '#ffffff';
+  const resultNameEl = $('#wheel-result-name');
+  if (resultNameEl) {
+    resultNameEl.textContent = `${team.logo} ${team.name}`;
+    resultNameEl.style.color = team.secondaryColor || '#ffffff';
+  }
 
-  $('#draft-phase-label').textContent = team.name;
-  $('#draft-phase-label').style.color = team.secondaryColor || '#ffffff';
+  const phaseLabel = $('#draft-phase-label');
+  if (phaseLabel) {
+    phaseLabel.textContent = team.name;
+    phaseLabel.style.color = team.secondaryColor || '#ffffff';
+  }
 
   fireConfetti();
 
+  // Active turn tracking
+  const activePlayerIdx = room.draftOrder[room.draftIndex];
+  const activePlayer = room.players[activePlayerIdx];
+  const isMyTurn = activePlayer && (activePlayer.socketId === socket.id || activePlayer.name === state.playerName);
+
   // Notify server: animation done, switch to pick phase
-  socket.emit('spin_done', { roomId: state.roomId });
+  if (isMyTurn) {
+    socket.emit('spin_done', { roomId: state.roomId });
+  }
 }
 
 function spinWheel() {
   if (!state.roomId) return;
-  socket.emit('spin_wheel', { roomId: state.roomId });
+  socket.emit('spin_wheel_request', { roomId: state.roomId });
 }
 
 function enterPickPhase() {
@@ -572,6 +706,7 @@ function renderPickCards() {
 
   const activePlayerIdx = room.draftOrder[room.draftIndex];
   const activePlayer = room.players[activePlayerIdx];
+  if (!activePlayer) return;
   const isMyTurn = activePlayer.socketId === socket.id || activePlayer.name === state.playerName;
 
   if (activePool.length === 0) {
@@ -627,7 +762,7 @@ function renderPickCards() {
 
     if (!isDrafted && isMyTurn) {
       card.addEventListener('click', () => {
-        socket.emit('draft_player', {
+        socket.emit('draft_player_request', {
           roomId: state.roomId,
           playerSelection: {
             name: p.name,
@@ -661,6 +796,7 @@ function render5x5Grid() {
   // Renders the 5x5 layout
   const activePlayerIdx = room.draftOrder[room.draftIndex];
   const activePlayer = room.players[activePlayerIdx];
+  if (!activePlayer) return;
   const isMyTurn = activePlayer.socketId === socket.id || activePlayer.name === state.playerName;
 
   // Track budget
@@ -703,7 +839,7 @@ function render5x5Grid() {
 
       if (!isDrafted && isMyTurn && (spent + price <= 15)) {
         btn.addEventListener('click', () => {
-          socket.emit('draft_player', {
+          socket.emit('draft_player_request', {
             roomId: state.roomId,
             playerSelection: p
           });
@@ -724,6 +860,7 @@ function renderBlindResume() {
 
   const activePlayerIdx = room.draftOrder[room.draftIndex];
   const activePlayer = room.players[activePlayerIdx];
+  if (!activePlayer) return;
   const isMyTurn = activePlayer.socketId === socket.id || activePlayer.name === state.playerName;
 
   const container = $('#blind-cards-container');
@@ -787,7 +924,7 @@ function renderBlindResume() {
 
       if (isMyTurn) {
         card.addEventListener('click', () => {
-          socket.emit('draft_player', {
+          socket.emit('draft_player_request', {
             roomId: state.roomId,
             playerSelection: { blindId: p.blindId }
           });
@@ -982,6 +1119,11 @@ function leaveRoom() {
     state.playerName = null;
     state.room = null;
     state.isOwner = false;
+    
+    if (draftTimerInterval) {
+      clearInterval(draftTimerInterval);
+      draftTimerInterval = null;
+    }
     
     // Notify server to leave room
     socket.emit('leave_room', { roomId, playerName });

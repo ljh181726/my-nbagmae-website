@@ -165,6 +165,9 @@ async function saveRoomToDB(roomId, room) {
       currentTeam: room.currentTeam,
       blindPool: room.blindPool,
       phase: room.phase,
+      roomState: room.roomState || 'LOBBY',
+      currentTurnPlayerId: room.currentTurnPlayerId || null,
+      turnExpiresAt: room.turnExpiresAt || null,
       evalResult: room.evalResult,
       updatedAt: new Date()
     };
@@ -193,6 +196,9 @@ async function loadRoomFromDB(roomId) {
       currentTeam: doc.currentTeam,
       blindPool: doc.blindPool,
       phase: doc.phase,
+      roomState: doc.roomState || 'LOBBY',
+      currentTurnPlayerId: doc.currentTurnPlayerId || null,
+      turnExpiresAt: doc.turnExpiresAt || null,
       evalResult: doc.evalResult
     };
   } catch (err) {
