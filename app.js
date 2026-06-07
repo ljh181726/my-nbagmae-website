@@ -759,7 +759,7 @@ function renderPickCards() {
     const isDrafted = room.draftedIds.includes(p.name);
     
     const card = document.createElement('button');
-    card.className = 'player-btn relative flex flex-col items-center justify-between text-center';
+    card.className = 'player-btn relative flex flex-col items-center justify-between text-center min-h-[82px] py-3 px-2';
     card.disabled = isDrafted || !isMyTurn;
 
     const posHTML = p.position.map(pos => `<span class="pos-badge">${pos}</span>`).join('');
@@ -853,17 +853,17 @@ function render5x5Grid() {
     const rowPlayers = gridData.filter(p => p.price === price);
     
     const rowEl = document.createElement('div');
-    rowEl.className = 'grid grid-cols-6 gap-2 items-center';
+    rowEl.className = 'grid grid-cols-6 gap-2 items-stretch';
 
     const priceBadge = document.createElement('div');
-    priceBadge.className = 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 font-display font-black text-center py-3 rounded-lg text-sm';
+    priceBadge.className = 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 font-display font-black text-center rounded-lg text-sm flex items-center justify-center';
     priceBadge.textContent = `$${price}`;
     rowEl.appendChild(priceBadge);
 
     rowPlayers.forEach(p => {
       const isDrafted = room.draftedIds.includes(p.name);
       const btn = document.createElement('button');
-      btn.className = 'player-btn py-2 text-xs flex flex-col justify-center items-center h-full';
+      btn.className = 'player-btn py-2 px-1 text-xs flex flex-col justify-center items-center h-full min-h-[58px]';
       btn.disabled = isDrafted || !isMyTurn || (spent + price > 15);
 
       btn.innerHTML = `
