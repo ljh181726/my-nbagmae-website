@@ -72,12 +72,13 @@ export class LuckyWheel {
       const endAngle   = startAngle + arc;
       const team = this.teams[i];
 
-      // Filled arc
+      // Filled arc - safely parse primaryColor
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.arc(cx, cy, R, startAngle, endAngle);
       ctx.closePath();
-      ctx.fillStyle = i % 2 === 0 ? team.primaryColor : this._lighten(team.primaryColor, 25);
+      const baseColor = this._safeHex(team.primaryColor);
+      ctx.fillStyle = i % 2 === 0 ? baseColor : this._lighten(baseColor, 28);
       ctx.fill();
 
       // Segment border
@@ -99,7 +100,7 @@ export class LuckyWheel {
         : Math.min(13, Math.max(8, (arc * R) / 4));
 
       ctx.font      = `bold ${fontSize}px 'Inter', sans-serif`;
-      ctx.fillStyle = this._contrastColor(team.primaryColor);
+      ctx.fillStyle = this._contrastColor(this._safeHex(team.primaryColor));
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
 
@@ -187,14 +188,11 @@ export class LuckyWheel {
     const targetAngle = (targetIndex + 0.5) * arc;
 
     // Pointer is at -PI/2.
-    // Selected team is determined by: pointerAngle = (-PI/2 - rotation) % 2PI
-    // We want pointerAngle = targetAngle
-    // So targetAngle = -PI/2 - finalRotation => finalRotation = -PI/2 - targetAngle
     let desiredFinalRotation = (-Math.PI / 2 - targetAngle) % (2 * Math.PI);
     if (desiredFinalRotation < 0) desiredFinalRotation += 2 * Math.PI;
 
-    // Current rotation
-    const currentRotNorm = this.rotation % (2 * Math.PI);
+    // Current rotation (normalized)
+    const currentRotNorm = ((this.rotation % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
 
     // Calculate delta rotation needed to reach desired final rotation
     let delta = desiredFinalRotation - currentRotNorm;
@@ -203,30 +201,26 @@ export class LuckyWheel {
     // Add 5 full rotations for a nice spinning effect
     const totalDelta = delta + 5 * 2 * Math.PI;
 
-    // Deceleration factor
-    const deceleration = 0.985;
-    
-    // Sum of infinite series of velocity: v0 * d / (1 - d) = totalDelta
-    // Therefore: v0 = totalDelta * (1 - d) / d
-    this.spinVelocity = totalDelta * (0.015) / 0.985;
+    // Use cubic easing for predictable ~4 second spin duration
+    const DURATION_MS = 2000;
+    const startTime = performance.now();
+    const startRotation = this.rotation;
 
-    const minVelocity  = 0.0008;
+    const animate = (now) => {
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / DURATION_MS);
+      // Cubic ease-out: 1 - (1-t)^3
+      const eased = 1 - Math.pow(1 - t, 3);
 
-    const animate = () => {
-      this.rotation    += this.spinVelocity;
-      this.spinVelocity *= deceleration;
-
-      // Normalize rotation
-      this.rotation = this.rotation % (2 * Math.PI);
-
+      this.rotation = startRotation + totalDelta * eased;
       this.draw();
 
-      if (this.spinVelocity > minVelocity) {
+      if (t < 1) {
         this.animId = requestAnimationFrame(animate);
       } else {
-        // Stopped — determine result and fire callback
+        // Stopped — snap to exact target and fire callback
         this.spinning = false;
-        this.rotation = desiredFinalRotation; // Snap to exact target center
+        this.rotation = startRotation + totalDelta; // Keep full rotation value
         this.draw();
         this.onResult(targetTeam);
       }
@@ -248,9 +242,25 @@ export class LuckyWheel {
     return this.teams[index % n];
   }
 
+  /* ── Utility: ensure a valid hex color ────── */
+  _safeHex(hex) {
+    if (!hex || typeof hex !== 'string') return '#4b5563';
+    const cleaned = hex.trim();
+    if (/^#[0-9A-Fa-f]{6}$/.test(cleaned)) return cleaned;
+    if (/^#[0-9A-Fa-f]{3}$/.test(cleaned)) {
+      // Expand shorthand
+      const r = cleaned[1] + cleaned[1];
+      const g = cleaned[2] + cleaned[2];
+      const b = cleaned[3] + cleaned[3];
+      return `#${r}${g}${b}`;
+    }
+    return '#4b5563'; // Fallback gray
+  }
+
   /* ── Utility: lighten a hex color ──────── */
   _lighten(hex, pct) {
-    const num = parseInt(hex.replace('#', ''), 16);
+    const safe = this._safeHex(hex);
+    const num = parseInt(safe.replace('#', ''), 16);
     const r = Math.min(255, ((num >> 16) & 0xFF) + pct);
     const g = Math.min(255, ((num >> 8)  & 0xFF) + pct);
     const b = Math.min(255, ((num)       & 0xFF) + pct);
@@ -259,7 +269,8 @@ export class LuckyWheel {
 
   /* ── Utility: pick white or black text for contrast ── */
   _contrastColor(hex) {
-    const num = parseInt(hex.replace('#', ''), 16);
+    const safe = this._safeHex(hex);
+    const num = parseInt(safe.replace('#', ''), 16);
     const r = (num >> 16) & 0xFF;
     const g = (num >> 8)  & 0xFF;
     const b =  num        & 0xFF;

@@ -370,10 +370,18 @@ function updateDraftUI() {
       $('#btn-spin').disabled = !isMyTurn;
       $('#wheel-result').classList.add('hidden');
 
-      // Setup/refresh LuckWheel Canvas
+      // Setup/refresh LuckyWheel Canvas - only rebuild if teams changed or wheel not created
       const canvas = $('#wheel-canvas');
-      if (state.wheel) state.wheel.destroy();
-      state.wheel = new LuckyWheel(canvas, room.availableTeams, (team) => onSpinStopped(team));
+      const newTeamsKey = (room.availableTeams || []).map(t => t.abbreviation).join(',');
+      const prevTeamsKey = state.wheel ? state.wheel._teamsKey : '';
+      if (!state.wheel || newTeamsKey !== prevTeamsKey) {
+        if (state.wheel) state.wheel.destroy();
+        state.wheel = new LuckyWheel(canvas, room.availableTeams, (team) => onSpinStopped(team));
+        state.wheel._teamsKey = newTeamsKey;
+      } else if (!state.wheel.spinning) {
+        // Only redraw if not currently spinning
+        state.wheel.setTeams(room.availableTeams);
+      }
 
     } else if (room.phase === 'pick') {
       pickPhasePanel.classList.remove('hidden');
