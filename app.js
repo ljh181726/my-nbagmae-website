@@ -1,6 +1,34 @@
 import { LuckyWheel } from './wheel.js';
 import { ACTIVE_5X5_GRIDS, LEGENDS_5X5_GRIDS, NBA_TEAMS, SALARY_CAPS } from './data.js';
 
+function dbToStdAbbr(abbr) {
+  if (abbr === 'BRK') return 'BKN';
+  if (abbr === 'PHO') return 'PHX';
+  if (abbr === 'CHO') return 'CHA';
+  return abbr;
+}
+
+function getModernEquivalent(abbr) {
+  const map = {
+    'SEA': 'OKC',
+    'KCK': 'SAC', 'KCO': 'SAC', 'CIN': 'SAC', 'ROC': 'SAC',
+    'WSB': 'WAS', 'CAP': 'WAS', 'BAL': 'WAS',
+    'VAN': 'MEM',
+    'NJN': 'BKN', 'NYN': 'BKN', 'BRK': 'BKN',
+    'NOH': 'NOP', 'NOK': 'NOP',
+    'SDC': 'LAC', 'BUF': 'LAC',
+    'CHH': 'CHA', 'CHO': 'CHA',
+    'SFW': 'GSW', 'PHW': 'GSW',
+    'NOJ': 'UTA',
+    'SDR': 'HOU',
+    'FTW': 'DET',
+    'SYR': 'PHI',
+    'SLH': 'ATL', 'TRI': 'ATL',
+    'PHO': 'PHX'
+  };
+  return map[abbr] || abbr;
+}
+
 // Initialize Socket.io client
 const socket = io();
 
@@ -11,10 +39,12 @@ const state = {
   room: null,
   activeRosterView: 'normal', // 'normal' | 'legend'
   wheel: null,
+  wheelSpinning: false,       // true while wheel animation is running
   selectedTeamRoster: [], // Current roster available for drafting in Pick phase
   selectedTeamLegends: [], // Legends list for Relocated franchises / Legend mode
   isEvaluating: false
 };
+
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -96,6 +126,9 @@ socket.on('room_update', (room) => {
     state.playerName = me.name;
   }
 
+  // If wheel is currently animating, don't let room_update switch the UI
+  if (state.wheelSpinning) return;
+
   if (room.phase === 'lobby') {
     showScreen('screen-lobby');
     updateLobbyUI();
@@ -108,6 +141,7 @@ socket.on('room_update', (room) => {
   }
 });
 
+
 socket.on('game_started', (room) => {
   state.room = room;
   showScreen('screen-draft');
@@ -117,17 +151,19 @@ socket.on('game_started', (room) => {
 
 socket.on('wheel_spun', ({ team, room }) => {
   state.room = room;
+  state.wheelSpinning = true; // Block room_update from switching UI during animation
   
   // Locate the canvas Lucky Wheel instance and trigger spinning
   const canvas = $('#wheel-canvas');
   if (state.wheel) {
     $('#btn-spin').disabled = true;
     canvas.classList.add('spinning');
-    
     state.wheel.spinTo(team);
   } else {
-    // If not instantiated yet
-    onSpinStopped(team);
+    // Wheel not ready: init now then spin
+    state.wheel = new LuckyWheel(canvas, room.availableTeams, (t) => onSpinStopped(t));
+    state.wheel._teamsKey = (room.availableTeams || []).map(t => t.abbreviation).join(',');
+    state.wheel.spinTo(team);
   }
 });
 
@@ -137,7 +173,7 @@ socket.on('auto_respin_alert', ({ teamName, logo }) => {
 
 socket.on('blind_reveal', ({ playerName, realName, realTeam, blindId }) => {
   // Find modern/legend logo
-  const logo = NBA_TEAMS.find(t => t.abbreviation === realTeam)?.logo || '🏀';
+  const logo = NBA_TEAMS.find(t => t.abbreviation === getModernEquivalent(realTeam))?.logo || '🏀';
   showToast(`🕵️ 揭曉！${playerName} 盲選了：${logo} ${realName} (${realTeam})`);
 });
 
@@ -374,13 +410,14 @@ function updateDraftUI() {
       const canvas = $('#wheel-canvas');
       const newTeamsKey = (room.availableTeams || []).map(t => t.abbreviation).join(',');
       const prevTeamsKey = state.wheel ? state.wheel._teamsKey : '';
-      if (!state.wheel || newTeamsKey !== prevTeamsKey) {
-        if (state.wheel) state.wheel.destroy();
-        state.wheel = new LuckyWheel(canvas, room.availableTeams, (team) => onSpinStopped(team));
-        state.wheel._teamsKey = newTeamsKey;
-      } else if (!state.wheel.spinning) {
-        // Only redraw if not currently spinning
-        state.wheel.setTeams(room.availableTeams);
+
+      if (!state.wheelSpinning) {
+        // Only touch the wheel when NOT animating
+        if (!state.wheel || newTeamsKey !== prevTeamsKey) {
+          if (state.wheel) state.wheel.destroy();
+          state.wheel = new LuckyWheel(canvas, room.availableTeams, (team) => onSpinStopped(team));
+          state.wheel._teamsKey = newTeamsKey;
+        }
       }
 
     } else if (room.phase === 'pick') {
@@ -453,24 +490,24 @@ function onSpinStopped(team) {
   const room = state.room;
   if (!room) return;
 
+  state.wheelSpinning = false; // Allow room_update to update UI again
+
   const canvas = $('#wheel-canvas');
   canvas.classList.remove('spinning');
-
-  // Only active player sees options
-  const activePlayerIdx = room.draftOrder[room.draftIndex];
-  const activePlayer = room.players[activePlayerIdx];
-  const isMyTurn = activePlayer.socketId === socket.id || activePlayer.name === state.playerName;
 
   $('#btn-spin').classList.add('hidden');
   $('#wheel-result').classList.remove('hidden');
   
   $('#wheel-result-name').textContent = `${team.logo} ${team.name}`;
-  $('#wheel-result-name').style.color = team.secondaryColor;
+  $('#wheel-result-name').style.color = team.secondaryColor || '#ffffff';
 
   $('#draft-phase-label').textContent = team.name;
-  $('#draft-phase-label').style.color = team.secondaryColor;
+  $('#draft-phase-label').style.color = team.secondaryColor || '#ffffff';
 
   fireConfetti();
+
+  // Notify server: animation done, switch to pick phase
+  socket.emit('spin_done', { roomId: state.roomId });
 }
 
 function spinWheel() {
@@ -710,7 +747,7 @@ function renderBlindResume() {
 
     if (isDrafted) {
       // Reveal name
-      const logo = NBA_TEAMS.find(t => t.abbreviation === p.realTeam)?.logo || '🏀';
+      const logo = NBA_TEAMS.find(t => t.abbreviation === getModernEquivalent(p.realTeam))?.logo || '🏀';
       card.innerHTML = `
         <div class="w-full flex flex-col justify-center items-center h-full">
           <div class="text-2xl">${logo}</div>
@@ -810,7 +847,7 @@ function renderRosterPanels() {
       if (s < player.roster.length) {
         const p = player.roster[s];
         // Find team logo
-        const teamLogo = NBA_TEAMS.find(t => t.abbreviation === p.team)?.logo || '🏀';
+        const teamLogo = NBA_TEAMS.find(t => t.abbreviation === getModernEquivalent(p.team))?.logo || '🏀';
         
         const priceText = (mode === '15usd' || mode === 'legend_15usd')
           ? `<span class="text-[10px] font-black text-yellow-400">$${p.salary}</span>`
@@ -874,7 +911,7 @@ function updateEvalUI() {
         </div>
         <div class="space-y-2.5">
           ${player.roster.map(p => {
-            const logo = NBA_TEAMS.find(t => t.abbreviation === p.team)?.logo || '🏀';
+            const logo = NBA_TEAMS.find(t => t.abbreviation === getModernEquivalent(p.team))?.logo || '🏀';
             return `
               <div class="roster-card py-2.5 px-3 border border-purple-950 bg-card/40">
                 <div class="flex items-center justify-between mb-0.5">

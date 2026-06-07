@@ -201,13 +201,14 @@ export class LuckyWheel {
     // Add 5 full rotations for a nice spinning effect
     const totalDelta = delta + 5 * 2 * Math.PI;
 
-    // Use cubic easing for predictable ~4 second spin duration
+    // Use cubic easing for predictable 2 second spin duration
     const DURATION_MS = 2000;
-    const startTime = performance.now();
+    let startTime = null;
     const startRotation = this.rotation;
 
-    const animate = (now) => {
-      const elapsed = now - startTime;
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
       const t = Math.min(1, elapsed / DURATION_MS);
       // Cubic ease-out: 1 - (1-t)^3
       const eased = 1 - Math.pow(1 - t, 3);

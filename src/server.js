@@ -21,7 +21,8 @@ const {
   activeRooms,
   generateDynamic15UsdGrid,
   MODERN_TEAMS,
-  getFranchiseLegendsFromDB
+  getFranchiseLegendsFromDB,
+  getModernEquivalent
 } = require('./lobby');
 
 const { getLegendsForTeam } = require('./legends_pool');
@@ -351,16 +352,37 @@ io.on('connection', (socket) => {
         room.availableTeams = [...MODERN_TEAMS];
       } else {
         // Wheel, Salary Cap, Blind: get all unique team abbreviations in the players pool
-        const teamsSet = new Set(playersPool.map(p => p.team));
-        // Map back to standard modern teams config or historical metadata names
+        // Filter out any multi-team symbols ending in 'TM' (e.g., 2TM, 3TM, 4TM)
+        const teamsSet = new Set(playersPool.map(p => p.team).filter(t => t && !t.endsWith('TM')));
+        // Map back to standard modern teams, then fallback to historical metadata
         room.availableTeams = Array.from(teamsSet).map(abbr => {
-          const meta = HISTORICAL_TEAMS_META[abbr] || {};
+          // 1. Check historical metadata first
+          const meta = HISTORICAL_TEAMS_META[abbr];
+          if (meta) {
+            return {
+              abbreviation: abbr,
+              name: meta.name,
+              logo: meta.logo || '🏀',
+              primaryColor: meta.primaryColor || '#4b5563',
+              secondaryColor: meta.secondaryColor || '#9ca3af'
+            };
+          }
+          // 2. Check modern equivalent
+          const standardAbbr = getModernEquivalent(abbr);
+          const modern = MODERN_TEAMS.find(t => t.abbreviation === standardAbbr);
+          if (modern) {
+            return {
+              ...modern,
+              abbreviation: abbr // Keep database abbreviation for query consistency
+            };
+          }
+          // 3. Fallback
           return {
             abbreviation: abbr,
-            name: meta.name || `${abbr} Team`,
-            logo: meta.logo || '🏀',
-            primaryColor: meta.primaryColor || '#4b5563',
-            secondaryColor: meta.secondaryColor || '#9ca3af'
+            name: abbr,
+            logo: '🏀',
+            primaryColor: '#4b5563',
+            secondaryColor: '#9ca3af'
           };
         });
       }
@@ -440,10 +462,20 @@ io.on('connection', (socket) => {
     }
 
     room.currentTeam = rolledTeam;
-    room.phase = 'pick';
+    // Keep phase as 'wheel' during animation; client will emit 'spin_done' when animation completes
+    room.phase = 'wheel';
     await saveRoomToDB(roomId, room);
 
     io.to(roomId).emit('wheel_spun', { team: rolledTeam, room });
+    // Do NOT broadcastRoomUpdate here — the room_update would jump to pick UI immediately
+  });
+
+  // 5b. Client notifies server animation is done -> switch to pick phase
+  socket.on('spin_done', async ({ roomId }) => {
+    const room = activeRooms.get(roomId);
+    if (!room || room.phase !== 'wheel') return;
+    room.phase = 'pick';
+    await saveRoomToDB(roomId, room);
     broadcastRoomUpdate(roomId);
   });
 

@@ -90,16 +90,54 @@ const HISTORICAL_TEAMS_META = {
   "CHH": { name: "Charlotte Hornets", logo: "🐝", primaryColor: "#00788C", secondaryColor: "#1D1160" }
 };
 
+function dbToStdAbbr(abbr) {
+  if (abbr === 'BRK') return 'BKN';
+  if (abbr === 'PHO') return 'PHX';
+  if (abbr === 'CHO') return 'CHA';
+  return abbr;
+}
+
+function stdToDbAbbr(abbr) {
+  if (abbr === 'BKN') return 'BRK';
+  if (abbr === 'PHX') return 'PHO';
+  if (abbr === 'CHA') return 'CHO';
+  return abbr;
+}
+
+function getModernEquivalent(abbr) {
+  const map = {
+    'SEA': 'OKC',
+    'KCK': 'SAC', 'KCO': 'SAC', 'CIN': 'SAC', 'ROC': 'SAC',
+    'WSB': 'WAS', 'CAP': 'WAS', 'BAL': 'WAS',
+    'VAN': 'MEM',
+    'NJN': 'BKN', 'NYN': 'BKN', 'BRK': 'BKN',
+    'NOH': 'NOP', 'NOK': 'NOP',
+    'SDC': 'LAC', 'BUF': 'LAC',
+    'CHH': 'CHA', 'CHO': 'CHA',
+    'SFW': 'GSW', 'PHW': 'GSW',
+    'NOJ': 'UTA',
+    'SDR': 'HOU',
+    'FTW': 'DET',
+    'SYR': 'PHI',
+    'SLH': 'ATL', 'TRI': 'ATL',
+    'PHO': 'PHX'
+  };
+  return map[abbr] || abbr;
+}
+
 // Resolve the correct historical team code depending on draft year
 function getHistoricalTeamAbbr(modernAbbr, year) {
-  const ranges = FRANCHISE_MAPPING[modernAbbr];
-  if (!ranges) return modernAbbr;
+  const stdKey = dbToStdAbbr(modernAbbr);
+  const ranges = FRANCHISE_MAPPING[stdKey];
+  if (!ranges) {
+    return stdToDbAbbr(stdKey);
+  }
   for (const range of ranges) {
     if (year >= range.start && year <= range.end) {
-      return range.abbr;
+      return stdToDbAbbr(range.abbr);
     }
   }
-  return modernAbbr;
+  return stdToDbAbbr(stdKey);
 }
 
 // Generate room code (4-6 digits)
@@ -382,5 +420,6 @@ module.exports = {
   activeRooms,
   generateDynamic15UsdGrid,
   MODERN_TEAMS,
-  getFranchiseLegendsFromDB
+  getFranchiseLegendsFromDB,
+  getModernEquivalent
 };
