@@ -26,6 +26,8 @@ const {
   generateSnakeDraftOrder,
   getAvailablePlayersForRoom,
   getHistoricalTeamAbbr,
+  getAbbreviationCandidates,
+  matchTeamAbbr,
   HISTORICAL_TEAMS_META,
   activeRooms,
   generateDynamic15UsdGrid,
@@ -954,7 +956,6 @@ async function hasAvailablePlayersForTeam(room, teamAbbr) {
   if (!activePlayer) return false;
 
   const allPlayers = await getYearPlayers(room.settings.year);
-  const targetAbbr = getHistoricalTeamAbbr(teamAbbr, room.settings.year);
 
   const remainingPicks = 5 - activePlayer.roster.length;
   const currentRookies = activePlayer.roster.filter(p => p.is_rookie).length;
@@ -970,7 +971,7 @@ async function hasAvailablePlayersForTeam(room, teamAbbr) {
 
   return allPlayers.some(p => {
     // Must match team
-    if (p.team !== targetAbbr) return false;
+    if (!matchTeamAbbr(p.team, teamAbbr, room.settings.year)) return false;
     // Exclude drafted players
     if (room.draftedIds.includes(p.name)) return false;
     // Exclude room pre-banned players
@@ -1811,11 +1812,10 @@ io.on('connection', (socket) => {
 
     const year = room.settings.year;
     const allPlayers = await getYearPlayers(year);
-    const targetAbbr = getHistoricalTeamAbbr(teamAbbr, year);
 
     const filtered = allPlayers.filter(p => {
       // Match team
-      if (p.team !== targetAbbr) return false;
+      if (!matchTeamAbbr(p.team, teamAbbr, year)) return false;
       // Exclude drafted players
       if (room.draftedIds.includes(p.name)) return false;
       // Exclude room pre-banned players

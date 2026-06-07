@@ -140,6 +140,57 @@ function getHistoricalTeamAbbr(modernAbbr, year) {
   return stdToDbAbbr(stdKey);
 }
 
+// Get all possible abbreviation candidates for a team in a given year
+function getAbbreviationCandidates(specTeam, year) {
+  if (!specTeam) return [];
+  const stdKey = dbToStdAbbr(getModernEquivalent(dbToStdAbbr(specTeam)));
+  if (stdKey === 'BKN') {
+    return ['BKN', 'BRK', 'NJN'];
+  }
+  if (stdKey === 'CHA') {
+    if (year && year < 2004) {
+      return ['CHH', 'CHA', 'CHO'];
+    }
+    return ['CHA', 'CHO'];
+  }
+  if (stdKey === 'NOP') {
+    return ['NOP', 'NOH', 'NOK'];
+  }
+  if (stdKey === 'PHX') {
+    return ['PHX', 'PHO'];
+  }
+  if (stdKey === 'OKC') {
+    return ['OKC', 'SEA'];
+  }
+  if (stdKey === 'MEM') {
+    return ['MEM', 'VAN'];
+  }
+  
+  // For other teams, resolve via FRANCHISE_MAPPING range
+  let targetAbbr = stdKey;
+  const ranges = FRANCHISE_MAPPING[stdKey];
+  if (ranges && year) {
+    for (const range of ranges) {
+      if (year >= range.start && year <= range.end) {
+        targetAbbr = range.abbr;
+        break;
+      }
+    }
+  }
+  const dbTarget = stdToDbAbbr(targetAbbr);
+  const stdTarget = dbToStdAbbr(targetAbbr);
+  const result = new Set([stdTarget, dbTarget, targetAbbr]);
+  return Array.from(result);
+}
+
+// Check if a player's team abbreviation matches target team abbreviation (and its variants) for a given year
+function matchTeamAbbr(playerTeam, targetTeam, year) {
+  if (!playerTeam || !targetTeam) return false;
+  const candidates = getAbbreviationCandidates(targetTeam, year);
+  const upperPlayer = playerTeam.toUpperCase();
+  return candidates.some(c => c.toUpperCase() === upperPlayer);
+}
+
 // Generate room code (4-6 digits)
 function generateRoomId() {
   return Math.floor(1000 + Math.random() * 9000).toString();
@@ -437,6 +488,8 @@ module.exports = {
   generateSnakeDraftOrder,
   getAvailablePlayersForRoom,
   getHistoricalTeamAbbr,
+  getAbbreviationCandidates,
+  matchTeamAbbr,
   HISTORICAL_TEAMS_META,
   getActiveRooms,
   activeRooms,

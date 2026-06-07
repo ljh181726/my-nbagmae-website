@@ -600,6 +600,40 @@ function updateDraftUI() {
     turnBannerName.className = isMyTurn ? 'text-purple-400 font-black' : 'text-white';
   }
 
+  // Render PVE year / draft settings summary badge
+  const settingsSummary = $('#draft-settings-summary');
+  if (settingsSummary) {
+    let year = room.settings.year || "未知年份";
+    let allStarCapText = "無限制";
+    let rookieFloorText = "0 人";
+    
+    if (room.isPVE && room.levelId) {
+      const lvl = room.levelId;
+      if (lvl >= 1 && lvl <= 10) {
+        allStarCapText = "無上限";
+        rookieFloorText = "0 人";
+      } else if (lvl >= 11 && lvl <= 30) {
+        allStarCapText = "最多 2 人";
+        rookieFloorText = "至少 1 人";
+      } else if (lvl >= 31 && lvl <= 45) {
+        allStarCapText = "最多 3 人";
+        rookieFloorText = "至少 1 人";
+      } else if (lvl >= 46 && lvl <= 55) {
+        allStarCapText = "最多 4 人";
+        rookieFloorText = "至少 1 人";
+      } else if (lvl >= 56 && lvl <= 60) {
+        allStarCapText = "最多 5 人";
+        rookieFloorText = "至少 1 人";
+      }
+    } else {
+      const cap = room.settings.allStarCap !== undefined ? room.settings.allStarCap : 5;
+      const floor = room.settings.rookieFloor || 0;
+      allStarCapText = cap >= 5 ? "無上限" : `最多 ${cap} 人`;
+      rookieFloorText = floor === 0 ? "0 人" : `至少 ${floor} 人`;
+    }
+    settingsSummary.textContent = `📅 時空年份: ${year} 年 | ⭐ 全明星限制: ${allStarCapText} | 👶 新秀限制: ${rookieFloorText}`;
+  }
+
   const pickBadge = $('#draft-pick-badge');
   const currentPickNum = Math.floor(room.draftIndex / room.players.length) + 1;
   pickBadge.textContent = `${currentPickNum} / 5`;
@@ -1894,8 +1928,21 @@ function renderPVEMap() {
 function openPVEModal(levelData) {
   state.currentPVELevelId = levelData.level;
   
+  const chapterNames = [
+    "第一章：新手試煉 (1-10 關)",
+    "第二章：分區季後挑戰 (11-20 關)",
+    "第三章：白銀爭霸 (21-30 關)",
+    "第四章：黃金沙場對決 (31-40 關)",
+    "第五章：強權崛起 (41-50 關)",
+    "第六章：名人堂傳奇王朝 (51-60 關)"
+  ];
+  const lvl = levelData.level;
+  const chapterIdx = Math.floor((lvl - 1) / 10);
+  $('#pve-level-chapter').textContent = `章節：${chapterNames[chapterIdx] || '未知章節'}`;
+
   $('#pve-level-title').textContent = levelData.name;
-  $('#pve-level-cpu-team').textContent = levelData.cpuTeamName;
+  const cleanTeamName = levelData.cpuTeamName.replace(/^\d{4}\s*/, '');
+  $('#pve-level-cpu-team').textContent = `${levelData.year} 年 ${cleanTeamName}`;
   $('#pve-level-difficulty').textContent = `${levelData.difficulty.toUpperCase()} / ${getModeChineseName(levelData.mode)}`;
   $('#pve-level-cpu-overall').textContent = levelData.ratings.overall;
   

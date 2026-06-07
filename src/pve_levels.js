@@ -5,26 +5,16 @@
 const PVE_LEVELS = [
   {
     "level": 1,
-    "name": "關卡 1: 1977 費城76人挑戰",
+    "name": "關卡 1: 2012 夏洛特山貓挑戰",
+    "year": 2012,
     "difficulty": "bronze",
-    "cpuTeamName": "1977 費城76人",
+    "cpuTeamName": "2012 夏洛特山貓",
     "cpuRoster": [
       {
-        "name": "A. Player L1",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L1",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
+        "name": "Gerald Henderson",
+        "pts": 15.1,
+        "trb": 4.1,
+        "ast": 2.3,
         "position": [
           "SG"
         ],
@@ -32,10 +22,32 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L1",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
+        "name": "DJ Augustin",
+        "pts": 11.1,
+        "trb": 2.3,
+        "ast": 6.4,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Kemba Walker",
+        "pts": 12.1,
+        "trb": 3.5,
+        "ast": 4.4,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Corey Maggette",
+        "pts": 15,
+        "trb": 3.9,
+        "ast": 1.2,
         "position": [
           "SF"
         ],
@@ -43,21 +55,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "D. Player L1",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L1",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
+        "name": "Byron Mullens",
+        "pts": 9.3,
+        "trb": 5,
+        "ast": 0.9,
         "position": [
           "C"
         ],
@@ -66,245 +67,28 @@ const PVE_LEVELS = [
       }
     ],
     "ratings": {
-      "offense": 30,
-      "defense": 62,
-      "overall": 51
-    },
-    "mode": "wheel",
-    "restrictions": {}
-  },
-  {
-    "level": 2,
-    "name": "關卡 2: 1978 克里夫蘭騎士挑戰",
-    "difficulty": "bronze",
-    "cpuTeamName": "1978 克里夫蘭騎士",
-    "cpuRoster": [
-      {
-        "name": "A. Player L2",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L2",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L2",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L2",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L2",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 30,
-      "defense": 62,
-      "overall": 51
-    },
-    "mode": "wheel",
-    "restrictions": {}
-  },
-  {
-    "level": 3,
-    "name": "關卡 3: 1979 明尼蘇達灰狼挑戰",
-    "difficulty": "bronze",
-    "cpuTeamName": "1979 明尼蘇達灰狼",
-    "cpuRoster": [
-      {
-        "name": "A. Player L3",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L3",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L3",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L3",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L3",
-        "pts": 8,
-        "trb": 3,
-        "ast": 2,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 30,
-      "defense": 62,
-      "overall": 51
-    },
-    "mode": "wheel",
-    "restrictions": {}
-  },
-  {
-    "level": 4,
-    "name": "關卡 4: 1980 薩克拉門托國王挑戰",
-    "difficulty": "bronze",
-    "cpuTeamName": "1980 薩克拉門托國王",
-    "cpuRoster": [
-      {
-        "name": "A. Player L4",
-        "pts": 8.4,
-        "trb": 3.2,
-        "ast": 2.1,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L4",
-        "pts": 8.4,
-        "trb": 3.2,
-        "ast": 2.1,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L4",
-        "pts": 8.4,
-        "trb": 3.2,
-        "ast": 2.1,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L4",
-        "pts": 8.4,
-        "trb": 3.2,
-        "ast": 2.1,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L4",
-        "pts": 8.4,
-        "trb": 3.2,
-        "ast": 2.1,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 30,
-      "defense": 63,
+      "offense": 37,
+      "defense": 67,
       "overall": 52
     },
     "mode": "wheel",
-    "restrictions": {}
+    "restrictions": {
+      "allStarCap": 5,
+      "rookieFloor": 0
+    }
   },
   {
-    "level": 5,
-    "name": "關卡 5: 1981 奧蘭多魔術挑戰",
+    "level": 2,
+    "name": "關卡 2: 1993 達拉斯獨行俠挑戰",
+    "year": 1993,
     "difficulty": "bronze",
-    "cpuTeamName": "1981 奧蘭多魔術",
+    "cpuTeamName": "1993 達拉斯獨行俠",
     "cpuRoster": [
       {
-        "name": "A. Player L5",
-        "pts": 9.2,
-        "trb": 3.6,
-        "ast": 2.3,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L5",
-        "pts": 9.2,
-        "trb": 3.6,
-        "ast": 2.3,
+        "name": "Derek Harper",
+        "pts": 18.2,
+        "trb": 2,
+        "ast": 5.4,
         "position": [
           "SG"
         ],
@@ -312,161 +96,21 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L5",
-        "pts": 9.2,
-        "trb": 3.6,
-        "ast": 2.3,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L5",
-        "pts": 9.2,
-        "trb": 3.6,
-        "ast": 2.3,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L5",
-        "pts": 9.2,
-        "trb": 3.6,
-        "ast": 2.3,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 30,
-      "defense": 65,
-      "overall": 53
-    },
-    "mode": "wheel",
-    "restrictions": {}
-  },
-  {
-    "level": 6,
-    "name": "關卡 6: 1982 底特律活塞挑戰",
-    "difficulty": "bronze",
-    "cpuTeamName": "1982 底特律活塞",
-    "cpuRoster": [
-      {
-        "name": "A. Player L6",
-        "pts": 10.7,
-        "trb": 4.2,
-        "ast": 2.6,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L6",
-        "pts": 10.7,
-        "trb": 4.2,
-        "ast": 2.6,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L6",
-        "pts": 10.7,
-        "trb": 4.2,
-        "ast": 2.6,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L6",
-        "pts": 10.7,
-        "trb": 4.2,
-        "ast": 2.6,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L6",
-        "pts": 10.7,
-        "trb": 4.2,
-        "ast": 2.6,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 31,
-      "defense": 67,
-      "overall": 54
-    },
-    "mode": "wheel",
-    "restrictions": {}
-  },
-  {
-    "level": 7,
-    "name": "關卡 7: 1983 華盛頓巫師挑戰",
-    "difficulty": "bronze",
-    "cpuTeamName": "1983 華盛頓巫師",
-    "cpuRoster": [
-      {
-        "name": "A. Player L7",
-        "pts": 11.2,
+        "name": "Jim Jackson",
+        "pts": 16.3,
         "trb": 4.4,
-        "ast": 2.7,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L7",
-        "pts": 11.2,
-        "trb": 4.4,
-        "ast": 2.7,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L7",
-        "pts": 11.2,
-        "trb": 4.4,
-        "ast": 2.7,
+        "ast": 4.7,
         "position": [
           "SF"
         ],
         "is_allstar": false,
-        "is_rookie": false
+        "is_rookie": true
       },
       {
-        "name": "D. Player L7",
-        "pts": 11.2,
-        "trb": 4.4,
-        "ast": 2.7,
+        "name": "Terry Davis",
+        "pts": 12.7,
+        "trb": 9.3,
+        "ast": 0.9,
         "position": [
           "PF"
         ],
@@ -474,408 +118,125 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L7",
-        "pts": 11.2,
-        "trb": 4.4,
-        "ast": 2.7,
+        "name": "Sean Rooks",
+        "pts": 13.5,
+        "trb": 7.4,
+        "ast": 1.3,
         "position": [
           "C"
         ],
         "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 33,
-      "defense": 68,
-      "overall": 55
-    },
-    "mode": "wheel",
-    "restrictions": {}
-  },
-  {
-    "level": 8,
-    "name": "關卡 8: 1984 紐奧良鵜鶘挑戰",
-    "difficulty": "bronze",
-    "cpuTeamName": "1984 紐奧良鵜鶘",
-    "cpuRoster": [
-      {
-        "name": "A. Player L8",
-        "pts": 11.8,
-        "trb": 4.6,
-        "ast": 2.8,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
+        "is_rookie": true
       },
       {
-        "name": "B. Player L8",
-        "pts": 11.8,
-        "trb": 4.6,
-        "ast": 2.8,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L8",
-        "pts": 11.8,
-        "trb": 4.6,
-        "ast": 2.8,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L8",
-        "pts": 11.8,
-        "trb": 4.6,
-        "ast": 2.8,
+        "name": "Doug Smith",
+        "pts": 10.4,
+        "trb": 5.4,
+        "ast": 1.7,
         "position": [
           "PF"
         ],
         "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L8",
-        "pts": 11.8,
-        "trb": 4.6,
-        "ast": 2.8,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 35,
-      "defense": 68,
-      "overall": 56
-    },
-    "mode": "wheel",
-    "restrictions": {}
-  },
-  {
-    "level": 9,
-    "name": "關卡 9: 1985 休士頓火箭挑戰",
-    "difficulty": "bronze",
-    "cpuTeamName": "1985 休士頓火箭",
-    "cpuRoster": [
-      {
-        "name": "A. Player L9",
-        "pts": 12.4,
-        "trb": 4.8,
-        "ast": 2.9,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L9",
-        "pts": 12.4,
-        "trb": 4.8,
-        "ast": 2.9,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L9",
-        "pts": 12.4,
-        "trb": 4.8,
-        "ast": 2.9,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L9",
-        "pts": 12.4,
-        "trb": 4.8,
-        "ast": 2.9,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L9",
-        "pts": 12.4,
-        "trb": 4.8,
-        "ast": 2.9,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 36,
-      "defense": 69,
-      "overall": 57
-    },
-    "mode": "wheel",
-    "restrictions": {}
-  },
-  {
-    "level": 10,
-    "name": "關卡 10: 1986 亞特蘭大老鷹挑戰",
-    "difficulty": "bronze",
-    "cpuTeamName": "1986 亞特蘭大老鷹",
-    "cpuRoster": [
-      {
-        "name": "A. Player L10",
-        "pts": 13,
-        "trb": 5,
-        "ast": 3,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L10",
-        "pts": 13,
-        "trb": 5,
-        "ast": 3,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L10",
-        "pts": 13,
-        "trb": 5,
-        "ast": 3,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L10",
-        "pts": 13,
-        "trb": 5,
-        "ast": 3,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L10",
-        "pts": 13,
-        "trb": 5,
-        "ast": 3,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 38,
-      "defense": 70,
-      "overall": 59
-    },
-    "mode": "wheel",
-    "restrictions": {}
-  },
-  {
-    "level": 11,
-    "name": "關卡 11: 1977 波特蘭拓荒者挑戰",
-    "difficulty": "bronze",
-    "cpuTeamName": "1977 波特蘭拓荒者",
-    "cpuRoster": [
-      {
-        "name": "A. Player L11",
-        "pts": 13,
-        "trb": 5,
-        "ast": 3,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L11",
-        "pts": 13,
-        "trb": 5,
-        "ast": 3,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L11",
-        "pts": 13,
-        "trb": 5,
-        "ast": 3,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L11",
-        "pts": 13,
-        "trb": 5,
-        "ast": 3,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L11",
-        "pts": 13,
-        "trb": 5,
-        "ast": 3,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 38,
-      "defense": 70,
-      "overall": 59
-    },
-    "mode": "wheel",
-    "restrictions": {}
-  },
-  {
-    "level": 12,
-    "name": "關卡 12: 1978 猶他爵士挑戰",
-    "difficulty": "bronze",
-    "cpuTeamName": "1978 猶他爵士",
-    "cpuRoster": [
-      {
-        "name": "A. Player L12",
-        "pts": 13.7,
-        "trb": 5.3,
-        "ast": 3.2,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L12",
-        "pts": 13.7,
-        "trb": 5.3,
-        "ast": 3.2,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L12",
-        "pts": 13.7,
-        "trb": 5.3,
-        "ast": 3.2,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L12",
-        "pts": 13.7,
-        "trb": 5.3,
-        "ast": 3.2,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L12",
-        "pts": 13.7,
-        "trb": 5.3,
-        "ast": 3.2,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
+        "is_rookie": true
       }
     ],
     "ratings": {
       "offense": 40,
+      "defense": 76,
+      "overall": 58
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 5,
+      "rookieFloor": 0
+    }
+  },
+  {
+    "level": 3,
+    "name": "關卡 3: 1998 丹佛金塊挑戰",
+    "year": 1998,
+    "difficulty": "bronze",
+    "cpuTeamName": "1998 丹佛金塊",
+    "cpuRoster": [
+      {
+        "name": "Eric Williams",
+        "pts": 19.8,
+        "trb": 5.3,
+        "ast": 3,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "LaPhonso Ellis",
+        "pts": 14.3,
+        "trb": 7.2,
+        "ast": 2.8,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Bobby Jackson",
+        "pts": 11.6,
+        "trb": 4.4,
+        "ast": 4.7,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Johnny Newman",
+        "pts": 14.7,
+        "trb": 1.9,
+        "ast": 1.9,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Dean Garrett",
+        "pts": 7.3,
+        "trb": 7.9,
+        "ast": 1.1,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 38,
       "defense": 71,
-      "overall": 60
+      "overall": 55
     },
     "mode": "wheel",
-    "restrictions": {}
+    "restrictions": {
+      "allStarCap": 5,
+      "rookieFloor": 0
+    }
   },
   {
-    "level": 13,
-    "name": "關卡 13: 1979 印第安納溜馬挑戰",
+    "level": 4,
+    "name": "關卡 4: 2005 亞特蘭大老鷹挑戰",
+    "year": 2005,
     "difficulty": "bronze",
-    "cpuTeamName": "1979 印第安納溜馬",
+    "cpuTeamName": "2005 亞特蘭大老鷹",
     "cpuRoster": [
       {
-        "name": "A. Player L13",
-        "pts": 14.4,
-        "trb": 5.6,
-        "ast": 3.4,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L13",
-        "pts": 14.4,
-        "trb": 5.6,
-        "ast": 3.4,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L13",
-        "pts": 14.4,
-        "trb": 5.6,
-        "ast": 3.4,
+        "name": "Al Harrington",
+        "pts": 17.5,
+        "trb": 7,
+        "ast": 3.2,
         "position": [
           "SF"
         ],
@@ -883,21 +244,43 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "D. Player L13",
-        "pts": 14.4,
-        "trb": 5.6,
-        "ast": 3.4,
+        "name": "Josh Childress",
+        "pts": 10.1,
+        "trb": 6,
+        "ast": 1.9,
         "position": [
-          "PF"
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Josh Smith",
+        "pts": 9.7,
+        "trb": 6.2,
+        "ast": 1.7,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Tony Delk",
+        "pts": 11.9,
+        "trb": 2.3,
+        "ast": 1.9,
+        "position": [
+          "SG"
         ],
         "is_allstar": false,
         "is_rookie": false
       },
       {
-        "name": "E. Player L13",
-        "pts": 14.4,
-        "trb": 5.6,
-        "ast": 3.4,
+        "name": "Predrag Drobnjak",
+        "pts": 8.4,
+        "trb": 3.4,
+        "ast": 0.7,
         "position": [
           "C"
         ],
@@ -906,57 +289,50 @@ const PVE_LEVELS = [
       }
     ],
     "ratings": {
-      "offense": 42,
-      "defense": 72,
-      "overall": 62
+      "offense": 32,
+      "defense": 68,
+      "overall": 50
     },
     "mode": "wheel",
-    "restrictions": {}
+    "restrictions": {
+      "allStarCap": 5,
+      "rookieFloor": 0
+    }
   },
   {
-    "level": 14,
-    "name": "關卡 14: 1980 曼斐斯灰熊挑戰",
+    "level": 5,
+    "name": "關卡 5: 2010 紐澤西籃網挑戰",
+    "year": 2010,
     "difficulty": "bronze",
-    "cpuTeamName": "1980 曼斐斯灰熊",
+    "cpuTeamName": "2010 紐澤西籃網",
     "cpuRoster": [
       {
-        "name": "A. Player L14",
-        "pts": 14.4,
-        "trb": 5.6,
-        "ast": 3.4,
+        "name": "Brook Lopez",
+        "pts": 18.8,
+        "trb": 8.6,
+        "ast": 2.3,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Devin Harris",
+        "pts": 16.9,
+        "trb": 3.2,
+        "ast": 6.6,
         "position": [
           "PG"
         ],
-        "is_allstar": false,
+        "is_allstar": true,
         "is_rookie": false
       },
       {
-        "name": "B. Player L14",
-        "pts": 14.4,
-        "trb": 5.6,
-        "ast": 3.4,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L14",
-        "pts": 14.4,
-        "trb": 5.6,
-        "ast": 3.4,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L14",
-        "pts": 14.4,
-        "trb": 5.6,
-        "ast": 3.4,
+        "name": "Yi Jianlian",
+        "pts": 12,
+        "trb": 7.2,
+        "ast": 0.9,
         "position": [
           "PF"
         ],
@@ -964,58 +340,73 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L14",
-        "pts": 14.4,
-        "trb": 5.6,
-        "ast": 3.4,
+        "name": "Courtney Lee",
+        "pts": 12.5,
+        "trb": 3.5,
+        "ast": 1.7,
         "position": [
-          "C"
+          "SG"
         ],
         "is_allstar": false,
-        "is_rookie": false
+        "is_rookie": true
+      },
+      {
+        "name": "Terrence Williams",
+        "pts": 8.4,
+        "trb": 4.5,
+        "ast": 2.9,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
       }
     ],
     "ratings": {
-      "offense": 42,
-      "defense": 72,
-      "overall": 62
+      "offense": 41,
+      "defense": 75,
+      "overall": 58
     },
     "mode": "wheel",
-    "restrictions": {}
+    "restrictions": {
+      "allStarCap": 5,
+      "rookieFloor": 0
+    }
   },
   {
-    "level": 15,
-    "name": "關卡 15: 1981 邁阿密熱火挑戰",
+    "level": 6,
+    "name": "關卡 6: 2016 費城76人挑戰",
+    "year": 2016,
     "difficulty": "bronze",
-    "cpuTeamName": "1981 邁阿密熱火",
+    "cpuTeamName": "2016 費城76人",
     "cpuRoster": [
       {
-        "name": "A. Player L15",
-        "pts": 15.1,
-        "trb": 5.9,
-        "ast": 3.6,
+        "name": "Jahlil Okafor",
+        "pts": 17.5,
+        "trb": 7,
+        "ast": 1.2,
         "position": [
-          "PG"
+          "C"
         ],
         "is_allstar": false,
-        "is_rookie": false
+        "is_rookie": true
       },
       {
-        "name": "B. Player L15",
-        "pts": 15.1,
-        "trb": 5.9,
-        "ast": 3.6,
+        "name": "Nerlens Noel",
+        "pts": 11.1,
+        "trb": 8.1,
+        "ast": 1.8,
         "position": [
-          "SG"
+          "C"
         ],
         "is_allstar": false,
-        "is_rookie": false
+        "is_rookie": true
       },
       {
-        "name": "C. Player L15",
-        "pts": 15.1,
-        "trb": 5.9,
-        "ast": 3.6,
+        "name": "Robert Covington",
+        "pts": 12.8,
+        "trb": 6.3,
+        "ast": 1.4,
         "position": [
           "SF"
         ],
@@ -1023,10 +414,51 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "D. Player L15",
-        "pts": 15.1,
-        "trb": 5.9,
-        "ast": 3.6,
+        "name": "Jerami Grant",
+        "pts": 9.7,
+        "trb": 4.7,
+        "ast": 1.8,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "TJ McConnell",
+        "pts": 6.1,
+        "trb": 3.1,
+        "ast": 4.5,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 32,
+      "defense": 75,
+      "overall": 54
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 5,
+      "rookieFloor": 0
+    }
+  },
+  {
+    "level": 7,
+    "name": "關卡 7: 1987 洛杉磯快艇挑戰",
+    "year": 1987,
+    "difficulty": "bronze",
+    "cpuTeamName": "1987 洛杉磯快艇",
+    "cpuRoster": [
+      {
+        "name": "Michael Cage",
+        "pts": 15.7,
+        "trb": 11.5,
+        "ast": 1.6,
         "position": [
           "PF"
         ],
@@ -1034,12 +466,45 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L15",
-        "pts": 15.1,
-        "trb": 5.9,
-        "ast": 3.6,
+        "name": "Marques Johnson",
+        "pts": 16.6,
+        "trb": 3.3,
+        "ast": 2.8,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Darnell Valentine",
+        "pts": 11.2,
+        "trb": 2.3,
+        "ast": 6.9,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Benoit Benjamin",
+        "pts": 11.5,
+        "trb": 8.1,
+        "ast": 1.9,
         "position": [
           "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Mike Woodson",
+        "pts": 17.1,
+        "trb": 2.2,
+        "ast": 2.6,
+        "position": [
+          "SG"
         ],
         "is_allstar": false,
         "is_rookie": false
@@ -1047,34 +512,38 @@ const PVE_LEVELS = [
     ],
     "ratings": {
       "offense": 44,
-      "defense": 74,
-      "overall": 64
+      "defense": 76,
+      "overall": 60
     },
     "mode": "wheel",
-    "restrictions": {}
+    "restrictions": {
+      "allStarCap": 5,
+      "rookieFloor": 0
+    }
   },
   {
-    "level": 16,
-    "name": "關卡 16: 1982 布魯克林籃網挑戰",
-    "difficulty": "silver",
-    "cpuTeamName": "1982 布魯克林籃網",
+    "level": 8,
+    "name": "關卡 8: 2001 芝加哥公牛挑戰",
+    "year": 2001,
+    "difficulty": "bronze",
+    "cpuTeamName": "2001 芝加哥公牛",
     "cpuRoster": [
       {
-        "name": "A. Player L16",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Elton Brand",
+        "pts": 20.1,
+        "trb": 10.1,
+        "ast": 3.2,
         "position": [
-          "PG"
+          "PF"
         ],
-        "is_allstar": true,
-        "is_rookie": false
+        "is_allstar": false,
+        "is_rookie": true
       },
       {
-        "name": "B. Player L16",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Ron Mercer",
+        "pts": 19.7,
+        "trb": 3.9,
+        "ast": 3.3,
         "position": [
           "SG"
         ],
@@ -1082,10 +551,62 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L16",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Metta World Peace",
+        "pts": 11.9,
+        "trb": 3.9,
+        "ast": 3,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Brad Miller",
+        "pts": 8.9,
+        "trb": 7.4,
+        "ast": 1.9,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Fred Hoiberg",
+        "pts": 9.1,
+        "trb": 4.2,
+        "ast": 3.6,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 40,
+      "defense": 75,
+      "overall": 58
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 5,
+      "rookieFloor": 0
+    }
+  },
+  {
+    "level": 9,
+    "name": "關卡 9: 1999 溫哥華灰熊挑戰",
+    "year": 1999,
+    "difficulty": "bronze",
+    "cpuTeamName": "1999 溫哥華灰熊",
+    "cpuRoster": [
+      {
+        "name": "Shareef Abdur-Rahim",
+        "pts": 23,
+        "trb": 7.5,
+        "ast": 3.4,
         "position": [
           "SF"
         ],
@@ -1093,10 +614,32 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "D. Player L16",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Mike Bibby",
+        "pts": 13.2,
+        "trb": 2.7,
+        "ast": 6.5,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Bryant Reeves",
+        "pts": 10.8,
+        "trb": 5.5,
+        "ast": 1.5,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Tony Massenburg",
+        "pts": 11.2,
+        "trb": 6,
+        "ast": 0.5,
         "position": [
           "PF"
         ],
@@ -1104,49 +647,558 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L16",
+        "name": "Felipe Lopez",
+        "pts": 9.3,
+        "trb": 3.5,
+        "ast": 1.3,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 38,
+      "defense": 72,
+      "overall": 55
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 5,
+      "rookieFloor": 0
+    }
+  },
+  {
+    "level": 10,
+    "name": "關卡 10: 1997 波士頓塞爾提克挑戰",
+    "year": 1997,
+    "difficulty": "bronze",
+    "cpuTeamName": "1997 波士頓塞爾提克",
+    "cpuRoster": [
+      {
+        "name": "Antoine Walker",
+        "pts": 17.5,
+        "trb": 9,
+        "ast": 3.2,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "David Wesley",
+        "pts": 16.8,
+        "trb": 3.6,
+        "ast": 7.3,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Rick Fox",
+        "pts": 15.4,
+        "trb": 5.2,
+        "ast": 3.8,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Dino Radja",
         "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "trb": 8.4,
+        "ast": 1.9,
         "position": [
           "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Eric Williams",
+        "pts": 15,
+        "trb": 4.6,
+        "ast": 1.8,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 46,
+      "defense": 77,
+      "overall": 62
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 5,
+      "rookieFloor": 0
+    }
+  },
+  {
+    "level": 11,
+    "name": "關卡 11: 1989 邁阿密熱火挑戰",
+    "year": 1989,
+    "difficulty": "silver",
+    "cpuTeamName": "1989 邁阿密熱火",
+    "cpuRoster": [
+      {
+        "name": "Kevin Edwards",
+        "pts": 13.8,
+        "trb": 3.3,
+        "ast": 4.4,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Rory Sparrow",
+        "pts": 12.5,
+        "trb": 2.7,
+        "ast": 5.4,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Billy Thompson",
+        "pts": 10.8,
+        "trb": 7.2,
+        "ast": 2.2,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Grant Long",
+        "pts": 11.9,
+        "trb": 6.7,
+        "ast": 1.8,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Rony Seikaly",
+        "pts": 10.9,
+        "trb": 7,
+        "ast": 0.7,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 35,
+      "defense": 74,
+      "overall": 55
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 12,
+    "name": "關卡 12: 1996 溫哥華灰熊挑戰",
+    "year": 1996,
+    "difficulty": "silver",
+    "cpuTeamName": "1996 溫哥華灰熊",
+    "cpuRoster": [
+      {
+        "name": "Greg Anthony",
+        "pts": 14,
+        "trb": 2.5,
+        "ast": 6.9,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Bryant Reeves",
+        "pts": 13.3,
+        "trb": 7.4,
+        "ast": 1.4,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Blue Edwards",
+        "pts": 12.7,
+        "trb": 4.2,
+        "ast": 2.6,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Kenny Gattison",
+        "pts": 9.2,
+        "trb": 4.6,
+        "ast": 0.6,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Byron Scott",
+        "pts": 10.2,
+        "trb": 2.4,
+        "ast": 1.5,
+        "position": [
+          "SG"
         ],
         "is_allstar": false,
         "is_rookie": false
       }
     ],
     "ratings": {
-      "offense": 45,
-      "defense": 72,
-      "overall": 66
+      "offense": 34,
+      "defense": 69,
+      "overall": 52
     },
     "mode": "wheel",
     "restrictions": {
-      "allStarCap": 2
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 13,
+    "name": "關卡 13: 2002 芝加哥公牛挑戰",
+    "year": 2002,
+    "difficulty": "silver",
+    "cpuTeamName": "2002 芝加哥公牛",
+    "cpuRoster": [
+      {
+        "name": "Marcus Fizer",
+        "pts": 12.3,
+        "trb": 5.6,
+        "ast": 1.6,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Trenton Hassell",
+        "pts": 8.7,
+        "trb": 3.3,
+        "ast": 2.2,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Jamal Crawford",
+        "pts": 9.3,
+        "trb": 1.5,
+        "ast": 2.4,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Eddie Robinson",
+        "pts": 9,
+        "trb": 2.7,
+        "ast": 1.3,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Charles Oakley",
+        "pts": 3.8,
+        "trb": 6,
+        "ast": 2,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 30,
+      "defense": 68,
+      "overall": 49
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 14,
+    "name": "關卡 14: 2008 西雅圖超音速挑戰",
+    "year": 2008,
+    "difficulty": "silver",
+    "cpuTeamName": "2008 西雅圖超音速",
+    "cpuRoster": [
+      {
+        "name": "Kevin Durant",
+        "pts": 20.3,
+        "trb": 4.4,
+        "ast": 2.4,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Earl Watson",
+        "pts": 10.7,
+        "trb": 2.9,
+        "ast": 6.8,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Chris Wilcox",
+        "pts": 13.4,
+        "trb": 7,
+        "ast": 1.2,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Nick Collison",
+        "pts": 9.8,
+        "trb": 9.4,
+        "ast": 1.4,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Jeff Green",
+        "pts": 10.5,
+        "trb": 4.7,
+        "ast": 1.5,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 37,
+      "defense": 75,
+      "overall": 56
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 15,
+    "name": "關卡 15: 2012 華盛頓巫師挑戰",
+    "year": 2012,
+    "difficulty": "silver",
+    "cpuTeamName": "2012 華盛頓巫師",
+    "cpuRoster": [
+      {
+        "name": "John Wall",
+        "pts": 16.3,
+        "trb": 4.5,
+        "ast": 8,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Jordan Crawford",
+        "pts": 14.7,
+        "trb": 2.6,
+        "ast": 3,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "James Singleton",
+        "pts": 8.2,
+        "trb": 6.8,
+        "ast": 1.3,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Trevor Booker",
+        "pts": 8.4,
+        "trb": 6.5,
+        "ast": 0.8,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Andray Blatche",
+        "pts": 8.5,
+        "trb": 5.8,
+        "ast": 1.1,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 33,
+      "defense": 75,
+      "overall": 54
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 16,
+    "name": "關卡 16: 2015 紐約尼克挑戰",
+    "year": 2015,
+    "difficulty": "silver",
+    "cpuTeamName": "2015 紐約尼克",
+    "cpuRoster": [
+      {
+        "name": "Carmelo Anthony",
+        "pts": 24.2,
+        "trb": 6.6,
+        "ast": 3.1,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Andrea Bargnani",
+        "pts": 14.8,
+        "trb": 4.4,
+        "ast": 1.6,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Langston Galloway",
+        "pts": 11.8,
+        "trb": 4.2,
+        "ast": 3.3,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Jose Calderon",
+        "pts": 9.1,
+        "trb": 3,
+        "ast": 4.7,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Tim Hardaway",
+        "pts": 11.5,
+        "trb": 2.2,
+        "ast": 1.8,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 45,
+      "defense": 69,
+      "overall": 57
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
     }
   },
   {
     "level": 17,
-    "name": "關卡 17: 1983 密爾瓦基公鹿挑戰",
+    "name": "關卡 17: 2018 鳳凰城太陽挑戰",
+    "year": 2018,
     "difficulty": "silver",
-    "cpuTeamName": "1983 密爾瓦基公鹿",
+    "cpuTeamName": "2018 鳳凰城太陽",
     "cpuRoster": [
       {
-        "name": "A. Player L17",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L17",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Devin Booker",
+        "pts": 24.9,
+        "trb": 4.5,
+        "ast": 4.7,
         "position": [
           "SG"
         ],
@@ -1154,10 +1206,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L17",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "TJ Warren",
+        "pts": 19.6,
+        "trb": 5.1,
+        "ast": 1.3,
         "position": [
           "SF"
         ],
@@ -1165,60 +1217,95 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "D. Player L17",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Josh Jackson",
+        "pts": 13.1,
+        "trb": 4.6,
+        "ast": 1.5,
         "position": [
-          "PF"
+          "SF"
         ],
         "is_allstar": false,
-        "is_rookie": false
+        "is_rookie": true
       },
       {
-        "name": "E. Player L17",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Alex Len",
+        "pts": 8.5,
+        "trb": 7.5,
+        "ast": 1.2,
         "position": [
           "C"
         ],
         "is_allstar": false,
         "is_rookie": false
+      },
+      {
+        "name": "Tyson Chandler",
+        "pts": 6.5,
+        "trb": 9.1,
+        "ast": 1.2,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
       }
     ],
     "ratings": {
-      "offense": 45,
-      "defense": 72,
-      "overall": 66
+      "offense": 41,
+      "defense": 77,
+      "overall": 59
     },
     "mode": "wheel",
     "restrictions": {
+      "allStarCap": 2,
       "rookieFloor": 1
     }
   },
   {
     "level": 18,
-    "name": "關卡 18: 1984 多倫多暴龍挑戰",
+    "name": "關卡 18: 2019 克里夫蘭騎士挑戰",
+    "year": 2019,
     "difficulty": "silver",
-    "cpuTeamName": "1984 多倫多暴龍",
+    "cpuTeamName": "2019 克里夫蘭騎士",
     "cpuRoster": [
       {
-        "name": "A. Player L18",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Kevin Love",
+        "pts": 17,
+        "trb": 10.9,
+        "ast": 2.2,
         "position": [
-          "PG"
+          "PF"
         ],
         "is_allstar": true,
         "is_rookie": false
       },
       {
-        "name": "B. Player L18",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Tristan Thompson",
+        "pts": 10.9,
+        "trb": 10.2,
+        "ast": 2,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Collin Sexton",
+        "pts": 16.7,
+        "trb": 2.9,
+        "ast": 3,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Jordan Clarkson",
+        "pts": 16.8,
+        "trb": 3.3,
+        "ast": 2.4,
         "position": [
           "SG"
         ],
@@ -1226,71 +1313,62 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L18",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L18",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L18",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Larry Nance",
+        "pts": 9.4,
+        "trb": 8.2,
+        "ast": 3.2,
         "position": [
           "C"
         ],
-        "is_allstar": false,
+        "is_allstar": true,
         "is_rookie": false
       }
     ],
     "ratings": {
-      "offense": 45,
-      "defense": 72,
-      "overall": 66
+      "offense": 43,
+      "defense": 83,
+      "overall": 63
     },
     "mode": "wheel",
     "restrictions": {
-      "allStarCap": 2
+      "allStarCap": 2,
+      "rookieFloor": 1
     }
   },
   {
     "level": 19,
-    "name": "關卡 19: 1985 波士頓塞爾提克挑戰",
+    "name": "關卡 19: 2021 奧蘭多魔術挑戰",
+    "year": 2021,
     "difficulty": "silver",
-    "cpuTeamName": "1985 波士頓塞爾提克",
+    "cpuTeamName": "2021 奧蘭多魔術",
     "cpuRoster": [
       {
-        "name": "A. Player L19",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Markelle Fultz",
+        "pts": 12.9,
+        "trb": 3.1,
+        "ast": 5.4,
         "position": [
           "PG"
         ],
-        "is_allstar": true,
+        "is_allstar": false,
         "is_rookie": false
       },
       {
-        "name": "B. Player L19",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Cole Anthony",
+        "pts": 12.9,
+        "trb": 4.7,
+        "ast": 4.1,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Terrence Ross",
+        "pts": 15.6,
+        "trb": 3.4,
+        "ast": 2.3,
         "position": [
           "SG"
         ],
@@ -1298,70 +1376,368 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L19",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Michael Carter-Williams",
+        "pts": 8.8,
+        "trb": 4.5,
+        "ast": 4.2,
         "position": [
-          "SF"
+          "SG"
         ],
         "is_allstar": false,
         "is_rookie": false
       },
       {
-        "name": "D. Player L19",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Dwayne Bacon",
+        "pts": 10.9,
+        "trb": 3.1,
+        "ast": 1.3,
         "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L19",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
-        "position": [
-          "C"
+          "SG"
         ],
         "is_allstar": false,
         "is_rookie": false
       }
     ],
     "ratings": {
-      "offense": 45,
-      "defense": 72,
-      "overall": 66
+      "offense": 37,
+      "defense": 66,
+      "overall": 52
     },
     "mode": "wheel",
     "restrictions": {
+      "allStarCap": 2,
       "rookieFloor": 1
     }
   },
   {
     "level": 20,
-    "name": "關卡 20: 1986 金州勇士挑戰",
+    "name": "關卡 20: 2023 底特律活塞挑戰",
+    "year": 2023,
     "difficulty": "silver",
-    "cpuTeamName": "1986 金州勇士",
+    "cpuTeamName": "2023 底特律活塞",
     "cpuRoster": [
       {
-        "name": "A. Player L20",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Cade Cunningham",
+        "pts": 19.9,
+        "trb": 6.2,
+        "ast": 6,
         "position": [
           "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Bojan Bogdanovic",
+        "pts": 21.6,
+        "trb": 3.8,
+        "ast": 2.6,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Jaden Ivey",
+        "pts": 16.3,
+        "trb": 3.9,
+        "ast": 5.2,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Isaiah Stewart",
+        "pts": 11.3,
+        "trb": 8.1,
+        "ast": 1.4,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Killian Hayes",
+        "pts": 10.3,
+        "trb": 2.9,
+        "ast": 6.2,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 48,
+      "defense": 74,
+      "overall": 61
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 21,
+    "name": "關卡 21: 1990 奧蘭多魔術挑戰",
+    "year": 1990,
+    "difficulty": "silver",
+    "cpuTeamName": "1990 奧蘭多魔術",
+    "cpuRoster": [
+      {
+        "name": "Reggie Theus",
+        "pts": 18.9,
+        "trb": 2.9,
+        "ast": 5.4,
+        "position": [
+          "SG"
         ],
         "is_allstar": true,
         "is_rookie": false
       },
       {
-        "name": "B. Player L20",
-        "pts": 14,
-        "trb": 5,
+        "name": "Terry Catledge",
+        "pts": 19.4,
+        "trb": 7.6,
+        "ast": 1,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Sam Vincent",
+        "pts": 11.2,
+        "trb": 3.1,
+        "ast": 5.6,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Jerry Reynolds",
+        "pts": 12.8,
+        "trb": 4.8,
+        "ast": 2.7,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Otis Smith",
+        "pts": 13.5,
+        "trb": 4.6,
+        "ast": 2.3,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 46,
+      "defense": 71,
+      "overall": 59
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 22,
+    "name": "關卡 22: 1982 克里夫蘭騎士挑戰",
+    "year": 1982,
+    "difficulty": "silver",
+    "cpuTeamName": "1982 克里夫蘭騎士",
+    "cpuRoster": [
+      {
+        "name": "James Edwards",
+        "pts": 16.7,
+        "trb": 7.5,
+        "ast": 1.6,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Geoff Huston",
+        "pts": 10.3,
+        "trb": 1.9,
+        "ast": 7.6,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Scott Wedman",
+        "pts": 10.9,
+        "trb": 5.6,
+        "ast": 2.5,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Bob Wilkerson",
+        "pts": 11,
+        "trb": 3.8,
+        "ast": 3.6,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Lowes Moore",
+        "pts": 11.3,
+        "trb": 1,
+        "ast": 3.8,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 40,
+      "defense": 69,
+      "overall": 55
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 23,
+    "name": "關卡 23: 1995 明尼蘇達灰狼挑戰",
+    "year": 1995,
+    "difficulty": "silver",
+    "cpuTeamName": "1995 明尼蘇達灰狼",
+    "cpuRoster": [
+      {
+        "name": "Christian Laettner",
+        "pts": 16.3,
+        "trb": 7.6,
+        "ast": 2.9,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Isaiah Rider",
+        "pts": 20.4,
+        "trb": 3.3,
+        "ast": 3.3,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Doug West",
+        "pts": 12.9,
+        "trb": 3.2,
+        "ast": 2.6,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Sean Rooks",
+        "pts": 10.9,
+        "trb": 6.1,
+        "ast": 1.2,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Darrick Martin",
+        "pts": 7.5,
+        "trb": 1.9,
+        "ast": 3.9,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 39,
+      "defense": 70,
+      "overall": 55
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 24,
+    "name": "關卡 24: 2004 多倫多暴龍挑戰",
+    "year": 2004,
+    "difficulty": "silver",
+    "cpuTeamName": "2004 多倫多暴龍",
+    "cpuRoster": [
+      {
+        "name": "Vince Carter",
+        "pts": 22.5,
+        "trb": 4.8,
+        "ast": 4.8,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Chris Bosh",
+        "pts": 11.5,
+        "trb": 7.4,
+        "ast": 1,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Alvin Williams",
+        "pts": 8.8,
+        "trb": 2.7,
         "ast": 4,
         "position": [
           "SG"
@@ -1370,10 +1746,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L20",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Morris Peterson",
+        "pts": 8.3,
+        "trb": 3.2,
+        "ast": 1.4,
         "position": [
           "SF"
         ],
@@ -1381,10 +1757,284 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "D. Player L20",
-        "pts": 14,
-        "trb": 5,
-        "ast": 4,
+        "name": "Milt Palacio",
+        "pts": 4.4,
+        "trb": 1.7,
+        "ast": 3.1,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 35,
+      "defense": 69,
+      "overall": 52
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 25,
+    "name": "關卡 25: 2007 孟菲斯灰熊挑戰",
+    "year": 2007,
+    "difficulty": "silver",
+    "cpuTeamName": "2007 孟菲斯灰熊",
+    "cpuRoster": [
+      {
+        "name": "Pau Gasol",
+        "pts": 20.8,
+        "trb": 9.8,
+        "ast": 3.4,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Mike Miller",
+        "pts": 18.5,
+        "trb": 5.4,
+        "ast": 4.3,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Chucky Atkins",
+        "pts": 13.2,
+        "trb": 1.9,
+        "ast": 4.6,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Hakim Warrick",
+        "pts": 12.7,
+        "trb": 5.1,
+        "ast": 0.9,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Rudy Gay",
+        "pts": 10.8,
+        "trb": 4.5,
+        "ast": 1.3,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 45,
+      "defense": 75,
+      "overall": 60
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 26,
+    "name": "關卡 26: 2011 沙加緬度國王挑戰",
+    "year": 2011,
+    "difficulty": "silver",
+    "cpuTeamName": "2011 沙加緬度國王",
+    "cpuRoster": [
+      {
+        "name": "Tyreke Evans",
+        "pts": 17.8,
+        "trb": 4.8,
+        "ast": 5.6,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "DeMarcus Cousins",
+        "pts": 14.1,
+        "trb": 8.6,
+        "ast": 2.5,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Beno Udrih",
+        "pts": 13.7,
+        "trb": 3.4,
+        "ast": 4.9,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Samuel Dalembert",
+        "pts": 8.1,
+        "trb": 8.2,
+        "ast": 0.8,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Jason Thompson",
+        "pts": 8.8,
+        "trb": 6.1,
+        "ast": 1.2,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 37,
+      "defense": 79,
+      "overall": 58
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 27,
+    "name": "關卡 27: 2014 洛杉磯湖人挑戰",
+    "year": 2014,
+    "difficulty": "silver",
+    "cpuTeamName": "2014 洛杉磯湖人",
+    "cpuRoster": [
+      {
+        "name": "Pau Gasol",
+        "pts": 17.4,
+        "trb": 9.7,
+        "ast": 3.4,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Kobe Bryant",
+        "pts": 13.8,
+        "trb": 4.3,
+        "ast": 6.3,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Kendall Marshall",
+        "pts": 8,
+        "trb": 2.9,
+        "ast": 8.8,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Nick Young",
+        "pts": 17.9,
+        "trb": 2.6,
+        "ast": 1.5,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Jodie Meeks",
+        "pts": 15.7,
+        "trb": 2.5,
+        "ast": 1.8,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 49,
+      "defense": 74,
+      "overall": 62
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 28,
+    "name": "關卡 28: 2017 布魯克林籃網挑戰",
+    "year": 2017,
+    "difficulty": "silver",
+    "cpuTeamName": "2017 布魯克林籃網",
+    "cpuRoster": [
+      {
+        "name": "Brook Lopez",
+        "pts": 20.5,
+        "trb": 5.4,
+        "ast": 2.3,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Jeremy Lin",
+        "pts": 14.5,
+        "trb": 3.8,
+        "ast": 5.1,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Trevor Booker",
+        "pts": 10,
+        "trb": 8,
+        "ast": 1.9,
         "position": [
           "PF"
         ],
@@ -1392,10 +2042,762 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L20",
-        "pts": 14,
+        "name": "Sean Kilpatrick",
+        "pts": 13.1,
+        "trb": 4,
+        "ast": 2.2,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Rondae Hollis-Jefferson",
+        "pts": 8.7,
+        "trb": 5.8,
+        "ast": 2,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 40,
+      "defense": 74,
+      "overall": 57
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 29,
+    "name": "關卡 29: 2022 印第安納溜馬挑戰",
+    "year": 2022,
+    "difficulty": "silver",
+    "cpuTeamName": "2022 印第安納溜馬",
+    "cpuRoster": [
+      {
+        "name": "Malcolm Brogdon",
+        "pts": 19.1,
+        "trb": 5.1,
+        "ast": 5.9,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Myles Turner",
+        "pts": 12.9,
+        "trb": 7.1,
+        "ast": 1,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Chris Duarte",
+        "pts": 13.1,
+        "trb": 4.1,
+        "ast": 2.1,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "TJ McConnell",
+        "pts": 8.5,
+        "trb": 3.3,
+        "ast": 4.9,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Terry Taylor",
+        "pts": 9.6,
+        "trb": 5.2,
+        "ast": 1.2,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 37,
+      "defense": 72,
+      "overall": 55
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 30,
+    "name": "關卡 30: 2024 波特蘭拓荒者挑戰",
+    "year": 2024,
+    "difficulty": "silver",
+    "cpuTeamName": "2024 波特蘭拓荒者",
+    "cpuRoster": [
+      {
+        "name": "Anfernee Simons",
+        "pts": 22.6,
+        "trb": 3.6,
+        "ast": 5.5,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Deandre Ayton",
+        "pts": 16.7,
+        "trb": 11.1,
+        "ast": 1.6,
+        "position": [
+          "C"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Jerami Grant",
+        "pts": 21,
+        "trb": 3.5,
+        "ast": 2.8,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Malcolm Brogdon",
+        "pts": 15.7,
+        "trb": 3.8,
+        "ast": 5.5,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Shaedon Sharpe",
+        "pts": 15.9,
         "trb": 5,
+        "ast": 2.9,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 52,
+      "defense": 75,
+      "overall": 64
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 2,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 31,
+    "name": "關卡 31: 1993 鳳凰城太陽挑戰",
+    "year": 1993,
+    "difficulty": "gold",
+    "cpuTeamName": "1993 鳳凰城太陽",
+    "cpuRoster": [
+      {
+        "name": "Charles Barkley",
+        "pts": 25.6,
+        "trb": 12.2,
+        "ast": 5.1,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Kevin Johnson",
+        "pts": 16.1,
+        "trb": 2.1,
+        "ast": 7.8,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Dan Majerle",
+        "pts": 16.9,
+        "trb": 4.7,
+        "ast": 3.8,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Richard Dumas",
+        "pts": 15.8,
+        "trb": 4.6,
+        "ast": 1.3,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Cedric Ceballos",
+        "pts": 12.8,
+        "trb": 5.5,
+        "ast": 1,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 56,
+      "defense": 77,
+      "overall": 67
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 3,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 32,
+    "name": "關卡 32: 1994 休士頓火箭挑戰",
+    "year": 1994,
+    "difficulty": "gold",
+    "cpuTeamName": "1994 休士頓火箭",
+    "cpuRoster": [
+      {
+        "name": "Hakeem Olajuwon",
+        "pts": 27.3,
+        "trb": 11.9,
+        "ast": 3.6,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Otis Thorpe",
+        "pts": 14,
+        "trb": 10.6,
+        "ast": 2.3,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Vernon Maxwell",
+        "pts": 13.6,
+        "trb": 3.1,
+        "ast": 5.1,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Robert Horry",
+        "pts": 9.9,
+        "trb": 5.4,
+        "ast": 2.9,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Kenny Smith",
+        "pts": 11.6,
+        "trb": 1.8,
+        "ast": 4.2,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 49,
+      "defense": 80,
+      "overall": 65
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 3,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 33,
+    "name": "關卡 33: 1998 猶他爵士挑戰",
+    "year": 1998,
+    "difficulty": "gold",
+    "cpuTeamName": "1998 猶他爵士",
+    "cpuRoster": [
+      {
+        "name": "Karl Malone",
+        "pts": 27,
+        "trb": 10.3,
+        "ast": 3.9,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "John Stockton",
+        "pts": 12,
+        "trb": 2.6,
+        "ast": 8.5,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Jeff Hornacek",
+        "pts": 14.2,
+        "trb": 3.4,
+        "ast": 4.4,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Howard Eisley",
+        "pts": 7.7,
+        "trb": 2,
+        "ast": 4.2,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Adam Keefe",
+        "pts": 7.8,
+        "trb": 5.5,
+        "ast": 1.1,
+        "position": [
+          "SF",
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 49,
+      "defense": 77,
+      "overall": 63
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 3,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 34,
+    "name": "關卡 34: 2000 洛杉磯湖人挑戰",
+    "year": 2000,
+    "difficulty": "gold",
+    "cpuTeamName": "2000 洛杉磯湖人",
+    "cpuRoster": [
+      {
+        "name": "Shaquille O'Neal",
+        "pts": 29.7,
+        "trb": 13.6,
+        "ast": 3.8,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Kobe Bryant",
+        "pts": 22.5,
+        "trb": 6.3,
+        "ast": 4.9,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Glen Rice",
+        "pts": 15.9,
+        "trb": 4.1,
+        "ast": 2.2,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Ron Harper",
+        "pts": 7,
+        "trb": 4.2,
+        "ast": 3.4,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Robert Horry",
+        "pts": 5.7,
+        "trb": 4.8,
+        "ast": 1.6,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 52,
+      "defense": 78,
+      "overall": 65
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 3,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 35,
+    "name": "關卡 35: 2002 沙加緬度國王挑戰",
+    "year": 2002,
+    "difficulty": "gold",
+    "cpuTeamName": "2002 沙加緬度國王",
+    "cpuRoster": [
+      {
+        "name": "Chris Webber",
+        "pts": 24.5,
+        "trb": 10.1,
+        "ast": 4.8,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Peja Stojakovic",
+        "pts": 21.2,
+        "trb": 5.3,
+        "ast": 2.5,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Vlade Divac",
+        "pts": 11.1,
+        "trb": 8.4,
+        "ast": 3.7,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Mike Bibby",
+        "pts": 13.7,
+        "trb": 2.8,
+        "ast": 5,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Doug Christie",
+        "pts": 12,
+        "trb": 4.6,
+        "ast": 4.2,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 55,
+      "defense": 80,
+      "overall": 68
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 3,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 36,
+    "name": "關卡 36: 2004 底特律活塞挑戰",
+    "year": 2004,
+    "difficulty": "gold",
+    "cpuTeamName": "2004 底特律活塞",
+    "cpuRoster": [
+      {
+        "name": "Chauncey Billups",
+        "pts": 16.9,
+        "trb": 3.5,
+        "ast": 5.7,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Richard Hamilton",
+        "pts": 17.6,
+        "trb": 3.6,
         "ast": 4,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Ben Wallace",
+        "pts": 9.5,
+        "trb": 12.4,
+        "ast": 1.7,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Tayshaun Prince",
+        "pts": 10.3,
+        "trb": 4.8,
+        "ast": 2.3,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Mehmet Okur",
+        "pts": 9.6,
+        "trb": 5.9,
+        "ast": 1,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 39,
+      "defense": 76,
+      "overall": 58
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 3,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 37,
+    "name": "關卡 37: 2006 邁阿密熱火挑戰",
+    "year": 2006,
+    "difficulty": "gold",
+    "cpuTeamName": "2006 邁阿密熱火",
+    "cpuRoster": [
+      {
+        "name": "Dwyane Wade",
+        "pts": 27.2,
+        "trb": 5.7,
+        "ast": 6.7,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Shaquille O'Neal",
+        "pts": 20,
+        "trb": 9.2,
+        "ast": 1.9,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Jason Williams",
+        "pts": 12.3,
+        "trb": 2.4,
+        "ast": 4.9,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Antoine Walker",
+        "pts": 12.2,
+        "trb": 5.1,
+        "ast": 2,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Udonis Haslem",
+        "pts": 9.3,
+        "trb": 7.8,
+        "ast": 1.2,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 52,
+      "defense": 81,
+      "overall": 67
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 3,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 38,
+    "name": "關卡 38: 2008 波士頓塞爾提克挑戰",
+    "year": 2008,
+    "difficulty": "gold",
+    "cpuTeamName": "2008 波士頓塞爾提克",
+    "cpuRoster": [
+      {
+        "name": "Kevin Garnett",
+        "pts": 18.8,
+        "trb": 9.2,
+        "ast": 3.4,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Paul Pierce",
+        "pts": 19.6,
+        "trb": 5.1,
+        "ast": 4.5,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Ray Allen",
+        "pts": 17.4,
+        "trb": 3.7,
+        "ast": 3.1,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Rajon Rondo",
+        "pts": 10.6,
+        "trb": 4.2,
+        "ast": 5.1,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Kendrick Perkins",
+        "pts": 6.9,
+        "trb": 6.1,
+        "ast": 1.1,
         "position": [
           "C"
         ],
@@ -1404,26 +2806,39 @@ const PVE_LEVELS = [
       }
     ],
     "ratings": {
-      "offense": 45,
-      "defense": 72,
-      "overall": 66
+      "offense": 49,
+      "defense": 78,
+      "overall": 64
     },
     "mode": "wheel",
     "restrictions": {
-      "allStarCap": 2
+      "allStarCap": 3,
+      "rookieFloor": 1
     }
   },
   {
-    "level": 21,
-    "name": "關卡 21: 1987 洛杉磯湖人挑戰",
-    "difficulty": "silver",
-    "cpuTeamName": "1987 洛杉磯湖人",
+    "level": 39,
+    "name": "關卡 39: 2011 達拉斯獨行俠挑戰",
+    "year": 2011,
+    "difficulty": "gold",
+    "cpuTeamName": "2011 達拉斯獨行俠",
     "cpuRoster": [
       {
-        "name": "A. Player L21",
-        "pts": 14.7,
-        "trb": 5.3,
-        "ast": 4.2,
+        "name": "Dirk Nowitzki",
+        "pts": 23,
+        "trb": 7,
+        "ast": 2.6,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Jason Kidd",
+        "pts": 7.9,
+        "trb": 4.4,
+        "ast": 8.2,
         "position": [
           "PG"
         ],
@@ -1431,10 +2846,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "B. Player L21",
-        "pts": 14.7,
-        "trb": 5.3,
-        "ast": 4.2,
+        "name": "Jason Terry",
+        "pts": 15.8,
+        "trb": 1.9,
+        "ast": 4.1,
         "position": [
           "SG"
         ],
@@ -1442,34 +2857,245 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L21",
-        "pts": 14.7,
-        "trb": 5.3,
-        "ast": 4.2,
+        "name": "Shawn Marion",
+        "pts": 12.5,
+        "trb": 6.9,
+        "ast": 1.4,
         "position": [
           "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Caron Butler",
+        "pts": 15,
+        "trb": 4.1,
+        "ast": 1.6,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 52,
+      "defense": 75,
+      "overall": 64
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 3,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 40,
+    "name": "關卡 40: 2012 邁阿密熱火挑戰",
+    "year": 2012,
+    "difficulty": "gold",
+    "cpuTeamName": "2012 邁阿密熱火",
+    "cpuRoster": [
+      {
+        "name": "LeBron James",
+        "pts": 27.1,
+        "trb": 7.9,
+        "ast": 6.2,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Dwyane Wade",
+        "pts": 22.1,
+        "trb": 4.8,
+        "ast": 4.6,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Chris Bosh",
+        "pts": 18,
+        "trb": 7.9,
+        "ast": 1.8,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Mario Chalmers",
+        "pts": 9.8,
+        "trb": 2.7,
+        "ast": 3.5,
+        "position": [
+          "PG"
         ],
         "is_allstar": false,
         "is_rookie": false
       },
       {
-        "name": "D. Player L21",
-        "pts": 14.7,
-        "trb": 5.3,
-        "ast": 4.2,
+        "name": "Udonis Haslem",
+        "pts": 6,
+        "trb": 7.3,
+        "ast": 0.7,
         "position": [
           "PF"
         ],
         "is_allstar": false,
         "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 53,
+      "defense": 79,
+      "overall": 66
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 3,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 41,
+    "name": "關卡 41: 2013 聖安東尼奧馬刺挑戰",
+    "year": 2013,
+    "difficulty": "gold",
+    "cpuTeamName": "2013 聖安東尼奧馬刺",
+    "cpuRoster": [
+      {
+        "name": "Tony Parker",
+        "pts": 20.3,
+        "trb": 3,
+        "ast": 7.6,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
       },
       {
-        "name": "E. Player L21",
-        "pts": 14.7,
-        "trb": 5.3,
-        "ast": 4.2,
+        "name": "Tim Duncan",
+        "pts": 17.8,
+        "trb": 9.9,
+        "ast": 2.7,
         "position": [
           "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Manu Ginobili",
+        "pts": 11.8,
+        "trb": 3.4,
+        "ast": 4.6,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Kawhi Leonard",
+        "pts": 11.9,
+        "trb": 6,
+        "ast": 1.6,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      },
+      {
+        "name": "Tiago Splitter",
+        "pts": 10.3,
+        "trb": 6.4,
+        "ast": 1.6,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 49,
+      "defense": 79,
+      "overall": 64
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 3,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 42,
+    "name": "關卡 42: 2014 印第安納溜馬挑戰",
+    "year": 2014,
+    "difficulty": "gold",
+    "cpuTeamName": "2014 印第安納溜馬",
+    "cpuRoster": [
+      {
+        "name": "Paul George",
+        "pts": 21.7,
+        "trb": 6.8,
+        "ast": 3.5,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Lance Stephenson",
+        "pts": 13.8,
+        "trb": 7.2,
+        "ast": 4.6,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "David West",
+        "pts": 14,
+        "trb": 6.8,
+        "ast": 2.8,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Roy Hibbert",
+        "pts": 10.8,
+        "trb": 6.6,
+        "ast": 1.1,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "George Hill",
+        "pts": 10.3,
+        "trb": 3.7,
+        "ast": 3.5,
+        "position": [
+          "PG"
         ],
         "is_allstar": false,
         "is_rookie": false
@@ -1477,25 +3103,112 @@ const PVE_LEVELS = [
     ],
     "ratings": {
       "offense": 47,
-      "defense": 73,
+      "defense": 79,
+      "overall": 63
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 3,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 43,
+    "name": "關卡 43: 2016 克里夫蘭騎士挑戰",
+    "year": 2016,
+    "difficulty": "gold",
+    "cpuTeamName": "2016 克里夫蘭騎士",
+    "cpuRoster": [
+      {
+        "name": "LeBron James",
+        "pts": 25.3,
+        "trb": 7.4,
+        "ast": 6.8,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Kevin Love",
+        "pts": 16,
+        "trb": 9.9,
+        "ast": 2.4,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Kyrie Irving",
+        "pts": 19.6,
+        "trb": 3,
+        "ast": 4.7,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Dahntay Jones",
+        "pts": 13,
+        "trb": 5,
+        "ast": 2,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Tristan Thompson",
+        "pts": 7.8,
+        "trb": 9,
+        "ast": 0.8,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 52,
+      "defense": 82,
       "overall": 67
     },
     "mode": "wheel",
     "restrictions": {
+      "allStarCap": 3,
       "rookieFloor": 1
     }
   },
   {
-    "level": 22,
-    "name": "關卡 22: 1988 芝加哥公牛挑戰",
-    "difficulty": "silver",
-    "cpuTeamName": "1988 芝加哥公牛",
+    "level": 44,
+    "name": "關卡 44: 2019 多倫多暴龍挑戰",
+    "year": 2019,
+    "difficulty": "gold",
+    "cpuTeamName": "2019 多倫多暴龍",
     "cpuRoster": [
       {
-        "name": "A. Player L22",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
+        "name": "Kawhi Leonard",
+        "pts": 26.6,
+        "trb": 7.3,
+        "ast": 3.3,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Kyle Lowry",
+        "pts": 14.2,
+        "trb": 4.8,
+        "ast": 8.7,
         "position": [
           "PG"
         ],
@@ -1503,32 +3216,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "B. Player L22",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L22",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L22",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
+        "name": "Pascal Siakam",
+        "pts": 16.9,
+        "trb": 6.9,
+        "ast": 3.1,
         "position": [
           "PF"
         ],
@@ -1536,110 +3227,73 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L22",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
+        "name": "Serge Ibaka",
+        "pts": 15,
+        "trb": 8.1,
+        "ast": 1.3,
         "position": [
           "C"
         ],
         "is_allstar": false,
         "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 49,
-      "defense": 75,
-      "overall": 69
-    },
-    "mode": "wheel",
-    "restrictions": {
-      "allStarCap": 2
-    }
-  },
-  {
-    "level": 23,
-    "name": "關卡 23: 1989 聖安東尼奧馬刺挑戰",
-    "difficulty": "silver",
-    "cpuTeamName": "1989 聖安東尼奧馬刺",
-    "cpuRoster": [
+      },
       {
-        "name": "A. Player L23",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
+        "name": "Fred VanVleet",
+        "pts": 11,
+        "trb": 2.6,
+        "ast": 4.8,
         "position": [
           "PG"
         ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L23",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L23",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L23",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L23",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
-        "position": [
-          "C"
-        ],
         "is_allstar": false,
         "is_rookie": false
       }
     ],
     "ratings": {
-      "offense": 49,
-      "defense": 75,
-      "overall": 69
+      "offense": 54,
+      "defense": 79,
+      "overall": 67
     },
     "mode": "wheel",
     "restrictions": {
+      "allStarCap": 3,
       "rookieFloor": 1
     }
   },
   {
-    "level": 24,
-    "name": "關卡 24: 1990 達拉斯獨行俠挑戰",
-    "difficulty": "silver",
-    "cpuTeamName": "1990 達拉斯獨行俠",
+    "level": 45,
+    "name": "關卡 45: 2021 密爾瓦基公鹿挑戰",
+    "year": 2021,
+    "difficulty": "gold",
+    "cpuTeamName": "2021 密爾瓦基公鹿",
     "cpuRoster": [
       {
-        "name": "A. Player L24",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
+        "name": "Giannis Antetokounmpo",
+        "pts": 28.1,
+        "trb": 11,
+        "ast": 5.9,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Khris Middleton",
+        "pts": 20.4,
+        "trb": 6,
+        "ast": 5.4,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Jrue Holiday",
+        "pts": 17.7,
+        "trb": 4.5,
+        "ast": 6.1,
         "position": [
           "PG"
         ],
@@ -1647,71 +3301,84 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "B. Player L24",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
+        "name": "Elijah Bryant",
+        "pts": 16,
+        "trb": 6,
+        "ast": 3,
         "position": [
           "SG"
         ],
         "is_allstar": false,
-        "is_rookie": false
+        "is_rookie": true
       },
       {
-        "name": "C. Player L24",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
+        "name": "Donte DiVincenzo",
+        "pts": 10.4,
+        "trb": 5.8,
+        "ast": 3.1,
         "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L24",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L24",
-        "pts": 15.4,
-        "trb": 5.6,
-        "ast": 4.4,
-        "position": [
-          "C"
+          "SG"
         ],
         "is_allstar": false,
         "is_rookie": false
       }
     ],
     "ratings": {
-      "offense": 49,
-      "defense": 75,
-      "overall": 69
+      "offense": 61,
+      "defense": 80,
+      "overall": 71
     },
     "mode": "wheel",
     "restrictions": {
-      "allStarCap": 2
+      "allStarCap": 3,
+      "rookieFloor": 1
     }
   },
   {
-    "level": 25,
-    "name": "關卡 25: 1991 鳳凰城太陽挑戰",
-    "difficulty": "silver",
-    "cpuTeamName": "1991 鳳凰城太陽",
+    "level": 46,
+    "name": "關卡 46: 1983 費城76人挑戰",
+    "year": 1983,
+    "difficulty": "legend",
+    "cpuTeamName": "1983 費城76人",
     "cpuRoster": [
       {
-        "name": "A. Player L25",
-        "pts": 16.2,
-        "trb": 5.9,
-        "ast": 4.6,
+        "name": "Moses Malone",
+        "pts": 24.5,
+        "trb": 15.3,
+        "ast": 1.3,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Julius Erving",
+        "pts": 21.4,
+        "trb": 6.8,
+        "ast": 3.7,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Andrew Toney",
+        "pts": 19.7,
+        "trb": 2.8,
+        "ast": 4.5,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Maurice Cheeks",
+        "pts": 12.5,
+        "trb": 2.6,
+        "ast": 6.9,
         "position": [
           "PG"
         ],
@@ -1719,10 +3386,147 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "B. Player L25",
-        "pts": 16.2,
-        "trb": 5.9,
-        "ast": 4.6,
+        "name": "Bobby Jones",
+        "pts": 9,
+        "trb": 4.6,
+        "ast": 1.9,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 60,
+      "defense": 80,
+      "overall": 70
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 4,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 47,
+    "name": "關卡 47: 1986 波士頓塞爾提克挑戰",
+    "year": 1986,
+    "difficulty": "legend",
+    "cpuTeamName": "1986 波士頓塞爾提克",
+    "cpuRoster": [
+      {
+        "name": "Larry Bird",
+        "pts": 25.8,
+        "trb": 9.8,
+        "ast": 6.8,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Kevin McHale",
+        "pts": 21.3,
+        "trb": 8.1,
+        "ast": 2.7,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Robert Parish",
+        "pts": 16.1,
+        "trb": 9.5,
+        "ast": 1.8,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Dennis Johnson",
+        "pts": 15.6,
+        "trb": 3.4,
+        "ast": 5.8,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Danny Ainge",
+        "pts": 10.7,
+        "trb": 2.9,
+        "ast": 5.1,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 61,
+      "defense": 84,
+      "overall": 73
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 4,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 48,
+    "name": "關卡 48: 1987 洛杉磯湖人挑戰",
+    "year": 1987,
+    "difficulty": "legend",
+    "cpuTeamName": "1987 洛杉磯湖人",
+    "cpuRoster": [
+      {
+        "name": "Magic Johnson",
+        "pts": 23.9,
+        "trb": 6.3,
+        "ast": 12.2,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "James Worthy",
+        "pts": 19.4,
+        "trb": 5.7,
+        "ast": 2.8,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Kareem Abdul-Jabbar",
+        "pts": 17.5,
+        "trb": 6.7,
+        "ast": 2.6,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Byron Scott",
+        "pts": 17,
+        "trb": 3.5,
+        "ast": 3.4,
         "position": [
           "SG"
         ],
@@ -1730,10 +3534,73 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L25",
-        "pts": 16.2,
-        "trb": 5.9,
-        "ast": 4.6,
+        "name": "AC Green",
+        "pts": 10.8,
+        "trb": 7.8,
+        "ast": 1.1,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
+      }
+    ],
+    "ratings": {
+      "offense": 58,
+      "defense": 81,
+      "overall": 70
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 4,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 49,
+    "name": "關卡 49: 1989 底特律活塞挑戰",
+    "year": 1989,
+    "difficulty": "legend",
+    "cpuTeamName": "1989 底特律活塞",
+    "cpuRoster": [
+      {
+        "name": "Isiah Thomas",
+        "pts": 18.2,
+        "trb": 3.4,
+        "ast": 8.3,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Joe Dumars",
+        "pts": 17.2,
+        "trb": 2.5,
+        "ast": 5.7,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Bill Laimbeer",
+        "pts": 13.7,
+        "trb": 9.6,
+        "ast": 2.2,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Dennis Rodman",
+        "pts": 9,
+        "trb": 9.4,
+        "ast": 1.2,
         "position": [
           "SF"
         ],
@@ -1741,21 +3608,84 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "D. Player L25",
-        "pts": 16.2,
-        "trb": 5.9,
-        "ast": 4.6,
+        "name": "Vinnie Johnson",
+        "pts": 13.8,
+        "trb": 3.1,
+        "ast": 3,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      }
+    ],
+    "ratings": {
+      "offense": 48,
+      "defense": 78,
+      "overall": 63
+    },
+    "mode": "wheel",
+    "restrictions": {
+      "allStarCap": 4,
+      "rookieFloor": 1
+    }
+  },
+  {
+    "level": 50,
+    "name": "關卡 50: 1996 芝加哥公牛挑戰",
+    "year": 1996,
+    "difficulty": "legend",
+    "cpuTeamName": "1996 芝加哥公牛",
+    "cpuRoster": [
+      {
+        "name": "Michael Jordan",
+        "pts": 30.4,
+        "trb": 6.6,
+        "ast": 4.3,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Scottie Pippen",
+        "pts": 19.4,
+        "trb": 6.4,
+        "ast": 5.9,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Dennis Rodman",
+        "pts": 5.5,
+        "trb": 14.9,
+        "ast": 2.5,
         "position": [
           "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Toni Kukoc",
+        "pts": 13.1,
+        "trb": 4,
+        "ast": 3.5,
+        "position": [
+          "SF"
         ],
         "is_allstar": false,
         "is_rookie": false
       },
       {
-        "name": "E. Player L25",
-        "pts": 16.2,
-        "trb": 5.9,
-        "ast": 4.6,
+        "name": "Luc Longley",
+        "pts": 9.1,
+        "trb": 5.1,
+        "ast": 1.9,
         "position": [
           "C"
         ],
@@ -1765,1838 +3695,27 @@ const PVE_LEVELS = [
     ],
     "ratings": {
       "offense": 51,
-      "defense": 76,
-      "overall": 70
+      "defense": 79,
+      "overall": 65
     },
     "mode": "wheel",
     "restrictions": {
+      "allStarCap": 4,
       "rookieFloor": 1
-    }
-  },
-  {
-    "level": 26,
-    "name": "關卡 26: 1992 丹佛金塊挑戰",
-    "difficulty": "silver",
-    "cpuTeamName": "1992 丹佛金塊",
-    "cpuRoster": [
-      {
-        "name": "A. Player L26",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L26",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L26",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L26",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L26",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 54,
-      "defense": 77,
-      "overall": 73
-    },
-    "mode": "wheel",
-    "restrictions": {
-      "allStarCap": 2
-    }
-  },
-  {
-    "level": 27,
-    "name": "關卡 27: 1993 夏洛特山貓挑戰",
-    "difficulty": "silver",
-    "cpuTeamName": "1993 夏洛特山貓",
-    "cpuRoster": [
-      {
-        "name": "A. Player L27",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L27",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L27",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L27",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L27",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 54,
-      "defense": 77,
-      "overall": 73
-    },
-    "mode": "wheel",
-    "restrictions": {
-      "rookieFloor": 1
-    }
-  },
-  {
-    "level": 28,
-    "name": "關卡 28: 1994 費城76人挑戰",
-    "difficulty": "silver",
-    "cpuTeamName": "1994 費城76人",
-    "cpuRoster": [
-      {
-        "name": "A. Player L28",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L28",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L28",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L28",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L28",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 54,
-      "defense": 77,
-      "overall": 73
-    },
-    "mode": "wheel",
-    "restrictions": {
-      "allStarCap": 2
-    }
-  },
-  {
-    "level": 29,
-    "name": "關卡 29: 1995 克里夫蘭騎士挑戰",
-    "difficulty": "silver",
-    "cpuTeamName": "1995 克里夫蘭騎士",
-    "cpuRoster": [
-      {
-        "name": "A. Player L29",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L29",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L29",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L29",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L29",
-        "pts": 17,
-        "trb": 6.2,
-        "ast": 4.8,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 54,
-      "defense": 77,
-      "overall": 73
-    },
-    "mode": "wheel",
-    "restrictions": {
-      "rookieFloor": 1
-    }
-  },
-  {
-    "level": 30,
-    "name": "關卡 30: 1996 明尼蘇達灰狼挑戰",
-    "difficulty": "silver",
-    "cpuTeamName": "1996 明尼蘇達灰狼",
-    "cpuRoster": [
-      {
-        "name": "A. Player L30",
-        "pts": 17.9,
-        "trb": 6.5,
-        "ast": 5,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L30",
-        "pts": 17.9,
-        "trb": 6.5,
-        "ast": 5,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L30",
-        "pts": 17.9,
-        "trb": 6.5,
-        "ast": 5,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L30",
-        "pts": 17.9,
-        "trb": 6.5,
-        "ast": 5,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L30",
-        "pts": 17.9,
-        "trb": 6.5,
-        "ast": 5,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 56,
-      "defense": 78,
-      "overall": 74
-    },
-    "mode": "wheel",
-    "restrictions": {
-      "allStarCap": 2
-    }
-  },
-  {
-    "level": 31,
-    "name": "關卡 31: 1997 薩克拉門托國王挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "1997 薩克拉門托國王",
-    "cpuRoster": [
-      {
-        "name": "A. Player L31",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L31",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L31",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L31",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L31",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 56,
-      "defense": 79,
-      "overall": 76
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 13
-    }
-  },
-  {
-    "level": 32,
-    "name": "關卡 32: 1998 奧蘭多魔術挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "1998 奧蘭多魔術",
-    "cpuRoster": [
-      {
-        "name": "A. Player L32",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L32",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L32",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L32",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L32",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 56,
-      "defense": 79,
-      "overall": 76
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 14
-    }
-  },
-  {
-    "level": 33,
-    "name": "關卡 33: 1999 底特律活塞挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "1999 底特律活塞",
-    "cpuRoster": [
-      {
-        "name": "A. Player L33",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L33",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L33",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L33",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L33",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 56,
-      "defense": 79,
-      "overall": 76
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 13
-    }
-  },
-  {
-    "level": 34,
-    "name": "關卡 34: 2000 華盛頓巫師挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "2000 華盛頓巫師",
-    "cpuRoster": [
-      {
-        "name": "A. Player L34",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L34",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L34",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L34",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L34",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 56,
-      "defense": 79,
-      "overall": 76
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 14
-    }
-  },
-  {
-    "level": 35,
-    "name": "關卡 35: 2001 紐奧良鵜鶘挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "2001 紐奧良鵜鶘",
-    "cpuRoster": [
-      {
-        "name": "A. Player L35",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L35",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L35",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L35",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L35",
-        "pts": 17.1,
-        "trb": 6.6,
-        "ast": 4.8,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 56,
-      "defense": 79,
-      "overall": 76
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 13
-    }
-  },
-  {
-    "level": 36,
-    "name": "關卡 36: 2002 休士頓火箭挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "2002 休士頓火箭",
-    "cpuRoster": [
-      {
-        "name": "A. Player L36",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L36",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L36",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L36",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L36",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 59,
-      "defense": 81,
-      "overall": 79
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 14
-    }
-  },
-  {
-    "level": 37,
-    "name": "關卡 37: 2003 亞特蘭大老鷹挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "2003 亞特蘭大老鷹",
-    "cpuRoster": [
-      {
-        "name": "A. Player L37",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L37",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L37",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L37",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L37",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 59,
-      "defense": 81,
-      "overall": 79
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 13
-    }
-  },
-  {
-    "level": 38,
-    "name": "關卡 38: 2004 波特蘭拓荒者挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "2004 波特蘭拓荒者",
-    "cpuRoster": [
-      {
-        "name": "A. Player L38",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L38",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L38",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L38",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L38",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 59,
-      "defense": 81,
-      "overall": 79
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 14
-    }
-  },
-  {
-    "level": 39,
-    "name": "關卡 39: 2005 猶他爵士挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "2005 猶他爵士",
-    "cpuRoster": [
-      {
-        "name": "A. Player L39",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L39",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L39",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L39",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L39",
-        "pts": 18,
-        "trb": 7,
-        "ast": 5,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 59,
-      "defense": 81,
-      "overall": 79
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 13
-    }
-  },
-  {
-    "level": 40,
-    "name": "關卡 40: 2006 印第安納溜馬挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "2006 印第安納溜馬",
-    "cpuRoster": [
-      {
-        "name": "A. Player L40",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L40",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L40",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L40",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L40",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 61,
-      "defense": 83,
-      "overall": 81
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 14
-    }
-  },
-  {
-    "level": 41,
-    "name": "關卡 41: 2007 曼斐斯灰熊挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "2007 曼斐斯灰熊",
-    "cpuRoster": [
-      {
-        "name": "A. Player L41",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L41",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L41",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L41",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L41",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 61,
-      "defense": 83,
-      "overall": 81
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 13
-    }
-  },
-  {
-    "level": 42,
-    "name": "關卡 42: 2008 邁阿密熱火挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "2008 邁阿密熱火",
-    "cpuRoster": [
-      {
-        "name": "A. Player L42",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L42",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L42",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L42",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L42",
-        "pts": 18.9,
-        "trb": 7.4,
-        "ast": 5.3,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 61,
-      "defense": 83,
-      "overall": 81
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 14
-    }
-  },
-  {
-    "level": 43,
-    "name": "關卡 43: 2009 布魯克林籃網挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "2009 布魯克林籃網",
-    "cpuRoster": [
-      {
-        "name": "A. Player L43",
-        "pts": 19.8,
-        "trb": 7.8,
-        "ast": 5.6,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L43",
-        "pts": 19.8,
-        "trb": 7.8,
-        "ast": 5.6,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L43",
-        "pts": 19.8,
-        "trb": 7.8,
-        "ast": 5.6,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L43",
-        "pts": 19.8,
-        "trb": 7.8,
-        "ast": 5.6,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L43",
-        "pts": 19.8,
-        "trb": 7.8,
-        "ast": 5.6,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 64,
-      "defense": 84,
-      "overall": 83
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 13
-    }
-  },
-  {
-    "level": 44,
-    "name": "關卡 44: 2010 密爾瓦基公鹿挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "2010 密爾瓦基公鹿",
-    "cpuRoster": [
-      {
-        "name": "A. Player L44",
-        "pts": 19.8,
-        "trb": 7.8,
-        "ast": 5.6,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L44",
-        "pts": 19.8,
-        "trb": 7.8,
-        "ast": 5.6,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L44",
-        "pts": 19.8,
-        "trb": 7.8,
-        "ast": 5.6,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L44",
-        "pts": 19.8,
-        "trb": 7.8,
-        "ast": 5.6,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L44",
-        "pts": 19.8,
-        "trb": 7.8,
-        "ast": 5.6,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 64,
-      "defense": 84,
-      "overall": 83
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 14
-    }
-  },
-  {
-    "level": 45,
-    "name": "關卡 45: 2011 多倫多暴龍挑戰",
-    "difficulty": "gold",
-    "cpuTeamName": "2011 多倫多暴龍",
-    "cpuRoster": [
-      {
-        "name": "A. Player L45",
-        "pts": 20.8,
-        "trb": 8.2,
-        "ast": 5.9,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L45",
-        "pts": 20.8,
-        "trb": 8.2,
-        "ast": 5.9,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L45",
-        "pts": 20.8,
-        "trb": 8.2,
-        "ast": 5.9,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L45",
-        "pts": 20.8,
-        "trb": 8.2,
-        "ast": 5.9,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L45",
-        "pts": 20.8,
-        "trb": 8.2,
-        "ast": 5.9,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 67,
-      "defense": 86,
-      "overall": 85
-    },
-    "mode": "15usd",
-    "restrictions": {
-      "budget": 13
-    }
-  },
-  {
-    "level": 46,
-    "name": "關卡 46: 2012 波士頓塞爾提克挑戰",
-    "difficulty": "legend",
-    "cpuTeamName": "2012 波士頓塞爾提克",
-    "cpuRoster": [
-      {
-        "name": "A. Player L46",
-        "pts": 18.1,
-        "trb": 6.3,
-        "ast": 4.8,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L46",
-        "pts": 18.1,
-        "trb": 6.3,
-        "ast": 4.8,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L46",
-        "pts": 18.1,
-        "trb": 6.3,
-        "ast": 4.8,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L46",
-        "pts": 18.1,
-        "trb": 6.3,
-        "ast": 4.8,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L46",
-        "pts": 18.1,
-        "trb": 6.3,
-        "ast": 4.8,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 62,
-      "defense": 80,
-      "overall": 84
-    },
-    "mode": "legend_15usd",
-    "restrictions": {
-      "budget": 12,
-      "mode": "legend_15usd"
-    }
-  },
-  {
-    "level": 47,
-    "name": "關卡 47: 2013 金州勇士挑戰",
-    "difficulty": "legend",
-    "cpuTeamName": "2013 金州勇士",
-    "cpuRoster": [
-      {
-        "name": "A. Player L47",
-        "pts": 18.1,
-        "trb": 6.3,
-        "ast": 4.8,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L47",
-        "pts": 18.1,
-        "trb": 6.3,
-        "ast": 4.8,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L47",
-        "pts": 18.1,
-        "trb": 6.3,
-        "ast": 4.8,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L47",
-        "pts": 18.1,
-        "trb": 6.3,
-        "ast": 4.8,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L47",
-        "pts": 18.1,
-        "trb": 6.3,
-        "ast": 4.8,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 62,
-      "defense": 80,
-      "overall": 84
-    },
-    "mode": "legend_wheel",
-    "restrictions": {
-      "rookieFloor": 2
-    }
-  },
-  {
-    "level": 48,
-    "name": "關卡 48: 2014 洛杉磯湖人挑戰",
-    "difficulty": "legend",
-    "cpuTeamName": "2014 洛杉磯湖人",
-    "cpuRoster": [
-      {
-        "name": "A. Player L48",
-        "pts": 19.1,
-        "trb": 6.6,
-        "ast": 5.1,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L48",
-        "pts": 19.1,
-        "trb": 6.6,
-        "ast": 5.1,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L48",
-        "pts": 19.1,
-        "trb": 6.6,
-        "ast": 5.1,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L48",
-        "pts": 19.1,
-        "trb": 6.6,
-        "ast": 5.1,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L48",
-        "pts": 19.1,
-        "trb": 6.6,
-        "ast": 5.1,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 65,
-      "defense": 82,
-      "overall": 87
-    },
-    "mode": "legend_wheel",
-    "restrictions": {
-      "allStarCap": 1
-    }
-  },
-  {
-    "level": 49,
-    "name": "關卡 49: 2015 芝加哥公牛挑戰",
-    "difficulty": "legend",
-    "cpuTeamName": "2015 芝加哥公牛",
-    "cpuRoster": [
-      {
-        "name": "A. Player L49",
-        "pts": 19.1,
-        "trb": 6.6,
-        "ast": 5.1,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L49",
-        "pts": 19.1,
-        "trb": 6.6,
-        "ast": 5.1,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L49",
-        "pts": 19.1,
-        "trb": 6.6,
-        "ast": 5.1,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L49",
-        "pts": 19.1,
-        "trb": 6.6,
-        "ast": 5.1,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L49",
-        "pts": 19.1,
-        "trb": 6.6,
-        "ast": 5.1,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 65,
-      "defense": 82,
-      "overall": 87
-    },
-    "mode": "legend_15usd",
-    "restrictions": {
-      "budget": 12,
-      "mode": "legend_15usd"
-    }
-  },
-  {
-    "level": 50,
-    "name": "關卡 50: 2016 聖安東尼奧馬刺挑戰",
-    "difficulty": "legend",
-    "cpuTeamName": "2016 聖安東尼奧馬刺",
-    "cpuRoster": [
-      {
-        "name": "A. Player L50",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L50",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L50",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L50",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
-        "position": [
-          "PF"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L50",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
-        "position": [
-          "C"
-        ],
-        "is_allstar": false,
-        "is_rookie": false
-      }
-    ],
-    "ratings": {
-      "offense": 68,
-      "defense": 83,
-      "overall": 89
-    },
-    "mode": "legend_wheel",
-    "restrictions": {
-      "rookieFloor": 2
     }
   },
   {
     "level": 51,
-    "name": "關卡 51: 2017 達拉斯獨行俠挑戰",
+    "name": "關卡 51: 1997 芝加哥公牛挑戰",
+    "year": 1997,
     "difficulty": "legend",
-    "cpuTeamName": "2017 達拉斯獨行俠",
+    "cpuTeamName": "1997 芝加哥公牛",
     "cpuRoster": [
       {
-        "name": "A. Player L51",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L51",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
+        "name": "Michael Jordan",
+        "pts": 29.6,
+        "trb": 5.9,
+        "ast": 4.3,
         "position": [
           "SG"
         ],
@@ -3604,10 +3723,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L51",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
+        "name": "Scottie Pippen",
+        "pts": 20.2,
+        "trb": 6.5,
+        "ast": 5.7,
         "position": [
           "SF"
         ],
@@ -3615,10 +3734,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "D. Player L51",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
+        "name": "Dennis Rodman",
+        "pts": 5.7,
+        "trb": 16.1,
+        "ast": 3.1,
         "position": [
           "PF"
         ],
@@ -3626,10 +3745,21 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L51",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
+        "name": "Toni Kukoc",
+        "pts": 13.2,
+        "trb": 4.6,
+        "ast": 4.5,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Luc Longley",
+        "pts": 9.1,
+        "trb": 5.6,
+        "ast": 2.4,
         "position": [
           "C"
         ],
@@ -3638,37 +3768,28 @@ const PVE_LEVELS = [
       }
     ],
     "ratings": {
-      "offense": 68,
-      "defense": 83,
-      "overall": 89
+      "offense": 52,
+      "defense": 80,
+      "overall": 66
     },
-    "mode": "legend_wheel",
+    "mode": "wheel",
     "restrictions": {
-      "allStarCap": 1
+      "allStarCap": 4,
+      "rookieFloor": 1
     }
   },
   {
     "level": 52,
-    "name": "關卡 52: 2018 鳳凰城太陽挑戰",
+    "name": "關卡 52: 1998 芝加哥公牛挑戰",
+    "year": 1998,
     "difficulty": "legend",
-    "cpuTeamName": "2018 鳳凰城太陽",
+    "cpuTeamName": "1998 芝加哥公牛",
     "cpuRoster": [
       {
-        "name": "A. Player L52",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L52",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
+        "name": "Michael Jordan",
+        "pts": 28.7,
+        "trb": 5.8,
+        "ast": 3.5,
         "position": [
           "SG"
         ],
@@ -3676,10 +3797,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L52",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
+        "name": "Scottie Pippen",
+        "pts": 19.1,
+        "trb": 5.2,
+        "ast": 5.8,
         "position": [
           "SF"
         ],
@@ -3687,10 +3808,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "D. Player L52",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
+        "name": "Dennis Rodman",
+        "pts": 4.7,
+        "trb": 15,
+        "ast": 2.9,
         "position": [
           "PF"
         ],
@@ -3698,10 +3819,21 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L52",
-        "pts": 20.1,
-        "trb": 6.9,
-        "ast": 5.4,
+        "name": "Toni Kukoc",
+        "pts": 13.3,
+        "trb": 4.4,
+        "ast": 4.2,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Luc Longley",
+        "pts": 11.4,
+        "trb": 5.9,
+        "ast": 2.8,
         "position": [
           "C"
         ],
@@ -3710,38 +3842,39 @@ const PVE_LEVELS = [
       }
     ],
     "ratings": {
-      "offense": 68,
-      "defense": 83,
-      "overall": 89
+      "offense": 52,
+      "defense": 79,
+      "overall": 66
     },
-    "mode": "legend_15usd",
+    "mode": "wheel",
     "restrictions": {
-      "budget": 12,
-      "mode": "legend_15usd"
+      "allStarCap": 4,
+      "rookieFloor": 1
     }
   },
   {
     "level": 53,
-    "name": "關卡 53: 2019 丹佛金塊挑戰",
+    "name": "關卡 53: 2001 洛杉磯湖人挑戰",
+    "year": 2001,
     "difficulty": "legend",
-    "cpuTeamName": "2019 丹佛金塊",
+    "cpuTeamName": "2001 洛杉磯湖人",
     "cpuRoster": [
       {
-        "name": "A. Player L53",
-        "pts": 21.2,
-        "trb": 7.3,
-        "ast": 5.7,
+        "name": "Shaquille O'Neal",
+        "pts": 28.7,
+        "trb": 12.7,
+        "ast": 3.7,
         "position": [
-          "PG"
+          "C"
         ],
         "is_allstar": true,
         "is_rookie": false
       },
       {
-        "name": "B. Player L53",
-        "pts": 21.2,
-        "trb": 7.3,
-        "ast": 5.7,
+        "name": "Kobe Bryant",
+        "pts": 28.5,
+        "trb": 5.9,
+        "ast": 5,
         "position": [
           "SG"
         ],
@@ -3749,21 +3882,21 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L53",
-        "pts": 21.2,
-        "trb": 7.3,
-        "ast": 5.7,
+        "name": "Derek Fisher",
+        "pts": 11.5,
+        "trb": 3,
+        "ast": 4.4,
         "position": [
-          "SF"
+          "PG"
         ],
-        "is_allstar": true,
+        "is_allstar": false,
         "is_rookie": false
       },
       {
-        "name": "D. Player L53",
-        "pts": 21.2,
-        "trb": 7.3,
-        "ast": 5.7,
+        "name": "Horace Grant",
+        "pts": 8.5,
+        "trb": 7.1,
+        "ast": 1.6,
         "position": [
           "PF"
         ],
@@ -3771,38 +3904,51 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L53",
-        "pts": 21.2,
-        "trb": 7.3,
-        "ast": 5.7,
+        "name": "Rick Fox",
+        "pts": 9.6,
+        "trb": 4,
+        "ast": 3.2,
         "position": [
-          "C"
+          "SF"
         ],
         "is_allstar": false,
         "is_rookie": false
       }
     ],
     "ratings": {
-      "offense": 72,
-      "defense": 85,
-      "overall": 92
+      "offense": 55,
+      "defense": 79,
+      "overall": 67
     },
-    "mode": "legend_wheel",
+    "mode": "wheel",
     "restrictions": {
-      "rookieFloor": 2
+      "allStarCap": 4,
+      "rookieFloor": 1
     }
   },
   {
     "level": 54,
-    "name": "關卡 54: 2020 夏洛特山貓挑戰",
+    "name": "關卡 54: 2007 聖安東尼奧馬刺挑戰",
+    "year": 2007,
     "difficulty": "legend",
-    "cpuTeamName": "2020 夏洛特山貓",
+    "cpuTeamName": "2007 聖安東尼奧馬刺",
     "cpuRoster": [
       {
-        "name": "A. Player L54",
-        "pts": 21.2,
-        "trb": 7.3,
-        "ast": 5.7,
+        "name": "Tim Duncan",
+        "pts": 20,
+        "trb": 10.6,
+        "ast": 3.4,
+        "position": [
+          "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Tony Parker",
+        "pts": 18.6,
+        "trb": 3.2,
+        "ast": 5.5,
         "position": [
           "PG"
         ],
@@ -3810,10 +3956,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "B. Player L54",
-        "pts": 21.2,
-        "trb": 7.3,
-        "ast": 5.7,
+        "name": "Manu Ginobili",
+        "pts": 16.5,
+        "trb": 4.4,
+        "ast": 3.5,
         "position": [
           "SG"
         ],
@@ -3821,10 +3967,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L54",
-        "pts": 21.2,
-        "trb": 7.3,
-        "ast": 5.7,
+        "name": "Michael Finley",
+        "pts": 9,
+        "trb": 2.7,
+        "ast": 1.3,
         "position": [
           "SF"
         ],
@@ -3832,82 +3978,40 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "D. Player L54",
-        "pts": 21.2,
-        "trb": 7.3,
-        "ast": 5.7,
+        "name": "Brent Barry",
+        "pts": 8.5,
+        "trb": 2.1,
+        "ast": 1.8,
         "position": [
-          "PF"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "E. Player L54",
-        "pts": 21.2,
-        "trb": 7.3,
-        "ast": 5.7,
-        "position": [
-          "C"
+          "SG"
         ],
         "is_allstar": false,
         "is_rookie": false
       }
     ],
     "ratings": {
-      "offense": 72,
-      "defense": 85,
-      "overall": 92
+      "offense": 50,
+      "defense": 74,
+      "overall": 62
     },
-    "mode": "legend_wheel",
+    "mode": "wheel",
     "restrictions": {
-      "allStarCap": 1
+      "allStarCap": 4,
+      "rookieFloor": 1
     }
   },
   {
     "level": 55,
-    "name": "關卡 55: 2021 費城76人挑戰",
+    "name": "關卡 55: 2017 金州勇士挑戰",
+    "year": 2017,
     "difficulty": "legend",
-    "cpuTeamName": "2021 費城76人",
+    "cpuTeamName": "2017 金州勇士",
     "cpuRoster": [
       {
-        "name": "A. Player L55",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L55",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L55",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L55",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
+        "name": "Kevin Durant",
+        "pts": 25.1,
+        "trb": 8.3,
+        "ast": 4.8,
         "position": [
           "PF"
         ],
@@ -3915,50 +4019,73 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L55",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
+        "name": "Stephen Curry",
+        "pts": 25.3,
+        "trb": 4.5,
+        "ast": 6.6,
         "position": [
-          "C"
+          "PG"
         ],
-        "is_allstar": false,
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Draymond Green",
+        "pts": 10.2,
+        "trb": 7.9,
+        "ast": 7,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Klay Thompson",
+        "pts": 22.3,
+        "trb": 3.7,
+        "ast": 2.1,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Andre Iguodala",
+        "pts": 7.6,
+        "trb": 4,
+        "ast": 3.4,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
         "is_rookie": false
       }
     ],
     "ratings": {
-      "offense": 75,
-      "defense": 86,
-      "overall": 94
+      "offense": 64,
+      "defense": 80,
+      "overall": 72
     },
-    "mode": "legend_15usd",
+    "mode": "wheel",
     "restrictions": {
-      "budget": 12,
-      "mode": "legend_15usd"
+      "allStarCap": 4,
+      "rookieFloor": 1
     }
   },
   {
     "level": 56,
-    "name": "關卡 56: 2022 克里夫蘭騎士挑戰",
-    "difficulty": "legend",
-    "cpuTeamName": "2022 克里夫蘭騎士",
+    "name": "關卡 56: 1996 芝加哥公牛挑戰",
+    "year": 1996,
+    "difficulty": "ultimate",
+    "cpuTeamName": "1996 芝加哥公牛",
     "cpuRoster": [
       {
-        "name": "A. Player L56",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L56",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
+        "name": "Michael Jordan",
+        "pts": 30.4,
+        "trb": 6.6,
+        "ast": 4.3,
         "position": [
           "SG"
         ],
@@ -3966,10 +4093,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L56",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
+        "name": "Scottie Pippen",
+        "pts": 19.4,
+        "trb": 6.4,
+        "ast": 5.9,
         "position": [
           "SF"
         ],
@@ -3977,10 +4104,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "D. Player L56",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
+        "name": "Dennis Rodman",
+        "pts": 5.5,
+        "trb": 14.9,
+        "ast": 2.5,
         "position": [
           "PF"
         ],
@@ -3988,10 +4115,21 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L56",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
+        "name": "Toni Kukoc",
+        "pts": 13.1,
+        "trb": 4,
+        "ast": 3.5,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": false,
+        "is_rookie": false
+      },
+      {
+        "name": "Luc Longley",
+        "pts": 9.1,
+        "trb": 5.1,
+        "ast": 1.9,
         "position": [
           "C"
         ],
@@ -4000,59 +4138,28 @@ const PVE_LEVELS = [
       }
     ],
     "ratings": {
-      "offense": 75,
-      "defense": 86,
-      "overall": 94
+      "offense": 51,
+      "defense": 79,
+      "overall": 65
     },
-    "mode": "legend_wheel",
+    "mode": "wheel",
     "restrictions": {
-      "rookieFloor": 2
+      "allStarCap": 5,
+      "rookieFloor": 1
     }
   },
   {
     "level": 57,
-    "name": "關卡 57: 2023 明尼蘇達灰狼挑戰",
-    "difficulty": "legend",
-    "cpuTeamName": "2023 明尼蘇達灰狼",
+    "name": "關卡 57: 2017 金州勇士挑戰",
+    "year": 2017,
+    "difficulty": "ultimate",
+    "cpuTeamName": "2017 金州勇士",
     "cpuRoster": [
       {
-        "name": "A. Player L57",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L57",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L57",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
-        "position": [
-          "SF"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "D. Player L57",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
+        "name": "Kevin Durant",
+        "pts": 25.1,
+        "trb": 8.3,
+        "ast": 4.8,
         "position": [
           "PF"
         ],
@@ -4060,49 +4167,84 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L57",
-        "pts": 22.3,
-        "trb": 7.7,
-        "ast": 6,
+        "name": "Stephen Curry",
+        "pts": 25.3,
+        "trb": 4.5,
+        "ast": 6.6,
         "position": [
-          "C"
+          "PG"
         ],
-        "is_allstar": false,
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Draymond Green",
+        "pts": 10.2,
+        "trb": 7.9,
+        "ast": 7,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Klay Thompson",
+        "pts": 22.3,
+        "trb": 3.7,
+        "ast": 2.1,
+        "position": [
+          "SG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Andre Iguodala",
+        "pts": 7.6,
+        "trb": 4,
+        "ast": 3.4,
+        "position": [
+          "SF"
+        ],
+        "is_allstar": true,
         "is_rookie": false
       }
     ],
     "ratings": {
-      "offense": 75,
-      "defense": 86,
-      "overall": 94
+      "offense": 64,
+      "defense": 80,
+      "overall": 72
     },
-    "mode": "legend_wheel",
+    "mode": "wheel",
     "restrictions": {
-      "allStarCap": 1
+      "allStarCap": 5,
+      "rookieFloor": 1
     }
   },
   {
     "level": 58,
-    "name": "關卡 58: 2024 薩克拉門托國王挑戰",
-    "difficulty": "legend",
-    "cpuTeamName": "2024 薩克拉門托國王",
+    "name": "關卡 58: 2001 洛杉磯湖人挑戰",
+    "year": 2001,
+    "difficulty": "ultimate",
+    "cpuTeamName": "2001 洛杉磯湖人",
     "cpuRoster": [
       {
-        "name": "A. Player L58",
-        "pts": 23.5,
-        "trb": 8.1,
-        "ast": 6.3,
+        "name": "Shaquille O'Neal",
+        "pts": 28.7,
+        "trb": 12.7,
+        "ast": 3.7,
         "position": [
-          "PG"
+          "C"
         ],
         "is_allstar": true,
         "is_rookie": false
       },
       {
-        "name": "B. Player L58",
-        "pts": 23.5,
-        "trb": 8.1,
-        "ast": 6.3,
+        "name": "Kobe Bryant",
+        "pts": 28.5,
+        "trb": 5.9,
+        "ast": 5,
         "position": [
           "SG"
         ],
@@ -4110,21 +4252,21 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "C. Player L58",
-        "pts": 23.5,
-        "trb": 8.1,
-        "ast": 6.3,
+        "name": "Derek Fisher",
+        "pts": 11.5,
+        "trb": 3,
+        "ast": 4.4,
         "position": [
-          "SF"
+          "PG"
         ],
-        "is_allstar": true,
+        "is_allstar": false,
         "is_rookie": false
       },
       {
-        "name": "D. Player L58",
-        "pts": 23.5,
-        "trb": 8.1,
-        "ast": 6.3,
+        "name": "Horace Grant",
+        "pts": 8.5,
+        "trb": 7.1,
+        "ast": 1.6,
         "position": [
           "PF"
         ],
@@ -4132,61 +4274,40 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L58",
-        "pts": 23.5,
-        "trb": 8.1,
-        "ast": 6.3,
+        "name": "Rick Fox",
+        "pts": 9.6,
+        "trb": 4,
+        "ast": 3.2,
         "position": [
-          "C"
+          "SF"
         ],
         "is_allstar": false,
         "is_rookie": false
       }
     ],
     "ratings": {
-      "offense": 79,
-      "defense": 88,
-      "overall": 97
+      "offense": 55,
+      "defense": 79,
+      "overall": 67
     },
-    "mode": "legend_15usd",
+    "mode": "wheel",
     "restrictions": {
-      "budget": 12,
-      "mode": "legend_15usd"
+      "allStarCap": 5,
+      "rookieFloor": 1
     }
   },
   {
     "level": 59,
-    "name": "關卡 59: 2025 奧蘭多魔術挑戰",
-    "difficulty": "legend",
-    "cpuTeamName": "2025 奧蘭多魔術",
+    "name": "關卡 59: 1986 波士頓塞爾提克挑戰",
+    "year": 1986,
+    "difficulty": "ultimate",
+    "cpuTeamName": "1986 波士頓塞爾提克",
     "cpuRoster": [
       {
-        "name": "A. Player L59",
-        "pts": 23.5,
-        "trb": 8.1,
-        "ast": 6.3,
-        "position": [
-          "PG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "B. Player L59",
-        "pts": 23.5,
-        "trb": 8.1,
-        "ast": 6.3,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L59",
-        "pts": 23.5,
-        "trb": 8.1,
-        "ast": 6.3,
+        "name": "Larry Bird",
+        "pts": 25.8,
+        "trb": 9.8,
+        "ast": 6.8,
         "position": [
           "SF"
         ],
@@ -4194,10 +4315,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "D. Player L59",
-        "pts": 23.5,
+        "name": "Kevin McHale",
+        "pts": 21.3,
         "trb": 8.1,
-        "ast": 6.3,
+        "ast": 2.7,
         "position": [
           "PF"
         ],
@@ -4205,38 +4326,62 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "E. Player L59",
-        "pts": 23.5,
-        "trb": 8.1,
-        "ast": 6.3,
+        "name": "Robert Parish",
+        "pts": 16.1,
+        "trb": 9.5,
+        "ast": 1.8,
         "position": [
           "C"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Dennis Johnson",
+        "pts": 15.6,
+        "trb": 3.4,
+        "ast": 5.8,
+        "position": [
+          "PG"
+        ],
+        "is_allstar": true,
+        "is_rookie": false
+      },
+      {
+        "name": "Danny Ainge",
+        "pts": 10.7,
+        "trb": 2.9,
+        "ast": 5.1,
+        "position": [
+          "SG"
         ],
         "is_allstar": false,
         "is_rookie": false
       }
     ],
     "ratings": {
-      "offense": 79,
-      "defense": 88,
-      "overall": 97
+      "offense": 61,
+      "defense": 84,
+      "overall": 73
     },
-    "mode": "legend_wheel",
+    "mode": "wheel",
     "restrictions": {
-      "rookieFloor": 2
+      "allStarCap": 5,
+      "rookieFloor": 1
     }
   },
   {
     "level": 60,
-    "name": "關卡 60: 2026 底特律活塞挑戰",
-    "difficulty": "legend",
-    "cpuTeamName": "2026 底特律活塞",
+    "name": "關卡 60: 1987 洛杉磯湖人挑戰",
+    "year": 1987,
+    "difficulty": "ultimate",
+    "cpuTeamName": "1987 洛杉磯湖人",
     "cpuRoster": [
       {
-        "name": "A. Player L60",
-        "pts": 24.7,
-        "trb": 8.5,
-        "ast": 6.6,
+        "name": "Magic Johnson",
+        "pts": 23.9,
+        "trb": 6.3,
+        "ast": 12.2,
         "position": [
           "PG"
         ],
@@ -4244,21 +4389,10 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "B. Player L60",
-        "pts": 24.7,
-        "trb": 8.5,
-        "ast": 6.6,
-        "position": [
-          "SG"
-        ],
-        "is_allstar": true,
-        "is_rookie": false
-      },
-      {
-        "name": "C. Player L60",
-        "pts": 24.7,
-        "trb": 8.5,
-        "ast": 6.6,
+        "name": "James Worthy",
+        "pts": 19.4,
+        "trb": 5.7,
+        "ast": 2.8,
         "position": [
           "SF"
         ],
@@ -4266,40 +4400,52 @@ const PVE_LEVELS = [
         "is_rookie": false
       },
       {
-        "name": "D. Player L60",
-        "pts": 24.7,
-        "trb": 8.5,
-        "ast": 6.6,
+        "name": "Kareem Abdul-Jabbar",
+        "pts": 17.5,
+        "trb": 6.7,
+        "ast": 2.6,
         "position": [
-          "PF"
+          "C"
         ],
         "is_allstar": true,
         "is_rookie": false
       },
       {
-        "name": "E. Player L60",
-        "pts": 24.7,
-        "trb": 8.5,
-        "ast": 6.6,
+        "name": "Byron Scott",
+        "pts": 17,
+        "trb": 3.5,
+        "ast": 3.4,
         "position": [
-          "C"
+          "SG"
         ],
         "is_allstar": false,
         "is_rookie": false
+      },
+      {
+        "name": "AC Green",
+        "pts": 10.8,
+        "trb": 7.8,
+        "ast": 1.1,
+        "position": [
+          "PF"
+        ],
+        "is_allstar": false,
+        "is_rookie": true
       }
     ],
     "ratings": {
-      "offense": 82,
-      "defense": 90,
-      "overall": 99
+      "offense": 58,
+      "defense": 81,
+      "overall": 70
     },
-    "mode": "legend_wheel",
+    "mode": "wheel",
     "restrictions": {
-      "allStarCap": 1
+      "allStarCap": 5,
+      "rookieFloor": 1
     }
   }
 ];
 
-if (typeof module !== 'undefined') {
+if (typeof module !== 'undefined' && module.exports) {
   module.exports = { PVE_LEVELS };
 }
