@@ -1488,21 +1488,29 @@ io.on('connection', (socket) => {
     const room = activeRooms.get(roomId);
     if (!room) return;
 
-    const activePlayerIdx = room.draftOrder[room.draftIndex];
-    const activePlayer = room.players[activePlayerIdx];
-
-    if (!activePlayer || activePlayer.socketId !== socket.id) {
-      socket.emit('error_message', '目前不是你的回合，無法選擇球員！');
+    if (room.isProcessingPick) {
+      socket.emit('error_message', '伺服器正在處理選秀中，請稍候...');
       return;
     }
 
-    if (room.roomState === 'WHEEL_SPINNING') {
-      socket.emit('error_message', '目前轉盤正在旋轉，請等候旋轉結束再選人！');
-      return;
-    }
+    room.isProcessingPick = true;
 
-    const mode = room.settings.mode;
-    const year = room.settings.year;
+    try {
+      const activePlayerIdx = room.draftOrder[room.draftIndex];
+      const activePlayer = room.players[activePlayerIdx];
+
+      if (!activePlayer || activePlayer.socketId !== socket.id) {
+        socket.emit('error_message', '目前不是你的回合，無法選擇球員！');
+        return;
+      }
+
+      if (room.roomState === 'WHEEL_SPINNING') {
+        socket.emit('error_message', '目前轉盤正在旋轉，請等候旋轉結束再選人！');
+        return;
+      }
+
+      const mode = room.settings.mode;
+      const year = room.settings.year;
 
     let draftedPlayerDoc = null;
 
@@ -1688,6 +1696,12 @@ io.on('connection', (socket) => {
 
     await saveRoomToDB(roomId, room);
     broadcastRoomUpdate(roomId);
+    } catch (err) {
+      console.error('Error in draft_player_request:', err);
+      socket.emit('error_message', '處理選秀時伺服器發生錯誤！');
+    } finally {
+      room.isProcessingPick = false;
+    }
   });
 
   // 7. Request AI Evaluation Event

@@ -47,7 +47,8 @@ const state = {
   unlockedLevel: parseInt(localStorage.getItem('pve_unlocked_level') || '1'),
   isPVE: false,
   currentPVELevelId: null,
-  typewriterInterval: null
+  typewriterInterval: null,
+  isProcessingPick: false
 };
 
 
@@ -227,6 +228,7 @@ socket.on('room_created', ({ roomId, room }) => {
 });
 
 socket.on('room_update', (room) => {
+  state.isProcessingPick = false;
   const oldRoom = state.room;
   state.room = room;
   
@@ -281,6 +283,7 @@ socket.on('room_update', (room) => {
 
 
 socket.on('game_started', (room) => {
+  state.isProcessingPick = false;
   state.room = room;
   showScreen('screen-draft');
   updateDraftUI();
@@ -418,6 +421,7 @@ socket.on('eval_error', (errorMsg) => {
 });
 
 socket.on('error_message', (msg) => {
+  state.isProcessingPick = false;
   showToast(msg);
 });
 
@@ -953,6 +957,8 @@ function renderPickCards() {
 
     if (!isDisabled && isMyTurn) {
       card.addEventListener('click', () => {
+        if (state.isProcessingPick) return;
+        state.isProcessingPick = true;
         socket.emit('draft_player_request', {
           roomId: state.roomId,
           playerSelection: {
@@ -1070,6 +1076,8 @@ function render5x5Grid() {
 
       if (!isDisabled && isMyTurn) {
         btn.addEventListener('click', () => {
+          if (state.isProcessingPick) return;
+          state.isProcessingPick = true;
           socket.emit('draft_player_request', {
             roomId: state.roomId,
             playerSelection: p
@@ -1155,6 +1163,8 @@ function renderBlindResume() {
 
       if (isMyTurn) {
         card.addEventListener('click', () => {
+          if (state.isProcessingPick) return;
+          state.isProcessingPick = true;
           socket.emit('draft_player_request', {
             roomId: state.roomId,
             playerSelection: { blindId: p.blindId }
@@ -1746,6 +1756,15 @@ function triggerCheckIn() {
 
 async function claimCheckIn() {
   if (!state.user) return;
+  if (state.isCheckInRequesting) return;
+  state.isCheckInRequesting = true;
+
+  const btnActionEl = $('#btn-checkin-action');
+  if (btnActionEl) {
+    btnActionEl.disabled = true;
+    btnActionEl.textContent = '⌛ 正在處理簽到...';
+  }
+
   try {
     const res = await fetch('/api/users/checkin', {
       method: 'POST',
@@ -1762,10 +1781,20 @@ async function claimCheckIn() {
       fireConfetti();
     } else {
       showToast(`⚠️ ${data.message || '簽到失敗'}`);
+      if (btnActionEl) {
+        btnActionEl.disabled = false;
+        btnActionEl.textContent = '🪙 立即簽到領取獎勵';
+      }
     }
   } catch (err) {
     console.error('Check-in error:', err);
     showToast('❌ 簽到連線失敗');
+    if (btnActionEl) {
+      btnActionEl.disabled = false;
+      btnActionEl.textContent = '🪙 立即簽到領取獎勵';
+    }
+  } finally {
+    state.isCheckInRequesting = false;
   }
 }
 
