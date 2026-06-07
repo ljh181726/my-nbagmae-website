@@ -18,8 +18,23 @@ try {
       credential: admin.credential.cert(serviceAccount)
     });
     console.log('✅ Firebase Admin initialized successfully');
+  } else if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log('✅ Firebase Admin initialized via service account JSON environment variable');
+  } else if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+      })
+    });
+    console.log('✅ Firebase Admin initialized via individual environment variables');
   } else {
-    console.warn('⚠️ firebase-service-account.json not found in src/');
+    console.warn('⚠️ firebase-service-account.json not found in src/ and environment variables not set');
   }
 } catch (err) {
   console.error('❌ Failed to initialize Firebase Admin:', err);

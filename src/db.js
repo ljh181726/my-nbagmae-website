@@ -222,8 +222,6 @@ module.exports = {
   findOrCreateUser,
   performCheckIn,
   incrementRookieGames,
-  updatePVEProgress,
-  registerUserEmail,
-  loginUserEmail
+  updatePVEProgress
 };
 
