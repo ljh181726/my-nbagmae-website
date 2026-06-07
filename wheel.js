@@ -22,17 +22,44 @@ export class LuckyWheel {
     // High-DPI canvas
     this._setupHiDPI();
     this.draw();
+
+    // Listen to window resize to handle responsiveness
+    this._resizeHandler = () => this.draw();
+    window.addEventListener('resize', this._resizeHandler);
+
+    // If layout hasn't finished (e.g. container was hidden), schedule a deferred setup
+    const rect = this.canvas.getBoundingClientRect();
+    if (rect.width === 0) {
+      setTimeout(() => {
+        this.draw();
+      }, 50);
+    }
   }
 
   /* ── HiDPI ─────────────────────────────── */
   _setupHiDPI() {
     const dpr  = window.devicePixelRatio || 1;
-    const rect = this.canvas.getBoundingClientRect();
-    this.canvas.width  = rect.width  * dpr;
-    this.canvas.height = rect.height * dpr;
+    let rect = this.canvas.getBoundingClientRect();
+    let width = rect.width;
+    let height = rect.height;
+
+    // Fallback if hidden or not yet laid out
+    if (width === 0 || height === 0) {
+      width = this.canvas.offsetWidth;
+      height = this.canvas.offsetHeight;
+    }
+    if (width === 0 || height === 0) {
+      const styleWidth = parseFloat(this.canvas.style.width);
+      const styleHeight = parseFloat(this.canvas.style.height);
+      width = !isNaN(styleWidth) ? styleWidth : (this.canvas.width ? this.canvas.width / dpr : 380);
+      height = !isNaN(styleHeight) ? styleHeight : (this.canvas.height ? this.canvas.height / dpr : 380);
+    }
+
+    this.canvas.width  = width  * dpr;
+    this.canvas.height = height * dpr;
     this.ctx.scale(dpr, dpr);
-    this.W = rect.width;
-    this.H = rect.height;
+    this.W = width;
+    this.H = height;
   }
 
   /* ── Update teams pool ─────────────────── */
@@ -44,6 +71,10 @@ export class LuckyWheel {
 
   /* ── Main draw ─────────────────────────── */
   draw() {
+    const rect = this.canvas.getBoundingClientRect();
+    if (rect.width > 0 && rect.width !== this.W) {
+      this._setupHiDPI();
+    }
     const ctx = this.ctx;
     const cx  = this.W / 2;
     const cy  = this.H / 2;
@@ -282,5 +313,6 @@ export class LuckyWheel {
   /* ── Cleanup ───────────────────────────── */
   destroy() {
     if (this.animId) cancelAnimationFrame(this.animId);
+    window.removeEventListener('resize', this._resizeHandler);
   }
 }

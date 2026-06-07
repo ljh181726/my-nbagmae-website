@@ -565,6 +565,8 @@ function updateDraftUI() {
           if (state.wheel) state.wheel.destroy();
           state.wheel = new LuckyWheel(canvas, room.availableTeams, (team) => onSpinStopped(team));
           state.wheel._teamsKey = newTeamsKey;
+        } else {
+          state.wheel.draw();
         }
       }
 
