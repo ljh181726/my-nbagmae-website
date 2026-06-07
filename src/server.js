@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -470,7 +471,6 @@ function broadcastRoomUpdate(roomId) {
   io.to(roomId).emit('room_update', room);
 }
 
-const fs = require('fs');
 const vm = require('vm');
 
 let ACTIVE_5X5_GRIDS = [];
@@ -1173,13 +1173,6 @@ io.on('connection', (socket) => {
     room.evalResult = null;
     room.currentTeam = null;
 
-    // Process pre-bans & deduct currency first
-    try {
-      await processRoomPreBans(room);
-    } catch (err) {
-      console.error('Error processing room pre-bans:', err);
-    }
-
     if (room.isPVE) {
       const levelConfig = PVE_LEVELS[room.levelId - 1];
       if (levelConfig) {
@@ -1212,6 +1205,13 @@ io.on('connection', (socket) => {
       // Update players in room with new order
       room.players = shuntedPlayers;
       room.draftOrder = generateSnakeDraftOrder(room.players.length);
+    }
+
+    // Process pre-bans & deduct currency *after* settings (like year) are fully initialized
+    try {
+      await processRoomPreBans(room);
+    } catch (err) {
+      console.error('Error processing room pre-bans:', err);
     }
 
     const year = room.settings.year;

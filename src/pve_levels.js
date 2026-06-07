@@ -5,9 +5,9 @@
 const PVE_LEVELS = [
   {
     "level": 1,
-    "name": "關卡 1: 1967 費城76人挑戰",
+    "name": "關卡 1: 1977 費城76人挑戰",
     "difficulty": "bronze",
-    "cpuTeamName": "1967 費城76人",
+    "cpuTeamName": "1977 費城76人",
     "cpuRoster": [
       {
         "name": "A. Player L1",
@@ -75,9 +75,9 @@ const PVE_LEVELS = [
   },
   {
     "level": 2,
-    "name": "關卡 2: 1968 克里夫蘭騎士挑戰",
+    "name": "關卡 2: 1978 克里夫蘭騎士挑戰",
     "difficulty": "bronze",
-    "cpuTeamName": "1968 克里夫蘭騎士",
+    "cpuTeamName": "1978 克里夫蘭騎士",
     "cpuRoster": [
       {
         "name": "A. Player L2",
@@ -145,9 +145,9 @@ const PVE_LEVELS = [
   },
   {
     "level": 3,
-    "name": "關卡 3: 1969 明尼蘇達灰狼挑戰",
+    "name": "關卡 3: 1979 明尼蘇達灰狼挑戰",
     "difficulty": "bronze",
-    "cpuTeamName": "1969 明尼蘇達灰狼",
+    "cpuTeamName": "1979 明尼蘇達灰狼",
     "cpuRoster": [
       {
         "name": "A. Player L3",
@@ -215,9 +215,9 @@ const PVE_LEVELS = [
   },
   {
     "level": 4,
-    "name": "關卡 4: 1970 薩克拉門托國王挑戰",
+    "name": "關卡 4: 1980 薩克拉門托國王挑戰",
     "difficulty": "bronze",
-    "cpuTeamName": "1970 薩克拉門托國王",
+    "cpuTeamName": "1980 薩克拉門托國王",
     "cpuRoster": [
       {
         "name": "A. Player L4",
@@ -285,9 +285,9 @@ const PVE_LEVELS = [
   },
   {
     "level": 5,
-    "name": "關卡 5: 1971 奧蘭多魔術挑戰",
+    "name": "關卡 5: 1981 奧蘭多魔術挑戰",
     "difficulty": "bronze",
-    "cpuTeamName": "1971 奧蘭多魔術",
+    "cpuTeamName": "1981 奧蘭多魔術",
     "cpuRoster": [
       {
         "name": "A. Player L5",
@@ -355,9 +355,9 @@ const PVE_LEVELS = [
   },
   {
     "level": 6,
-    "name": "關卡 6: 1972 底特律活塞挑戰",
+    "name": "關卡 6: 1982 底特律活塞挑戰",
     "difficulty": "bronze",
-    "cpuTeamName": "1972 底特律活塞",
+    "cpuTeamName": "1982 底特律活塞",
     "cpuRoster": [
       {
         "name": "A. Player L6",
@@ -425,9 +425,9 @@ const PVE_LEVELS = [
   },
   {
     "level": 7,
-    "name": "關卡 7: 1973 華盛頓巫師挑戰",
+    "name": "關卡 7: 1983 華盛頓巫師挑戰",
     "difficulty": "bronze",
-    "cpuTeamName": "1973 華盛頓巫師",
+    "cpuTeamName": "1983 華盛頓巫師",
     "cpuRoster": [
       {
         "name": "A. Player L7",
@@ -495,9 +495,9 @@ const PVE_LEVELS = [
   },
   {
     "level": 8,
-    "name": "關卡 8: 1974 紐奧良鵜鶘挑戰",
+    "name": "關卡 8: 1984 紐奧良鵜鶘挑戰",
     "difficulty": "bronze",
-    "cpuTeamName": "1974 紐奧良鵜鶘",
+    "cpuTeamName": "1984 紐奧良鵜鶘",
     "cpuRoster": [
       {
         "name": "A. Player L8",
@@ -565,9 +565,9 @@ const PVE_LEVELS = [
   },
   {
     "level": 9,
-    "name": "關卡 9: 1975 休士頓火箭挑戰",
+    "name": "關卡 9: 1985 休士頓火箭挑戰",
     "difficulty": "bronze",
-    "cpuTeamName": "1975 休士頓火箭",
+    "cpuTeamName": "1985 休士頓火箭",
     "cpuRoster": [
       {
         "name": "A. Player L9",
@@ -635,9 +635,9 @@ const PVE_LEVELS = [
   },
   {
     "level": 10,
-    "name": "關卡 10: 1976 亞特蘭大老鷹挑戰",
+    "name": "關卡 10: 1986 亞特蘭大老鷹挑戰",
     "difficulty": "bronze",
-    "cpuTeamName": "1976 亞特蘭大老鷹",
+    "cpuTeamName": "1986 亞特蘭大老鷹",
     "cpuRoster": [
       {
         "name": "A. Player L10",
