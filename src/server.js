@@ -7,7 +7,15 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-const { connectDB } = require('./db');
+const {
+  connectDB,
+  getUserByUid,
+  findOrCreateUser,
+  performCheckIn,
+  incrementRookieGames,
+  updatePVEProgress
+} = require('./db');
+const { PVE_LEVELS } = require('./pve_levels');
 const { getYearPlayers } = require('./cache');
 const { queueEvaluation } = require('./gemini');
 const {
@@ -69,6 +77,53 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { uid, name, avatar, provider } = req.body;
+    if (!uid) {
+      return res.status(400).json({ error: 'Missing uid' });
+    }
+    const user = await findOrCreateUser({ uid, name, avatar, provider });
+    res.json({ user });
+  } catch (err) {
+    console.error('Error in /api/auth/login:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/users/checkin', async (req, res) => {
+  try {
+    const { uid } = req.body;
+    if (!uid) {
+      return res.status(400).json({ error: 'Missing uid' });
+    }
+    const checkinResult = await performCheckIn(uid);
+    res.json(checkinResult);
+  } catch (err) {
+    console.error('Error in /api/users/checkin:', err);
+    res.status(500).json({ error: err.message || 'Internal server error' });
+  }
+});
+
+app.get('/api/pve/levels', (req, res) => {
+  res.json({ levels: PVE_LEVELS });
+});
+
+app.post('/api/users/pve/unlock', async (req, res) => {
+  try {
+    const { uid, level } = req.body;
+    if (!uid || !level) {
+      return res.status(400).json({ error: 'Missing uid or level' });
+    }
+    await updatePVEProgress(uid, level);
+    const user = await getUserByUid(uid);
+    res.json({ success: true, user });
+  } catch (err) {
+    console.error('Error in /api/users/pve/unlock:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 const server = http.createServer(app);
 
 // Configure Socket.io with optimized heartbeats to defend against HF Spaces network timeouts
@@ -122,8 +177,17 @@ function startRoomTurnTimer(roomId) {
   const room = activeRooms.get(roomId);
   if (!room || room.phase === 'lobby' || room.phase === 'eval') return;
 
+  const activePlayerIdx = room.draftOrder[room.draftIndex];
+  const activePlayer = room.players[activePlayerIdx];
+  let turnDuration = 30000;
+  
+  if (activePlayer && activePlayer.uid && activePlayer.rookieGamesPlayed < 5) {
+    turnDuration = 60000;
+    console.log(`⏳ Rookie timer active for ${activePlayer.name}: 60 seconds`);
+  }
+
   // Set expiration time
-  room.turnExpiresAt = Date.now() + 30000;
+  room.turnExpiresAt = Date.now() + turnDuration;
 
   // Setup timeout callback
   const timer = setTimeout(async () => {
@@ -133,7 +197,7 @@ function startRoomTurnTimer(roomId) {
     } catch (err) {
       console.error(`Error in AFK Penalty for Room ${roomId}:`, err);
     }
-  }, 30000);
+  }, turnDuration);
 
   roomTimers.set(roomId, timer);
 }
@@ -201,15 +265,60 @@ function calcRatings(roster) {
 }
 
 // Helper: Complete draft phase and transition to evaluation
-function completeDraft(room) {
+async function completeDraft(room) {
   room.phase = 'eval';
   room.roomState = 'GAME_OVER';
   
+  if (room.isPVE) {
+    const levelConfig = PVE_LEVELS[room.levelId - 1];
+    if (levelConfig) {
+      const cpuPlayer = {
+        socketId: 'cpu_bot',
+        name: `電腦隊伍 (${levelConfig.cpuTeamName})`,
+        roster: levelConfig.cpuRoster,
+        isOwner: false,
+        isOnline: true,
+        isCPU: true
+      };
+      if (!room.players.some(p => p.socketId === 'cpu_bot')) {
+        room.players.push(cpuPlayer);
+      }
+    }
+  }
+
   // Compute ratings for all players
   room.ratings = {};
   room.players.forEach(p => {
     room.ratings[p.name] = calcRatings(p.roster);
   });
+
+  // Increment rookieGamesPlayed for human players, and handle PVE progression
+  try {
+    for (const p of room.players) {
+      if (p.uid && !p.isCPU) {
+        await incrementRookieGames(p.uid);
+      }
+    }
+
+    if (room.isPVE) {
+      const player = room.players.find(p => p.socketId !== 'cpu_bot');
+      const cpu = room.players.find(p => p.socketId === 'cpu_bot');
+      if (player && cpu) {
+        const playerOverall = room.ratings[player.name].overall;
+        const cpuOverall = room.ratings[cpu.name].overall;
+        room.pveWin = playerOverall > cpuOverall;
+        
+        if (room.pveWin) {
+          console.log(`🏆 Player won PVE level ${room.levelId}! Unlocking next level...`);
+          if (player.uid) {
+            await updatePVEProgress(player.uid, room.levelId + 1);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error updating stats/progress on draft completion:', err);
+  }
   
   console.log(`🏁 Draft completed for room ${room.id}. Entering evaluation...`);
   clearRoomTurnTimer(room.id);
@@ -485,7 +594,7 @@ async function triggerAFKPenalty(roomId) {
   room.currentTeam = null;
 
   if (room.draftIndex >= room.draftOrder.length) {
-    completeDraft(room);
+    await completeDraft(room);
   } else {
     // Switch turn
     room.phase = 'wheel';
@@ -544,8 +653,20 @@ io.on('connection', (socket) => {
   console.log(`🔌 New client connected: ${socket.id}`);
 
   // 1. Create Room Event
-  socket.on('create_room', async ({ settings, playerName }) => {
+  socket.on('create_room', async ({ settings, playerName, uid }) => {
     const roomId = generateRoomId();
+    let rookieGamesPlayed = 0;
+    if (uid) {
+      try {
+        const user = await getUserByUid(uid);
+        if (user) {
+          rookieGamesPlayed = user.rookieGamesPlayed || 0;
+        }
+      } catch (err) {
+        console.error('Error fetching user rookie games in create_room:', err);
+      }
+    }
+
     const room = {
       id: roomId,
       settings: {
@@ -563,7 +684,9 @@ io.on('connection', (socket) => {
         name: playerName || 'Host',
         roster: [],
         isOwner: true,
-        isOnline: true
+        isOnline: true,
+        uid: uid || null,
+        rookieGamesPlayed
       }],
       draftOrder: [],
       draftIndex: 0,
@@ -573,7 +696,9 @@ io.on('connection', (socket) => {
       phase: 'lobby',
       evalResult: null,
       availableTeams: [],
-      sheetIndex: null // For 15 USD modes, tells clients which pregenerated 5x5 grid to render
+      sheetIndex: null, // For 15 USD modes, tells clients which pregenerated 5x5 grid to render
+      isPVE: !!settings.isPVE,
+      levelId: settings.levelId ? parseInt(settings.levelId) : null
     };
 
     activeRooms.set(roomId, room);
@@ -581,11 +706,11 @@ io.on('connection', (socket) => {
     await saveRoomToDB(roomId, room);
 
     socket.emit('room_created', { roomId, room });
-    console.log(`🏠 Room ${roomId} created by ${playerName}`);
+    console.log(`🏠 Room ${roomId} created by ${playerName} (isPVE: ${room.isPVE})`);
   });
 
   // 2. Join Room Event
-  socket.on('join_room', async ({ roomId, playerName }) => {
+  socket.on('join_room', async ({ roomId, playerName, uid }) => {
     let room = activeRooms.get(roomId);
 
     // If not in memory, attempt to recover from MongoDB Atlas
@@ -612,11 +737,27 @@ io.on('connection', (socket) => {
       return;
     }
 
+    let rookieGamesPlayed = 0;
+    if (uid) {
+      try {
+        const user = await getUserByUid(uid);
+        if (user) {
+          rookieGamesPlayed = user.rookieGamesPlayed || 0;
+        }
+      } catch (err) {
+        console.error('Error fetching user rookie games in join_room:', err);
+      }
+    }
+
     // Check if player is already in this room (reconnect case)
     const existingPlayer = room.players.find(p => p.name === playerName);
     if (existingPlayer) {
       existingPlayer.socketId = socket.id;
       existingPlayer.isOnline = true;
+      existingPlayer.uid = uid || existingPlayer.uid || null;
+      if (uid) {
+        existingPlayer.rookieGamesPlayed = rookieGamesPlayed;
+      }
       // Update turn player socket ID if active
       if (room.draftOrder && room.draftOrder.length > 0) {
         const activePlayerIdx = room.draftOrder[room.draftIndex];
@@ -631,7 +772,9 @@ io.on('connection', (socket) => {
         name: playerName,
         roster: [],
         isOwner: false,
-        isOnline: true
+        isOnline: true,
+        uid: uid || null,
+        rookieGamesPlayed
       });
     }
 
@@ -690,16 +833,39 @@ io.on('connection', (socket) => {
     room.evalResult = null;
     room.currentTeam = null;
 
-    // Randomize player draft order (Snake draft)
-    const shuntedPlayers = [...room.players];
-    // Shuffle players order
-    for (let i = shuntedPlayers.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuntedPlayers[i], shuntedPlayers[j]] = [shuntedPlayers[j], shuntedPlayers[i]];
+    if (room.isPVE) {
+      const levelConfig = PVE_LEVELS[room.levelId - 1];
+      if (levelConfig) {
+        room.settings.mode = levelConfig.mode;
+        
+        // Parse year from cpuTeamName
+        const matchYear = levelConfig.cpuTeamName.match(/^(\d{4})/);
+        const levelYear = matchYear ? parseInt(matchYear[1]) : 2026;
+        room.settings.year = levelYear;
+        
+        if (levelConfig.restrictions) {
+          room.settings.allStarCap = levelConfig.restrictions.allStarCap !== undefined ? levelConfig.restrictions.allStarCap : 5;
+          room.settings.rookieFloor = levelConfig.restrictions.rookieFloor !== undefined ? levelConfig.restrictions.rookieFloor : 0;
+          room.settings.budget = levelConfig.restrictions.budget !== undefined ? levelConfig.restrictions.budget : 15;
+        } else {
+          room.settings.allStarCap = 5;
+          room.settings.rookieFloor = 0;
+          room.settings.budget = 15;
+        }
+      }
+      room.draftOrder = [0, 0, 0, 0, 0];
+    } else {
+      // Randomize player draft order (Snake draft)
+      const shuntedPlayers = [...room.players];
+      // Shuffle players order
+      for (let i = shuntedPlayers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuntedPlayers[i], shuntedPlayers[j]] = [shuntedPlayers[j], shuntedPlayers[i]];
+      }
+      // Update players in room with new order
+      room.players = shuntedPlayers;
+      room.draftOrder = generateSnakeDraftOrder(room.players.length);
     }
-    // Update players in room with new order
-    room.players = shuntedPlayers;
-    room.draftOrder = generateSnakeDraftOrder(room.players.length);
 
     const year = room.settings.year;
     const mode = room.settings.mode;
@@ -1161,7 +1327,7 @@ io.on('connection', (socket) => {
     room.currentTeam = null;
 
     if (room.draftIndex >= room.draftOrder.length) {
-      completeDraft(room);
+      await completeDraft(room);
     } else {
       room.phase = 'wheel';
       room.roomState = 'DRAFTING';
@@ -1225,7 +1391,8 @@ io.on('connection', (socket) => {
     // Clear timers
     clearRoomTurnTimer(roomId);
 
-    // Clear rosters
+    // Clear rosters and remove CPU bots
+    room.players = room.players.filter(p => !p.isCPU);
     room.players.forEach(p => {
       p.roster = [];
     });

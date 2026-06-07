@@ -42,7 +42,12 @@ const state = {
   wheelSpinning: false,       // true while wheel animation is running
   selectedTeamRoster: [], // Current roster available for drafting in Pick phase
   selectedTeamLegends: [], // Legends list for Relocated franchises / Legend mode
-  isEvaluating: false
+  isEvaluating: false,
+  user: null,
+  unlockedLevel: parseInt(localStorage.getItem('pve_unlocked_level') || '1'),
+  isPVE: false,
+  currentPVELevelId: null,
+  typewriterInterval: null
 };
 
 
@@ -213,8 +218,12 @@ socket.on('room_created', ({ roomId, room }) => {
   sessionStorage.setItem('nba_room_id', roomId);
   sessionStorage.setItem('nba_player_name', state.playerName);
 
-  showScreen('screen-lobby');
-  updateLobbyUI();
+  if (room.isPVE) {
+    socket.emit('start_game', { roomId });
+  } else {
+    showScreen('screen-lobby');
+    updateLobbyUI();
+  }
 });
 
 socket.on('room_update', (room) => {
@@ -423,7 +432,8 @@ function createRoom() {
       allStarCap: parseInt(allStarCapInput.value) !== undefined ? parseInt(allStarCapInput.value) : 5,
       rookieFloor: parseInt(rookieFloorInput.value) !== undefined ? parseInt(rookieFloorInput.value) : 0
     },
-    playerName
+    playerName,
+    uid: state.user ? state.user.uid : null
   });
 }
 
@@ -439,7 +449,7 @@ function joinRoom() {
     return;
   }
 
-  socket.emit('join_room', { roomId, playerName });
+  socket.emit('join_room', { roomId, playerName, uid: state.user ? state.user.uid : null });
 }
 
 function copyRoomCode() {
@@ -1117,19 +1127,36 @@ function renderRosterPanels() {
 
   const mode = room.settings.mode;
 
-  room.players.forEach((player, idx) => {
+  let playersToRender = [...room.players];
+  if (room.isPVE && !playersToRender.some(p => p.isCPU)) {
+    const levelConfig = pveLevels[room.levelId - 1];
+    if (levelConfig) {
+      playersToRender.push({
+        socketId: 'cpu_bot',
+        name: `電腦 (${levelConfig.cpuTeamName})`,
+        roster: levelConfig.cpuRoster,
+        isOnline: true,
+        isCPU: true
+      });
+    }
+  }
+
+  playersToRender.forEach((player, idx) => {
     const isSelf = player.name === state.playerName;
     const activePlayerIdx = room.draftOrder[room.draftIndex];
-    const isCurrentTurn = idx === activePlayerIdx;
+    const isCurrentTurn = room.isPVE ? (!player.isCPU) : (idx === activePlayerIdx);
 
     const panel = document.createElement('div');
     panel.className = `roster-panel glass-panel p-4 border transition-all ${isCurrentTurn ? 'border-purple-500 ring-1 ring-purple-500/20' : 'border-purple-950/60'}`;
     
     // Header labels (spent budgets or salaries)
     let extraHeaderHTML = '';
-    if (mode === '15usd' || mode === 'legend_15usd') {
+    if (player.isCPU) {
+      extraHeaderHTML = `<span class="ml-auto text-xs font-bold text-red-400 bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20">💻 電腦挑戰者</span>`;
+    } else if (mode === '15usd' || mode === 'legend_15usd') {
       const spent = player.roster.reduce((sum, p) => sum + p.salary, 0);
-      extraHeaderHTML = `<span class="ml-auto text-xs font-bold text-yellow-400 bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">預算: $${spent} / $15</span>`;
+      const limit = room.settings.budget || 15;
+      extraHeaderHTML = `<span class="ml-auto text-xs font-bold text-yellow-400 bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">預算: $${spent} / $${limit}</span>`;
     } else if (mode === 'salary_cap' || mode === 'salary_cap_legend') {
       const spent = player.roster.reduce((sum, p) => sum + p.salary, 0);
       const cap = SALARY_CAPS[room.settings.year] || 154647000;
@@ -1141,10 +1168,10 @@ function renderRosterPanels() {
 
     const header = `
       <div class="flex items-center gap-2.5 mb-3">
-        <span class="text-lg">${player.isOnline ? '🟢' : '⚪'}</span>
+        <span class="text-lg">${player.isCPU ? '🤖' : (player.isOnline ? '🟢' : '⚪')}</span>
         <div>
           <div class="font-bold text-sm ${isSelf ? 'text-purple-400' : 'text-gray-200'}">${player.name}</div>
-          <div class="text-[10px] text-gray-500">${isCurrentTurn ? '🔥 選擇中...' : '已就緒'}</div>
+          <div class="text-[10px] text-gray-500">${player.isCPU ? '已準備就緒' : (isCurrentTurn ? '🔥 選擇中...' : '已就緒')}</div>
         </div>
         ${extraHeaderHTML}
       </div>
@@ -1154,12 +1181,11 @@ function renderRosterPanels() {
     for (let s = 0; s < 5; s++) {
       if (s < player.roster.length) {
         const p = player.roster[s];
-        // Find team logo
         const teamLogo = NBA_TEAMS.find(t => t.abbreviation === getModernEquivalent(p.team))?.logo || '🏀';
         
-        const priceText = (mode === '15usd' || mode === 'legend_15usd')
+        const priceText = (!player.isCPU && (mode === '15usd' || mode === 'legend_15usd'))
           ? `<span class="text-[10px] font-black text-yellow-400">$${p.salary}</span>`
-          : (mode.includes('salary_cap') && p.salary)
+          : (!player.isCPU && mode.includes('salary_cap') && p.salary)
           ? `<span class="text-[10px] text-yellow-500">$${(p.salary / 1000000).toFixed(1)}M</span>`
           : '';
 
@@ -1195,14 +1221,45 @@ function updateEvalUI() {
 
   const mode = room.settings.mode;
 
+  // Render PVE result banner
+  const existingBanner = $('#pve-result-banner');
+  if (existingBanner) existingBanner.remove();
+
+  if (room.isPVE) {
+    const banner = document.createElement('div');
+    banner.id = 'pve-result-banner';
+    banner.className = `w-full max-w-4xl text-center py-4 mb-6 rounded-xl font-display font-black text-xl border ${room.pveWin ? 'bg-green-500/20 border-green-500/40 text-green-400 shadow-[0_0_15px_rgba(52,211,153,0.3)]' : 'bg-red-500/20 border-red-500/40 text-red-400 shadow-[0_0_15px_rgba(244,63,94,0.3)]'}`;
+    banner.textContent = room.pveWin ? '🏆 挑戰成功 (VICTORY)！解鎖下一關卡' : '❌ 挑戰失敗 (DEFEAT)！請重試';
+    container.parentNode.insertBefore(banner, container);
+
+    // Save PVE level unlock
+    if (room.pveWin) {
+      const currentLevel = room.levelId;
+      const nextLevel = currentLevel + 1;
+      if (nextLevel > state.unlockedLevel) {
+        state.unlockedLevel = nextLevel;
+        localStorage.setItem('pve_unlocked_level', nextLevel);
+        const pveProgressEl = $('#pve-user-progress');
+        if (pveProgressEl) {
+          pveProgressEl.textContent = `解鎖進度: ${state.unlockedLevel} / 60 關`;
+        }
+      }
+    }
+  }
+
+  const animationTargets = [];
+
   room.players.forEach(player => {
     const col = document.createElement('div');
     col.className = 'glass-panel p-5 border border-purple-950/60 bg-card/30 flex flex-col justify-between';
     
     let statsSummaryHTML = '';
-    if (mode === '15usd' || mode === 'legend_15usd') {
+    if (player.isCPU) {
+      statsSummaryHTML = `<div class="text-xs text-red-400 mt-1 font-semibold">💻 電腦關卡陣容</div>`;
+    } else if (mode === '15usd' || mode === 'legend_15usd') {
       const spent = player.roster.reduce((sum, p) => sum + p.salary, 0);
-      statsSummaryHTML = `<div class="text-xs text-yellow-400 mt-1 font-semibold">總金額：$${spent} / $15</div>`;
+      const limit = room.settings.budget || 15;
+      statsSummaryHTML = `<div class="text-xs text-yellow-400 mt-1 font-semibold">總金額：$${spent} / $${limit}</div>`;
     } else if (mode.includes('salary_cap')) {
       const spent = player.roster.reduce((sum, p) => sum + p.salary, 0);
       statsSummaryHTML = `<div class="text-xs text-yellow-500 mt-1 font-semibold">總薪資：$${spent.toLocaleString()}</div>`;
@@ -1210,20 +1267,28 @@ function updateEvalUI() {
 
     const ratings = (room.ratings && room.ratings[player.name]) || { offense: 0, defense: 0, overall: 0 };
     
-    function getRingHTML(score, label, strokeColor) {
+    function getRingHTML(score, label, strokeColor, key) {
       const radius = 20;
       const strokeWidth = 3;
       const circumference = 2 * Math.PI * radius;
-      const strokeDashoffset = circumference * (1 - score / 100);
+      const safeName = player.name.replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+      const uniqueId = `${safeName}-${key}`;
+      
+      animationTargets.push({
+        id: uniqueId,
+        score
+      });
+      
       return `
         <div class="flex flex-col items-center">
           <div class="relative w-11 h-11 flex items-center justify-center">
             <svg class="w-full h-full transform -rotate-90">
               <circle cx="22" cy="22" r="${radius}" stroke="rgba(255,255,255,0.06)" stroke-width="${strokeWidth}" fill="transparent" />
-              <circle cx="22" cy="22" r="${radius}" stroke="${strokeColor}" stroke-width="${strokeWidth}" fill="transparent"
-                      stroke-dasharray="${circumference}" stroke-dashoffset="${strokeDashoffset}" stroke-linecap="round" />
+              <circle id="ring-${uniqueId}" cx="22" cy="22" r="${radius}" stroke="${strokeColor}" stroke-width="${strokeWidth}" fill="transparent"
+                      stroke-dasharray="${circumference}" stroke-dashoffset="${circumference}" stroke-linecap="round"
+                      style="transition: stroke-dashoffset 1.5s cubic-bezier(0.1, 1, 0.1, 1);" />
             </svg>
-            <span class="absolute text-[10px] font-black text-white">${score}</span>
+            <span id="score-${uniqueId}" class="absolute text-[10px] font-black text-white">0</span>
           </div>
           <span class="text-[9px] text-gray-400 mt-1 font-semibold">${label}</span>
         </div>
@@ -1232,16 +1297,16 @@ function updateEvalUI() {
 
     const ratingsHTML = `
       <div class="flex items-center justify-around bg-purple-950/15 border border-purple-900/10 rounded-xl p-2.5 mb-4">
-        ${getRingHTML(ratings.offense, '進攻', '#f43f5e')}
-        ${getRingHTML(ratings.defense, '防守', '#34d399')}
-        ${getRingHTML(ratings.overall, '總評', '#f59e0b')}
+        ${getRingHTML(ratings.offense, '進攻', '#f43f5e', 'offense')}
+        ${getRingHTML(ratings.defense, '防守', '#34d399', 'defense')}
+        ${getRingHTML(ratings.overall, '總評', '#f59e0b', 'overall')}
       </div>
     `;
 
     col.innerHTML = `
       <div>
         <div class="flex items-center gap-2.5 mb-4 pb-2 border-b border-purple-950">
-          <span class="text-2xl">🏀</span>
+          <span class="text-2xl">${player.isCPU ? '🤖' : '🏀'}</span>
           <div>
             <div class="font-bold text-white text-base">${player.name}</div>
             ${statsSummaryHTML}
@@ -1270,6 +1335,30 @@ function updateEvalUI() {
     container.appendChild(col);
   });
 
+  // Trigger Ring & Score loading animations
+  setTimeout(() => {
+    animationTargets.forEach(target => {
+      const circle = document.getElementById(`ring-${target.id}`);
+      const text = document.getElementById(`score-${target.id}`);
+      if (circle) {
+        const circumference = 2 * Math.PI * 20;
+        circle.style.strokeDashoffset = circumference * (1 - target.score / 100);
+      }
+      if (text) {
+        let curr = 0;
+        const step = Math.ceil(target.score / 30);
+        const interval = setInterval(() => {
+          curr += step;
+          if (curr >= target.score) {
+            curr = target.score;
+            clearInterval(interval);
+          }
+          text.textContent = curr;
+        }, 30);
+      }
+    });
+  }, 100);
+
   const evalActions = $('#eval-actions');
   const evalResult = $('#eval-result');
   const btnReplay = $('#btn-replay');
@@ -1289,7 +1378,6 @@ function updateEvalUI() {
     btnReplay.classList.add('hidden');
     btnLeaveEval.classList.add('hidden');
 
-    // Only owners can request AI evaluation
     const btnEvaluate = $('#btn-evaluate');
     if (state.isOwner) {
       btnEvaluate.disabled = false;
@@ -1300,6 +1388,7 @@ function updateEvalUI() {
     }
   }
 }
+
 
 function requestEvaluation() {
   if (!state.roomId) return;
@@ -1359,6 +1448,373 @@ function fireConfetti() {
   setTimeout(() => { container.innerHTML = ''; }, 3500);
 }
 
+// ── OAuth & PVE Campaign Mode Implementation ──
+async function loginWithGoogle() {
+  console.log('Initiating Google Login...');
+  const mockGoogleProfiles = [
+    { uid: 'google_1082739182', name: 'LeBron Fan 23', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80', provider: 'google' },
+    { uid: 'google_2910398271', name: 'Curry Cooker', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', provider: 'google' },
+    { uid: 'google_3019283719', name: 'KD EasyMoney', avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&auto=format&fit=crop&q=80', provider: 'google' }
+  ];
+  const nickname = prompt('【模擬 Google 登入】請輸入你的暱稱：', state.playerName || 'Google 玩家');
+  if (!nickname) return;
+  
+  const profile = mockGoogleProfiles[Math.floor(Math.random() * mockGoogleProfiles.length)];
+  profile.name = nickname;
+  
+  await sendLoginPayload(profile);
+}
+
+async function loginWithFacebook() {
+  console.log('Initiating Facebook Login...');
+  const mockFacebookProfiles = [
+    { uid: 'facebook_987654321', name: 'Mamba Mentality', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', provider: 'facebook' },
+    { uid: 'facebook_543216789', name: 'Joker MVP', avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=100&auto=format&fit=crop&q=80', provider: 'facebook' }
+  ];
+  const nickname = prompt('【模擬 Facebook 登入】請輸入你的暱稱：', state.playerName || 'FB 玩家');
+  if (!nickname) return;
+  
+  const profile = mockFacebookProfiles[Math.floor(Math.random() * mockFacebookProfiles.length)];
+  profile.name = nickname;
+  
+  await sendLoginPayload(profile);
+}
+
+async function sendLoginPayload(profile) {
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(profile)
+    });
+    if (!res.ok) throw new Error('登入失敗');
+    const data = await res.json();
+    state.user = data.user;
+    
+    state.playerName = state.user.name;
+    sessionStorage.setItem('nba_player_name', state.playerName);
+    
+    const createNameEl = $('#create-player-name');
+    const joinNameEl = $('#join-player-name');
+    if (createNameEl) createNameEl.value = state.playerName;
+    if (joinNameEl) joinNameEl.value = state.playerName;
+    
+    state.unlockedLevel = state.user.unlockedLevel || 1;
+    
+    updateOAuthUI();
+    showToast(`✅ 歡迎回來，${state.user.name}！`);
+    
+    triggerCheckIn();
+  } catch (err) {
+    console.error('Login error:', err);
+    showToast('❌ 登入失敗，請稍後重試。');
+  }
+}
+
+function updateOAuthUI() {
+  const loggedOutEl = $('#oauth-logged-out');
+  const loggedInEl = $('#oauth-logged-in');
+  if (state.user) {
+    loggedOutEl.classList.add('hidden');
+    loggedInEl.classList.remove('hidden');
+    
+    $('#user-avatar').src = state.user.avatar;
+    $('#user-name').textContent = state.user.name;
+    $('#badge-streak').textContent = `🔥 ${state.user.checkInStreak || 0}天`;
+    $('#user-points').textContent = `🪙 ${state.user.points || 0} 積分`;
+    
+    const pveProgressEl = $('#pve-user-progress');
+    if (pveProgressEl) {
+      pveProgressEl.textContent = `解鎖進度: ${state.unlockedLevel} / 60 關`;
+    }
+  } else {
+    loggedOutEl.classList.remove('hidden');
+    loggedInEl.classList.add('hidden');
+  }
+}
+
+function logout() {
+  state.user = null;
+  state.playerName = 'Player 1';
+  sessionStorage.removeItem('nba_player_name');
+  
+  const createNameEl = $('#create-player-name');
+  const joinNameEl = $('#join-player-name');
+  if (createNameEl) createNameEl.value = 'Player 1';
+  if (joinNameEl) joinNameEl.value = 'Player 2';
+  
+  state.unlockedLevel = parseInt(localStorage.getItem('pve_unlocked_level') || '1');
+  
+  updateOAuthUI();
+  showToast('👋 已成功登出。');
+}
+
+function triggerCheckIn() {
+  if (!state.user) return;
+  
+  const gridEl = $('#checkin-grid');
+  gridEl.innerHTML = '';
+  
+  const currentStreak = state.user.checkInStreak || 0;
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isAlreadyCheckedIn = state.user.lastCheckInDate === todayStr;
+  
+  for (let day = 1; day <= 7; day++) {
+    const card = document.createElement('div');
+    card.className = 'checkin-day';
+    
+    let icon = '🪙';
+    let reward = 100 * day;
+    if (day === 7) {
+      icon = '🎁';
+      reward += 500;
+    }
+    
+    let status = 'locked';
+    if (isAlreadyCheckedIn) {
+      if (day <= currentStreak) status = 'claimed';
+    } else {
+      if (day <= currentStreak) status = 'claimed';
+      else if (day === currentStreak + 1) status = 'ready';
+    }
+    
+    if (status === 'claimed') {
+      card.classList.add('claimed');
+      card.innerHTML = `
+        <span class="text-xs font-semibold text-gray-400">第 ${day} 天</span>
+        <span class="text-xl my-1">✅</span>
+        <span class="text-[10px] text-green-400">+${reward}</span>
+      `;
+    } else if (status === 'ready') {
+      card.classList.add('ready');
+      card.innerHTML = `
+        <span class="text-xs font-bold text-yellow-400">第 ${day} 天</span>
+        <span class="text-xl my-1 animate-bounce">${icon}</span>
+        <span class="text-[10px] font-bold text-yellow-400">+${reward}</span>
+      `;
+    } else {
+      card.innerHTML = `
+        <span class="text-xs text-gray-500">第 ${day} 天</span>
+        <span class="text-xl my-1 opacity-50">${icon}</span>
+        <span class="text-[10px] text-gray-500">+${reward}</span>
+      `;
+    }
+    
+    gridEl.appendChild(card);
+  }
+  
+  const statusMsgEl = $('#checkin-status-msg');
+  const btnActionEl = $('#btn-checkin-action');
+  
+  if (isAlreadyCheckedIn) {
+    statusMsgEl.textContent = `🎉 今日簽到成功！連續簽到第 ${currentStreak} 天`;
+    btnActionEl.disabled = true;
+    btnActionEl.textContent = '今日已領取';
+    btnActionEl.className = 'w-full py-3 bg-gray-700 text-gray-400 font-bold rounded-xl cursor-not-allowed';
+  } else {
+    statusMsgEl.textContent = `💡 今日可簽到領取第 ${currentStreak + 1} 天獎勵！`;
+    btnActionEl.disabled = false;
+    btnActionEl.textContent = '🪙 立即簽到領取獎勵';
+    btnActionEl.className = 'w-full py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white font-bold rounded-xl shadow-lg transition';
+  }
+  
+  $('#modal-checkin').classList.remove('hidden');
+}
+
+async function claimCheckIn() {
+  if (!state.user) return;
+  try {
+    const res = await fetch('/api/users/checkin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: state.user.uid })
+    });
+    const data = await res.json();
+    if (data.success) {
+      state.user = data.user;
+      updateOAuthUI();
+      triggerCheckIn();
+      showToast(`🎁 簽到成功！獲得 🪙 ${data.pointsGained} 積分！`);
+      fireConfetti();
+    } else {
+      showToast(`⚠️ ${data.message || '簽到失敗'}`);
+    }
+  } catch (err) {
+    console.error('Check-in error:', err);
+    showToast('❌ 簽到連線失敗');
+  }
+}
+
+function closeCheckInModal() {
+  $('#modal-checkin').classList.add('hidden');
+}
+
+let pveLevels = [];
+async function showPVEMap() {
+  state.isPVE = true;
+  showScreen('screen-pve');
+  
+  const pveProgressEl = $('#pve-user-progress');
+  if (pveProgressEl) {
+    pveProgressEl.textContent = `解鎖進度: ${state.unlockedLevel} / 60 關`;
+  }
+  
+  if (pveLevels.length === 0) {
+    try {
+      const res = await fetch('/api/pve/levels');
+      const data = await res.json();
+      pveLevels = data.levels;
+    } catch (err) {
+      console.error('Error fetching PVE levels:', err);
+      showToast('❌ 無法加載關卡資料');
+      return;
+    }
+  }
+  
+  renderPVEMap();
+}
+
+function renderPVEMap() {
+  const container = $('#pve-chapters-container');
+  container.innerHTML = '';
+  
+  const chapterNames = [
+    "第一章：新手試煉 (1-10 關)",
+    "第二章：分區季後挑戰 (11-20 關)",
+    "第三章：白銀爭霸 (21-30 關)",
+    "第四章：黃金沙場對決 (31-40 關)",
+    "第五章：強權崛起 (41-50 關)",
+    "第六章：名人堂傳奇王朝 (51-60 關)"
+  ];
+  
+  for (let ch = 0; ch < 6; ch++) {
+    const chapterCard = document.createElement('div');
+    chapterCard.className = 'pve-chapter-card mb-6';
+    
+    const title = document.createElement('h3');
+    title.className = 'text-base font-black text-purple-300 mb-4 border-b border-purple-950 pb-2';
+    title.textContent = chapterNames[ch];
+    chapterCard.appendChild(title);
+    
+    const grid = document.createElement('div');
+    grid.className = 'pve-level-grid';
+    
+    const startLvl = ch * 10 + 1;
+    const endLvl = (ch + 1) * 10;
+    
+    for (let l = startLvl; l <= endLvl; l++) {
+      const levelData = pveLevels[l - 1];
+      if (!levelData) continue;
+      
+      const node = document.createElement('div');
+      node.className = 'pve-level-node';
+      
+      const isUnlocked = l <= state.unlockedLevel;
+      const isCompleted = l < state.unlockedLevel;
+      const isCurrent = l === state.unlockedLevel;
+      
+      node.textContent = l;
+      
+      if (isUnlocked) {
+        node.classList.add('unlocked');
+        if (isCompleted) {
+          node.classList.add('completed');
+          node.innerHTML = `<span>${l}</span><span class="text-[8px] text-green-400">★</span>`;
+        } else if (isCurrent) {
+          node.classList.add('current');
+          node.innerHTML = `<span>${l}</span><span class="text-[8px] text-yellow-400 animate-pulse">⚔️</span>`;
+        }
+        node.onclick = () => openPVEModal(levelData);
+      } else {
+        node.classList.add('locked');
+        node.innerHTML = `<span>${l}</span><span class="text-[9px] text-gray-500">🔒</span>`;
+      }
+      
+      grid.appendChild(node);
+    }
+    
+    chapterCard.appendChild(grid);
+    container.appendChild(chapterCard);
+  }
+}
+
+function openPVEModal(levelData) {
+  state.currentPVELevelId = levelData.level;
+  
+  $('#pve-level-title').textContent = levelData.name;
+  $('#pve-level-cpu-team').textContent = levelData.cpuTeamName;
+  $('#pve-level-difficulty').textContent = `${levelData.difficulty.toUpperCase()} / ${getModeChineseName(levelData.mode)}`;
+  $('#pve-level-cpu-overall').textContent = levelData.ratings.overall;
+  
+  const rosterEl = $('#pve-level-roster');
+  rosterEl.innerHTML = levelData.cpuRoster.map(p => {
+    return `<div class="flex justify-between items-center py-1 border-b border-purple-950/20">
+      <span>${p.position.join('/')} - <strong>${p.name}</strong></span>
+      <span class="text-gray-400">${p.pts} PTS / ${p.trb} TRB / ${p.ast} AST</span>
+    </div>`;
+  }).join('');
+  
+  const limitsEl = $('#pve-level-limits');
+  let limitDesc = '無特殊選秀限制。';
+  if (levelData.restrictions) {
+    const r = levelData.restrictions;
+    const parts = [];
+    if (r.allStarCap !== undefined) parts.push(`全明星上限: <strong class="text-yellow-400">${r.allStarCap} 人</strong>`);
+    if (r.rookieFloor !== undefined) parts.push(`新秀下限: <strong class="text-cyan-400">${r.rookieFloor} 人</strong>`);
+    if (r.budget !== undefined) parts.push(`選秀預算限制: <strong class="text-green-400">$${r.budget}</strong>`);
+    if (parts.length > 0) limitDesc = parts.join(' | ');
+  }
+  limitsEl.innerHTML = limitDesc;
+  
+  $('#modal-pve-level').classList.remove('hidden');
+}
+
+function getModeChineseName(mode) {
+  const map = {
+    'wheel': '轉盤選秀',
+    'legend_wheel': '傳奇隊史轉盤',
+    '15usd': '經典 15 元選秀',
+    'legend_15usd': '歷史傳奇 15 元選秀',
+    'salary_cap': '薪資上限模式',
+    'salary_cap_legend': '薪資上限+傳奇球星',
+    'blind': '盲選模式'
+  };
+  return map[mode] || mode;
+}
+
+function closePVEModal() {
+  $('#modal-pve-level').classList.add('hidden');
+}
+
+function goBackFromPVE() {
+  state.isPVE = false;
+  showScreen('screen-setup');
+}
+
+function startPVEGame() {
+  closePVEModal();
+  const settings = {
+    isPVE: true,
+    levelId: state.currentPVELevelId
+  };
+  const payload = {
+    settings,
+    playerName: state.playerName || '挑戰者',
+    uid: state.user ? state.user.uid : null
+  };
+  socket.emit('create_room', payload);
+}
+
+function showPVPForm() {
+  const pvpSection = $('#pvp-section');
+  if (pvpSection.classList.contains('hidden')) {
+    pvpSection.classList.remove('hidden');
+    pvpSection.scrollIntoView({ behavior: 'smooth' });
+  } else {
+    pvpSection.classList.add('hidden');
+  }
+}
+
 // ── Global Interface Exposure ───────────────
 window.__app = {
   switchTab,
@@ -1371,7 +1827,20 @@ window.__app = {
   toggleRosterView,
   requestEvaluation,
   playAgain,
-  leaveRoom
+  leaveRoom,
+  loginWithGoogle,
+  loginWithFacebook,
+  logout,
+  triggerCheckIn,
+  claimCheckIn,
+  closeCheckInModal,
+  showPVEMap,
+  renderPVEMap,
+  openPVEModal,
+  closePVEModal,
+  goBackFromPVE,
+  startPVEGame,
+  showPVPForm
 };
 
 // ── Setup Page Visibility Toggles ───────────

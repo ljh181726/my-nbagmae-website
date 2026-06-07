@@ -8,8 +8,8 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <!-- Socket.io client script served by the backend server -->
   <script src="/socket.io/socket.io.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="stylesheet" href="style.css" />
 
   <script>
@@ -54,120 +54,181 @@
         <p class="text-gray-400 mt-2 text-sm">即時連線對戰 · 多元選秀模式 · 時空大亂鬥</p>
       </div>
 
-      <!-- Tab Buttons -->
-      <div class="flex border-b border-purple-950 mb-6">
-        <button id="tab-create" class="flex-1 py-3 text-sm font-bold border-b-2 border-purple-500 text-purple-400" onclick="window.__app.switchTab('create')">
-          建立房間 (Create)
+      <!-- OAuth Login Section -->
+      <div id="oauth-container" class="mb-6 p-4 bg-card/60 border border-purple-500/20 rounded-xl text-center">
+        <!-- Not logged in state -->
+        <div id="oauth-logged-out" class="space-y-3">
+          <p class="text-xs font-semibold text-gray-400">登入解鎖雲端進度與每日簽到獎勵</p>
+          <div class="flex flex-col sm:flex-row gap-2 justify-center">
+            <!-- Google Sign-In Button Container -->
+            <div id="g-login-btn-wrapper" class="flex justify-center">
+              <button onclick="window.__app.loginWithGoogle()" class="flex items-center justify-center gap-2 bg-white text-gray-800 px-4 py-2 rounded-lg font-bold text-xs shadow hover:bg-gray-100 transition duration-200">
+                <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#EA4335" d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.137 4.114-3.478 0-6.3-2.822-6.3-6.3s2.822-6.3 6.3-6.3c1.554 0 2.977.566 4.08 1.486l3.18-3.18C19.3 2.536 15.97 1.5 12.24 1.5c-5.79 0-10.5 4.71-10.5 10.5s4.71 10.5 10.5 10.5c5.52 0 10.22-3.96 10.22-10.5 0-.64-.06-1.28-.18-1.715H12.24z"/></svg>
+                Google 登入
+              </button>
+            </div>
+            <!-- Facebook Sign-In Button -->
+            <button onclick="window.__app.loginWithFacebook()" class="flex items-center justify-center gap-2 bg-[#1877F2] text-white px-4 py-2 rounded-lg font-bold text-xs shadow hover:bg-[#166FE5] transition duration-200">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              Facebook 登入
+            </button>
+          </div>
+          <p class="text-[10px] text-gray-500">或以訪客身份直接在下方開始遊玩</p>
+        </div>
+        <!-- Logged in state -->
+        <div id="oauth-logged-in" class="hidden flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3 text-left">
+            <img id="user-avatar" class="w-10 h-10 rounded-full border border-purple-500 shadow-md bg-purple-950" src="" alt="Avatar" />
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span id="user-name" class="font-bold text-xs text-white">暱稱</span>
+                <span id="badge-streak" class="text-[9px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded font-black border border-yellow-500/30">🔥 0天</span>
+              </div>
+              <p id="user-points" class="text-[10px] text-purple-400">🪙 0 積分</p>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <button id="btn-checkin" onclick="window.__app.triggerCheckIn()" class="text-[10px] font-bold bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white px-2.5 py-1 rounded-lg shadow-md transition">
+              🎁 簽到福利
+            </button>
+            <button onclick="window.__app.logout()" class="text-[9px] text-gray-400 hover:text-red-400 transition underline text-right">
+              登出
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Play Mode Options -->
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <button onclick="window.__app.showPVEMap()" class="p-4 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-purple-500 hover:bg-purple-900/30 transition text-center flex flex-col items-center justify-center gap-2">
+          <span class="text-3xl">🏆</span>
+          <span class="font-bold text-sm text-white">單人闖關 (PVE)</span>
+          <span class="text-[10px] text-gray-400">1-60 傳奇挑戰</span>
         </button>
-        <button id="tab-join" class="flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-400" onclick="window.__app.switchTab('join')">
-          加入房間 (Join)
+        <button id="btn-show-pvp" onclick="window.__app.showPVPForm()" class="p-4 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-purple-500 hover:bg-purple-900/30 transition text-center flex flex-col items-center justify-center gap-2">
+          <span class="text-3xl">👥</span>
+          <span class="font-bold text-sm text-white">線上對戰 (PVP)</span>
+          <span class="text-[10px] text-gray-400">房號連線聯賽</span>
         </button>
       </div>
 
-      <!-- Tab Content 1: Create Room -->
-      <div id="panel-create" class="block text-left space-y-5">
-        <div>
-          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">玩家名稱</label>
-          <input type="text" id="create-player-name" class="input-field" placeholder="輸入你的暱稱" value="Player 1" maxlength="15" />
+      <!-- PVP Section (hidden by default) -->
+      <div id="pvp-section" class="hidden border-t border-purple-950/50 pt-6">
+        <!-- Tab Buttons -->
+        <div class="flex border-b border-purple-950 mb-6">
+          <button id="tab-create" class="flex-1 py-3 text-sm font-bold border-b-2 border-purple-500 text-purple-400" onclick="window.__app.switchTab('create')">
+            建立房間 (Create)
+          </button>
+          <button id="tab-join" class="flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-400" onclick="window.__app.switchTab('join')">
+            加入房間 (Join)
+          </button>
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">遊戲模式</label>
-          <select id="create-mode" class="input-field cursor-pointer">
-            <option value="wheel">🎪 轉盤選秀模式 (標準年)</option>
-            <option value="legend_wheel">🎪 傳奇隊史轉盤 (跨時空傳奇)</option>
-            <option value="15usd">💵 經典 15 元選秀 (現役預設)</option>
-            <option value="legend_15usd">👑 歷史傳奇 15 元選秀 (經典歷史)</option>
-            <option value="salary_cap">⚖️ 薪資上限挑戰模式 (標準年薪資)</option>
-            <option value="salary_cap_legend">🪐 薪資上限 + 傳奇球星模式</option>
-            <option value="blind">🕵️ 盲選數據模式 (數據卡片選秀)</option>
-          </select>
-        </div>
-
-        <!-- Blind Draft Sub-mode (Only shown for blind mode) -->
-        <div id="blind-submode-container" class="hidden">
-          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">盲選子模式</label>
-          <select id="create-blind-submode" class="input-field cursor-pointer">
-            <option value="single">📅 制度 A: 單一年份盲選</option>
-            <option value="decade">📅 制度 B: 十年區間盲選</option>
-          </select>
-        </div>
-
-        <!-- Decade selector (Only shown for blind mode + decade sub-mode) -->
-        <div id="decade-selector-container" class="hidden">
-          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">選擇十年區間</label>
-          <select id="create-decade" class="input-field cursor-pointer">
-            <option value="1980s">1980 年代 (1980-1989)</option>
-            <option value="1990s">1990 年代 (1990-1999)</option>
-            <option value="2000s">2000 年代 (2000-2009)</option>
-            <option value="2010s">2010 年代 (2010-2019)</option>
-            <option value="2020s">2020 年代 (2020-2026)</option>
-          </select>
-        </div>
-
-        <!-- Year slider (Hidden for 15 USD modes since they are hardcoded) -->
-        <div id="year-slider-container">
-          <div class="flex justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-            <span>時空年份限制</span>
-            <span id="year-val" class="text-purple-400 font-bold">2026</span>
-          </div>
-          <input type="range" id="create-year" min="1977" max="2026" value="2026" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500" oninput="document.getElementById('year-val').innerText = this.value" />
-          <div class="flex justify-between text-[10px] text-gray-500 mt-1">
-            <span>1977 ABA合併</span>
-            <span>2026 最新賽季</span>
-          </div>
-        </div>
-
-        <!-- Advance filters -->
-        <div id="adv-filters-container" class="grid grid-cols-2 gap-4">
-          <label class="flex items-center gap-2 cursor-pointer bg-card/50 p-3 rounded-lg border border-purple-950 hover:border-purple-800 transition">
-            <input type="checkbox" id="create-ban-stars" class="w-4 h-4 accent-purple-500 rounded" />
-            <span class="text-xs font-medium text-gray-300 select-none">🚫 禁止明星賽球員</span>
-          </label>
-          <label class="flex items-center gap-2 cursor-pointer bg-card/50 p-3 rounded-lg border border-purple-950 hover:border-purple-800 transition">
-            <input type="checkbox" id="create-rookie-only" class="w-4 h-4 accent-purple-500 rounded" />
-            <span class="text-xs font-medium text-gray-300 select-none">👶 僅限新秀合約</span>
-          </label>
-        </div>
-
-        <!-- Wheel constraint sliders (Hidden for 15 USD modes, shown for wheel/salary_cap modes) -->
-        <div id="wheel-constraint-sliders" class="space-y-4 pt-2">
+        <!-- Tab Content 1: Create Room -->
+        <div id="panel-create" class="block text-left space-y-5">
           <div>
-            <div class="flex justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              <span>⭐ 每隊全明星上限 (All-Star Cap)</span>
-              <span id="allstar-cap-val" class="text-yellow-400 font-bold">5 人 (無限制)</span>
-            </div>
-            <input type="range" id="create-allstar-cap" min="0" max="5" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-yellow-500" oninput="document.getElementById('allstar-cap-val').innerText = this.value === '5' ? '5 人 (無限制)' : this.value + ' 人'" />
+            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">玩家名稱</label>
+            <input type="text" id="create-player-name" class="input-field" placeholder="輸入你的暱稱" value="Player 1" maxlength="15" />
           </div>
+
           <div>
-            <div class="flex justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              <span>👶 每隊新秀下限 (Rookie Floor)</span>
-              <span id="rookie-floor-val" class="text-cyan-400 font-bold">0 人 (無限制)</span>
-            </div>
-            <input type="range" id="create-rookie-floor" min="0" max="5" value="0" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-500" oninput="document.getElementById('rookie-floor-val').innerText = this.value === '0' ? '0 人 (無限制)' : this.value + ' 人'" />
+            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">遊戲模式</label>
+            <select id="create-mode" class="input-field cursor-pointer">
+              <option value="wheel">🎪 轉盤選秀模式 (標準年)</option>
+              <option value="legend_wheel">🎪 傳奇隊史轉盤 (跨時空傳奇)</option>
+              <option value="15usd">💵 經典 15 元選秀 (現役預設)</option>
+              <option value="legend_15usd">👑 歷史傳奇 15 元選秀 (經典歷史)</option>
+              <option value="salary_cap">⚖️ 薪資上限挑戰模式 (標準年薪資)</option>
+              <option value="salary_cap_legend">🪐 薪資上限 + 傳奇球星模式</option>
+              <option value="blind">🕵️ 盲選數據模式 (數據卡片選秀)</option>
+            </select>
           </div>
+
+          <!-- Blind Draft Sub-mode (Only shown for blind mode) -->
+          <div id="blind-submode-container" class="hidden">
+            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">盲選子模式</label>
+            <select id="create-blind-submode" class="input-field cursor-pointer">
+              <option value="single">📅 制度 A: 單一年份盲選</option>
+              <option value="decade">📅 制度 B: 十年區間盲選</option>
+            </select>
+          </div>
+
+          <!-- Decade selector (Only shown for blind mode + decade sub-mode) -->
+          <div id="decade-selector-container" class="hidden">
+            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">選擇十年區間</label>
+            <select id="create-decade" class="input-field cursor-pointer">
+              <option value="1980s">1980 年代 (1980-1989)</option>
+              <option value="1990s">1990 年代 (1990-1999)</option>
+              <option value="2000s">2000 年代 (2000-2009)</option>
+              <option value="2010s">2010 年代 (2010-2019)</option>
+              <option value="2020s">2020 年代 (2020-2026)</option>
+            </select>
+          </div>
+
+          <!-- Year slider (Hidden for 15 USD modes since they are hardcoded) -->
+          <div id="year-slider-container">
+            <div class="flex justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              <span>時空年份限制</span>
+              <span id="year-val" class="text-purple-400 font-bold">2026</span>
+            </div>
+            <input type="range" id="create-year" min="1977" max="2026" value="2026" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500" oninput="document.getElementById('year-val').innerText = this.value" />
+            <div class="flex justify-between text-[10px] text-gray-500 mt-1">
+              <span>1977 ABA合併</span>
+              <span>2026 最新賽季</span>
+            </div>
+          </div>
+
+          <!-- Advance filters -->
+          <div id="adv-filters-container" class="grid grid-cols-2 gap-4">
+            <label class="flex items-center gap-2 cursor-pointer bg-card/50 p-3 rounded-lg border border-purple-950 hover:border-purple-800 transition">
+              <input type="checkbox" id="create-ban-stars" class="w-4 h-4 accent-purple-500 rounded" />
+              <span class="text-xs font-medium text-gray-300 select-none">🚫 禁止明星賽球員</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer bg-card/50 p-3 rounded-lg border border-purple-950 hover:border-purple-800 transition">
+              <input type="checkbox" id="create-rookie-only" class="w-4 h-4 accent-purple-500 rounded" />
+              <span class="text-xs font-medium text-gray-300 select-none">👶 僅限新秀合約</span>
+            </label>
+          </div>
+
+          <!-- Wheel constraint sliders (Hidden for 15 USD modes, shown for wheel/salary_cap modes) -->
+          <div id="wheel-constraint-sliders" class="space-y-4 pt-2">
+            <div>
+              <div class="flex justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                <span>⭐ 每隊全明星上限 (All-Star Cap)</span>
+                <span id="allstar-cap-val" class="text-yellow-400 font-bold">5 人 (無限制)</span>
+              </div>
+              <input type="range" id="create-allstar-cap" min="0" max="5" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-yellow-500" oninput="document.getElementById('allstar-cap-val').innerText = this.value === '5' ? '5 人 (無限制)' : this.value + ' 人'" />
+            </div>
+            <div>
+              <div class="flex justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                <span>👶 每隊新秀下限 (Rookie Floor)</span>
+                <span id="rookie-floor-val" class="text-cyan-400 font-bold">0 人 (無限制)</span>
+              </div>
+              <input type="range" id="create-rookie-floor" min="0" max="5" value="0" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-500" oninput="document.getElementById('rookie-floor-val').innerText = this.value === '0' ? '0 人 (無限制)' : this.value + ' 人'" />
+            </div>
+          </div>
+
+          <button class="spin-btn w-full mt-6" onclick="window.__app.createRoom()">
+            🏠 建立房間並進入大廳
+          </button>
         </div>
 
-        <button class="spin-btn w-full mt-6" onclick="window.__app.createRoom()">
-          🏠 建立房間並進入大廳
-        </button>
-      </div>
+        <!-- Tab Content 2: Join Room -->
+        <div id="panel-join" class="hidden text-left space-y-5">
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">玩家名稱</label>
+            <input type="text" id="join-player-name" class="input-field" placeholder="輸入你的暱稱" value="Player 2" maxlength="15" />
+          </div>
 
-      <!-- Tab Content 2: Join Room -->
-      <div id="panel-join" class="hidden text-left space-y-5">
-        <div>
-          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">玩家名稱</label>
-          <input type="text" id="join-player-name" class="input-field" placeholder="輸入你的暱稱" value="Player 2" maxlength="15" />
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">輸入房號 (Room Code)</label>
+            <input type="text" id="join-room-id" class="input-field text-center text-xl font-bold tracking-widest uppercase" placeholder="4位數房號" maxlength="6" />
+          </div>
+
+          <button class="spin-btn w-full mt-6" onclick="window.__app.joinRoom()">
+            🚪 加入連線房間
+          </button>
         </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">輸入房號 (Room Code)</label>
-          <input type="text" id="join-room-id" class="input-field text-center text-xl font-bold tracking-widest uppercase" placeholder="4位數房號" maxlength="6" />
-        </div>
-
-        <button class="spin-btn w-full mt-6" onclick="window.__app.joinRoom()">
-          🚪 加入連線房間
-        </button>
       </div>
     </div>
   </section>
@@ -392,6 +453,85 @@
       </button>
     </div>
   </section>
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 5 — PVE CAMPAIGN MAP
+       ═══════════════════════════════════════════ -->
+  <section id="screen-pve" class="screen flex-col items-center min-h-screen px-4 py-8">
+    <div class="glass-panel max-w-6xl w-full p-6 text-center">
+      <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        <button onclick="window.__app.goBackFromPVE()" class="text-sm bg-purple-900/40 hover:bg-purple-800 px-4 py-2 rounded-lg border border-purple-500/20 text-gray-300 transition duration-200">⬅️ 返回首頁</button>
+        <h2 class="font-display text-2xl md:text-3xl font-black bg-gradient-to-r from-yellow-400 to-red-400 bg-clip-text text-transparent">🏆 關卡挑戰 (PVE Campaign)</h2>
+        <div class="text-xs text-purple-400 font-bold bg-purple-950/50 px-4 py-2 rounded-full border border-purple-500/10" id="pve-user-progress">解鎖進度: 1 / 60 關</div>
+      </div>
+      
+      <!-- PVE Chapters Grid (10 levels per chapter) -->
+      <div id="pve-chapters-container" class="space-y-8 overflow-y-auto max-h-[70vh] pr-2 text-left">
+        <!-- Chapters dynamically created -->
+      </div>
+    </div>
+  </section>
+
+  <!-- PVE Level Detail Modal -->
+  <div id="modal-pve-level" class="modal-overlay hidden">
+    <div class="glass-panel max-w-lg w-full p-6 text-left relative modal-content">
+      <button onclick="window.__app.closePVEModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+      <h3 id="pve-level-title" class="font-display text-2xl font-black text-yellow-400 mb-1">關卡 1: 夏洛特山貓挑戰</h3>
+      <p id="pve-level-chapter" class="text-xs text-purple-400 font-bold mb-4">章節：新手試煉</p>
+      
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="bg-card/50 p-3 rounded-lg border border-purple-950">
+          <span class="text-xs text-gray-400 block mb-1">💻 CPU 隊伍</span>
+          <span id="pve-level-cpu-team" class="font-bold text-white text-sm">2012 夏洛特山貓</span>
+        </div>
+        <div class="bg-card/50 p-3 rounded-lg border border-purple-950">
+          <span class="text-xs text-gray-400 block mb-1">⚙️ 關卡難度 / 模式</span>
+          <span id="pve-level-difficulty" class="font-bold text-sm text-purple-300">青銅 / 轉盤選秀</span>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <span class="text-xs text-gray-400 block mb-1">💻 CPU 預設五人陣容 (總評: <span id="pve-level-cpu-overall" class="text-yellow-400 font-bold">--</span>)</span>
+        <div id="pve-level-roster" class="space-y-1.5 bg-card/30 p-3 rounded-lg border border-purple-950/40 text-xs text-gray-300">
+          <!-- CPU Players -->
+        </div>
+      </div>
+
+      <div class="mb-4 bg-purple-950/30 p-3 rounded-lg border border-purple-500/20">
+        <span class="text-xs text-yellow-400 font-bold block mb-1">💡 玩家選秀限制</span>
+        <div id="pve-level-limits" class="text-xs text-gray-300 leading-relaxed">
+          <!-- Limits description -->
+        </div>
+      </div>
+
+      <button id="btn-start-pve" onclick="window.__app.startPVEGame()" class="spin-btn w-full py-3 mt-4 text-base font-bold bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white rounded-xl shadow-lg transition duration-200">
+        ⚔️ 開始挑戰此關卡
+      </button>
+    </div>
+  </div>
+
+  <!-- Daily Check-in Modal -->
+  <div id="modal-checkin" class="modal-overlay hidden">
+    <div class="glass-panel max-w-md w-full p-6 text-center relative modal-content">
+      <button onclick="window.__app.closeCheckInModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+      <div class="text-5xl mb-3 animate-bounce">🎁</div>
+      <h3 class="font-display text-2xl font-black text-yellow-400 mb-1">每日簽到福利</h3>
+      <p class="text-xs text-gray-400 mb-6">連續簽到 7 天可獲得海量積分加成！</p>
+      
+      <!-- 7 Days Grid -->
+      <div id="checkin-grid" class="grid grid-cols-7 gap-2 mb-6">
+        <!-- Day 1-7 cards generated by JS -->
+      </div>
+
+      <div class="bg-purple-950/30 p-3 rounded-xl border border-purple-500/20 mb-6">
+        <p class="text-sm text-gray-300 font-medium" id="checkin-status-msg">你今天尚未簽到</p>
+      </div>
+
+      <button id="btn-checkin-action" onclick="window.__app.claimCheckIn()" class="spin-btn w-full py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white font-bold rounded-xl shadow-lg transition">
+        🪙 立即簽到領取獎勵
+      </button>
+    </div>
+  </div>
 
   <div id="confetti-container" class="confetti-container"></div>
 

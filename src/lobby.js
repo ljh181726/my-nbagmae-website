@@ -157,7 +157,9 @@ async function saveRoomToDB(roomId, room) {
         name: p.name,
         roster: p.roster,
         isOwner: p.isOwner,
-        isOnline: p.isOnline
+        isOnline: p.isOnline,
+        uid: p.uid || null,
+        rookieGamesPlayed: p.rookieGamesPlayed || 0
       })),
       draftOrder: room.draftOrder,
       draftIndex: room.draftIndex,
@@ -172,6 +174,8 @@ async function saveRoomToDB(roomId, room) {
       ratings: room.ratings || null,
       dynamicGrid: room.dynamicGrid || null,
       sheetIndex: room.sheetIndex !== undefined ? room.sheetIndex : null,
+      isPVE: room.isPVE || false,
+      levelId: room.levelId || null,
       updatedAt: new Date()
     };
     await db.collection('active_rooms').updateOne(
@@ -205,7 +209,9 @@ async function loadRoomFromDB(roomId) {
       evalResult: doc.evalResult,
       ratings: doc.ratings || null,
       dynamicGrid: doc.dynamicGrid || null,
-      sheetIndex: doc.sheetIndex !== undefined ? doc.sheetIndex : null
+      sheetIndex: doc.sheetIndex !== undefined ? doc.sheetIndex : null,
+      isPVE: doc.isPVE || false,
+      levelId: doc.levelId || null
     };
   } catch (err) {
     console.error(`❌ Error loading room ${roomId} from DB:`, err);
