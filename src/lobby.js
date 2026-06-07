@@ -150,7 +150,7 @@ async function saveRoomToDB(roomId, room) {
   try {
     const db = await connectDB();
     const cleanRoom = {
-      _id: roomId,
+      _id: String(roomId),
       settings: room.settings,
       players: room.players.map(p => ({
         socketId: p.socketId,
@@ -192,7 +192,7 @@ async function saveRoomToDB(roomId, room) {
 async function loadRoomFromDB(roomId) {
   try {
     const db = await connectDB();
-    const doc = await db.collection('active_rooms').findOne({ _id: roomId });
+    const doc = await db.collection('active_rooms').findOne({ _id: String(roomId) });
     if (!doc) return null;
     return {
       settings: doc.settings,

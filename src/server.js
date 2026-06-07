@@ -1127,6 +1127,7 @@ io.on('connection', (socket) => {
 
   // 3. Reconnect/Rejoin Event
   socket.on('rejoin_room', async ({ roomId, playerName }) => {
+    roomId = String(roomId);
     let room = activeRooms.get(roomId);
 
     // If server restarted, read room state from MongoDB Atlas
@@ -1134,6 +1135,10 @@ io.on('connection', (socket) => {
       room = await loadRoomFromDB(roomId);
       if (room) {
         activeRooms.set(roomId, room);
+        // Start turn timer if active phase is draft, wheel, or pick
+        if (room.phase === 'draft' || room.phase === 'wheel' || room.phase === 'pick') {
+          startRoomTurnTimer(roomId);
+        }
       }
     }
 
@@ -1164,6 +1169,7 @@ io.on('connection', (socket) => {
 
   // 4. Start Game Event
   socket.on('start_game', async ({ roomId }) => {
+    roomId = String(roomId);
     const room = activeRooms.get(roomId);
     if (!room) return;
 
@@ -1365,6 +1371,7 @@ io.on('connection', (socket) => {
 
   // 5. Spin Wheel Event
   socket.on('spin_wheel_request', async ({ roomId }) => {
+    roomId = String(roomId);
     const room = activeRooms.get(roomId);
     if (!room) return;
 
@@ -1463,6 +1470,7 @@ io.on('connection', (socket) => {
 
   // 5b. Client notifies server animation is done -> switch to pick phase
   socket.on('spin_done', async ({ roomId }) => {
+    roomId = String(roomId);
     const room = activeRooms.get(roomId);
     if (!room || room.phase !== 'wheel') return;
 
@@ -1485,6 +1493,7 @@ io.on('connection', (socket) => {
 
   // 6. Draft Player Event
   socket.on('draft_player_request', async ({ roomId, playerSelection }) => {
+    roomId = String(roomId);
     const room = activeRooms.get(roomId);
     if (!room) return;
 
@@ -1706,6 +1715,7 @@ io.on('connection', (socket) => {
 
   // 7. Request AI Evaluation Event
   socket.on('request_evaluation', async ({ roomId }) => {
+    roomId = String(roomId);
     const room = activeRooms.get(roomId);
     if (!room) return;
 
@@ -1730,6 +1740,7 @@ io.on('connection', (socket) => {
 
   // 8. Replay / Restart Room Event
   socket.on('play_again', async ({ roomId }) => {
+    roomId = String(roomId);
     const room = activeRooms.get(roomId);
     if (!room) return;
 
@@ -1770,6 +1781,7 @@ io.on('connection', (socket) => {
 
   // 10. Fetch Team Roster Event / Dynamic Franchise Legends
   socket.on('get_team_roster', async ({ roomId, teamAbbr }, callback) => {
+    roomId = String(roomId);
     const room = activeRooms.get(roomId);
     if (!room) return callback([]);
 
@@ -1820,6 +1832,7 @@ io.on('connection', (socket) => {
 
   // 11. Leave Room Event
   socket.on('leave_room', async ({ roomId, playerName }) => {
+    roomId = String(roomId);
     const room = activeRooms.get(roomId);
     if (!room) return;
 
