@@ -218,13 +218,17 @@ socket.on('room_created', ({ roomId, room }) => {
 });
 
 socket.on('room_update', (room) => {
+  const oldRoom = state.room;
   state.room = room;
   
-  // Find self to check ownership
+  // Find self to check ownership and recover/store name
   const me = room.players.find(p => p.socketId === socket.id || p.name === state.playerName);
   if (me) {
     state.isOwner = me.isOwner;
     state.playerName = me.name;
+    state.roomId = room.id;
+    localStorage.setItem('nba_room_id', room.id);
+    localStorage.setItem('nba_player_name', me.name);
   }
 
   // Update timer countdown anyway
@@ -232,8 +236,9 @@ socket.on('room_update', (room) => {
     startLocalCountdown();
   }
 
-  // If the server room state has progressed to pick phase, the wheel spin is obsolete
-  if (room.phase === 'pick' && state.wheelSpinning) {
+  // If draftIndex has changed or phase transitioned, any local wheel spinning state is obsolete
+  const turnChanged = oldRoom && (oldRoom.draftIndex !== room.draftIndex || oldRoom.phase !== room.phase);
+  if ((turnChanged || room.phase === 'pick') && state.wheelSpinning) {
     state.wheelSpinning = false;
     if (state.wheel) {
       state.wheel.destroy();
