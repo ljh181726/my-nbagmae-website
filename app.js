@@ -123,19 +123,24 @@ function syncTurnUI() {
   if (isMyTurn) {
     if (mask) mask.classList.add('hidden');
   } else {
-    if (mask) {
-      mask.classList.remove('hidden');
-      const maskTitle = $('#spectator-mask-title');
-      const maskDesc = $('#spectator-mask-desc');
-      
-      const activeName = activePlayer ? activePlayer.name : '對手';
-      
-      if (room.roomState === 'WHEEL_SPINNING' || room.phase === 'wheel') {
-        if (maskTitle) maskTitle.textContent = '等待轉盤旋轉...';
-        if (maskDesc) maskDesc.textContent = `當前行動者 ${activeName} 正在旋轉轉盤以決定球隊。`;
-      } else {
-        if (maskTitle) maskTitle.textContent = '等待選取球員...';
-        if (maskDesc) maskDesc.textContent = `當前行動者 ${activeName} 正在選秀或挑選球員。`;
+    // Hide the mask during wheel spinning so spectators can watch the animation
+    if (room.roomState === 'WHEEL_SPINNING' || state.wheelSpinning) {
+      if (mask) mask.classList.add('hidden');
+    } else {
+      if (mask) {
+        mask.classList.remove('hidden');
+        const maskTitle = $('#spectator-mask-title');
+        const maskDesc = $('#spectator-mask-desc');
+        
+        const activeName = activePlayer ? activePlayer.name : '對手';
+        
+        if (room.roomState === 'WHEEL_SPINNING' || room.phase === 'wheel') {
+          if (maskTitle) maskTitle.textContent = '等待轉盤旋轉...';
+          if (maskDesc) maskDesc.textContent = `當前行動者 ${activeName} 正在旋轉轉盤以決定球隊。`;
+        } else {
+          if (maskTitle) maskTitle.textContent = '等待選取球員...';
+          if (maskDesc) maskDesc.textContent = `當前行動者 ${activeName} 正在選秀或挑選球員。`;
+        }
       }
     }
   }
@@ -225,6 +230,17 @@ socket.on('room_update', (room) => {
   // Update timer countdown anyway
   if (room.phase === 'draft' || room.phase === 'wheel' || room.phase === 'pick') {
     startLocalCountdown();
+  }
+
+  // If the server room state has progressed to pick phase, the wheel spin is obsolete
+  if (room.phase === 'pick' && state.wheelSpinning) {
+    state.wheelSpinning = false;
+    if (state.wheel) {
+      state.wheel.destroy();
+      state.wheel.spinning = false;
+    }
+    const canvas = $('#wheel-canvas');
+    if (canvas) canvas.classList.remove('spinning');
   }
 
   // If wheel is currently animating, don't let room_update switch the UI layout
@@ -638,9 +654,11 @@ function onSpinStopped(team) {
   const activePlayer = room.players[activePlayerIdx];
   const isMyTurn = activePlayer && (activePlayer.socketId === socket.id || activePlayer.name === state.playerName);
 
-  // Notify server: animation done, switch to pick phase
+  // Notify server: animation done, switch to pick phase (with 1.5s delay to view the result)
   if (isMyTurn) {
-    socket.emit('spin_done', { roomId: state.roomId });
+    setTimeout(() => {
+      socket.emit('spin_done', { roomId: state.roomId });
+    }, 1500);
   } else {
     // For spectators, if the server has already transitioned, update UI now
     if (room.phase === 'pick') {
