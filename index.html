@@ -9,7 +9,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <link rel="stylesheet" href="style.css" />
 
   <script>
@@ -54,26 +57,29 @@
         <p class="text-gray-400 mt-2 text-sm">即時連線對戰 · 多元選秀模式 · 時空大亂鬥</p>
       </div>
 
-      <!-- OAuth Login Section -->
+      <!-- Auth Section -->
       <div id="oauth-container" class="mb-6 p-4 bg-card/60 border border-purple-500/20 rounded-xl text-center">
         <!-- Not logged in state -->
         <div id="oauth-logged-out" class="space-y-3">
-          <p class="text-xs font-semibold text-gray-400">登入解鎖雲端進度與每日簽到獎勵</p>
+          <p class="text-xs font-semibold text-gray-400">🔐 登入解鎖雲端進度、每日簽到與虛擬幣獎勵</p>
           <div class="flex flex-col sm:flex-row gap-2 justify-center">
-            <!-- Google Sign-In Button Container -->
-            <div id="g-login-btn-wrapper" class="flex justify-center">
-              <button onclick="window.__app.loginWithGoogle()" class="flex items-center justify-center gap-2 bg-white text-gray-800 px-4 py-2 rounded-lg font-bold text-xs shadow hover:bg-gray-100 transition duration-200">
-                <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#EA4335" d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.137 4.114-3.478 0-6.3-2.822-6.3-6.3s2.822-6.3 6.3-6.3c1.554 0 2.977.566 4.08 1.486l3.18-3.18C19.3 2.536 15.97 1.5 12.24 1.5c-5.79 0-10.5 4.71-10.5 10.5s4.71 10.5 10.5 10.5c5.52 0 10.22-3.96 10.22-10.5 0-.64-.06-1.28-.18-1.715H12.24z"/></svg>
-                Google 登入
-              </button>
-            </div>
-            <!-- Facebook Sign-In Button -->
-            <button onclick="window.__app.loginWithFacebook()" class="flex items-center justify-center gap-2 bg-[#1877F2] text-white px-4 py-2 rounded-lg font-bold text-xs shadow hover:bg-[#166FE5] transition duration-200">
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-              Facebook 登入
+            <!-- Firebase Google Sign-In Button -->
+            <button id="btn-google-login" onclick="window.__app.loginWithGoogle()" class="flex items-center justify-center gap-2 bg-white text-gray-800 px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:bg-gray-50 active:scale-95 transition-all duration-200 border border-gray-200">
+              <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+                <path fill="#EA4335" d="M5.26620003,9.76452941 C6.19878754,6.93863203 8.85444915,4.90909091 12,4.90909091 C13.6909091,4.90909091 15.2181818,5.50909091 16.4181818,6.49090909 L19.9090909,3 C17.7818182,1.14545455 15.0545455,0 12,0 C7.27006974,0 3.1977497,2.69829785 1.23999023,6.65002441 L5.26620003,9.76452941 Z"/>
+                <path fill="#34A853" d="M16.0407269,18.0125889 C14.9509167,18.7163016 13.5660892,19.0909091 12,19.0909091 C8.86648613,19.0909091 6.21911939,17.076871 5.27698177,14.2678769 L1.23746264,17.3349879 C3.19279051,21.2936293 7.26500293,24 12,24 C14.9328362,24 17.7353462,22.9573905 19.834192,20.9995801 L16.0407269,18.0125889 Z"/>
+                <path fill="#4A90D9" d="M19.834192,20.9995801 C22.0291676,18.9520994 23.4545455,15.903663 23.4545455,12 C23.4545455,11.2909091 23.3454545,10.5272727 23.1818182,9.81818182 L12,9.81818182 L12,14.4545455 L18.4363636,14.4545455 C18.1187732,16.013626 17.2662994,17.2212117 16.0407269,18.0125889 L19.834192,20.9995801 Z"/>
+                <path fill="#FBBC05" d="M5.27698177,14.2678769 C5.03832634,13.556323 4.90909091,12.7937589 4.90909091,12 C4.90909091,11.2182781 5.03443647,10.4668121 5.26620003,9.76452941 L1.23999023,6.65002441 C0.43658717,8.26043162 0,10.0753848 0,12 C0,13.9195484 0.444780743,15.7301709 1.23746264,17.3349879 L5.27698177,14.2678769 Z"/>
+              </svg>
+              使用 Google 帳號登入
+            </button>
+            <!-- Guest Login Button -->
+            <button id="btn-guest-login" onclick="window.__app.loginAsGuest()" class="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-300 px-5 py-2.5 rounded-xl font-bold text-sm shadow hover:shadow-lg active:scale-95 transition-all duration-200 border border-gray-600">
+              <span class="text-base">👤</span>
+              訪客遊玩
             </button>
           </div>
-          <p class="text-[10px] text-gray-500">或以訪客身份直接在下方開始遊玩</p>
+          <p class="text-[10px] text-gray-500 mt-1">訪客模式僅能遊玩，無法儲存進度或累積虛擬幣</p>
         </div>
         <!-- Logged in state -->
         <div id="oauth-logged-in" class="hidden flex items-center justify-between gap-4">
@@ -82,6 +88,7 @@
             <div>
               <div class="flex items-center gap-1.5">
                 <span id="user-name" class="font-bold text-xs text-white">暱稱</span>
+                <span id="badge-provider" class="text-[9px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-black border border-blue-500/30">Google</span>
                 <span id="badge-streak" class="text-[9px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded font-black border border-yellow-500/30">🔥 0天</span>
               </div>
               <p id="user-points" class="text-[10px] text-purple-400">🪙 0 積分</p>
@@ -97,86 +104,137 @@
           </div>
       </div>
 
-      <!-- Account Settings Panel (Only shown when logged in) -->
-      <div id="account-settings-panel" class="hidden mb-6 p-5 glass-panel text-left space-y-4 border border-purple-500/30">
+      <!-- Account Settings Panel -->
+      <div id="account-settings-panel" class="hidden mb-6 p-5 glass-panel text-left space-y-4 border border-purple-500/30 relative">
         <h3 class="text-sm font-bold text-purple-300 uppercase tracking-wider border-b border-purple-500/20 pb-2 flex items-center justify-between">
           <span>⚙️ 帳號與球員禁用設定</span>
-          <span class="text-[10px] bg-purple-900/60 text-purple-200 px-2 py-0.5 rounded border border-purple-500/20">會員專屬</span>
+          <span class="text-[10px] bg-purple-900/60 text-purple-200 px-2 py-0.5 rounded border border-purple-500/20">Google 會員專屬</span>
         </h3>
+
+        <!-- Guest Lock Overlay (shown only when guest) -->
+        <div id="guest-lock-overlay" class="hidden guest-lock-overlay absolute inset-0 bg-black/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-6 text-center rounded-xl">
+          <div class="text-center py-4 px-2">
+            <div class="text-4xl mb-3">🔒</div>
+            <p class="text-sm font-bold text-gray-300 mb-1">此功能僅限 Google 帳號會員使用</p>
+            <p class="text-[11px] text-gray-500 leading-relaxed mb-4">請點擊網頁頂部的官方 Google 登入按鈕，拉起真實的 Firebase 第三方安全授權，方可正式解鎖資料庫中的每日簽到福利、虛擬幣累積、帳號預先禁用球員、生涯多維度勝率統計、90分以上傳奇陣容存檔與全球排行榜競爭之完整手遊功能。</p>
+            <button onclick="window.__app.loginWithGoogle()" class="flex items-center justify-center gap-2 mx-auto bg-white text-gray-800 px-4 py-2 rounded-xl font-bold text-sm shadow-lg hover:bg-gray-50 transition">
+              <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#EA4335" d="M5.26620003,9.76452941 C6.19878754,6.93863203 8.85444915,4.90909091 12,4.90909091 C13.6909091,4.90909091 15.2181818,5.50909091 16.4181818,6.49090909 L19.9090909,3 C17.7818182,1.14545455 15.0545455,0 12,0 C7.27006974,0 3.1977497,2.69829785 1.23999023,6.65002441 L5.26620003,9.76452941 Z"/><path fill="#34A853" d="M16.0407269,18.0125889 C14.9509167,18.7163016 13.5660892,19.0909091 12,19.0909091 C8.86648613,19.0909091 6.21911939,17.076871 5.27698177,14.2678769 L1.23746264,17.3349879 C3.19279051,21.2936293 7.26500293,24 12,24 C14.9328362,24 17.7353462,22.9573905 19.834192,20.9995801 L16.0407269,18.0125889 Z"/><path fill="#4A90D9" d="M19.834192,20.9995801 C22.0291676,18.9520994 23.4545455,15.903663 23.4545455,12 C23.4545455,11.2909091 23.3454545,10.5272727 23.1818182,9.81818182 L12,9.81818182 L12,14.4545455 L18.4363636,14.4545455 C18.1187732,16.013626 17.2662994,17.2212117 16.0407269,18.0125889 L19.834192,20.9995801 Z"/><path fill="#FBBC05" d="M5.27698177,14.2678769 C5.03832634,13.556323 4.90909091,12.7937589 4.90909091,12 C4.90909091,11.2182781 5.03443647,10.4668121 5.26620003,9.76452941 L1.23999023,6.65002441 C0.43658717,8.26043162 0,10.0753848 0,12 C0,13.9195484 0.444780743,15.7301709 1.23746264,17.3349879 L5.27698177,14.2678769 Z"/></svg>
+              立即綁定 Google 帳號解鎖
+            </button>
+          </div>
+        </div>
         
-        <!-- Coins & Streak Dashboard -->
-        <div class="grid grid-cols-2 gap-3 bg-purple-950/30 p-3 rounded-lg border border-purple-500/10">
-          <div>
-            <p class="text-[9px] text-gray-400 font-semibold uppercase">💰 帳號虛擬幣</p>
-            <p id="user-coins-display" class="text-lg font-black text-yellow-400 mt-0.5">0 元</p>
-          </div>
-          <div>
-            <p class="text-[9px] text-gray-400 font-semibold uppercase">📅 連續簽到進度</p>
-            <p id="user-streak-display" class="text-xs font-bold text-white mt-1">🔥 0 天</p>
-          </div>
-        </div>
-
-        <!-- 7-day sign-in progress bar -->
-        <div class="space-y-1.5">
-          <div class="flex justify-between text-[9px] text-gray-400">
-            <span>簽到進度 (Day 1 - 7)</span>
-            <span class="text-yellow-400 font-bold">第7天加碼 +10 元</span>
-          </div>
-          <div class="flex justify-between gap-1" id="signin-streak-bar">
-            <!-- 7 bubbles generated by JS -->
-          </div>
-        </div>
-
-        <!-- Pre-ban player settings -->
-        <div class="space-y-3">
-          <p class="text-xs font-semibold text-gray-300">⚔️ 預先禁用球員 (上限 3 名，全明星 2 元/一般球員 1 元)</p>
-          <div class="space-y-2">
-            <!-- Slot 1 -->
-            <div class="flex gap-2">
-              <div class="flex-1">
-                <input type="text" id="preban-team-1" class="input-field py-1.5 text-xs text-center uppercase" placeholder="球隊 (如 BOS)" maxlength="3" />
-              </div>
-              <div class="flex-1">
-                <input type="text" id="preban-jersey-1" class="input-field py-1.5 text-xs text-center" placeholder="背號 (如 #0)" maxlength="5" />
-              </div>
+        <!-- Real member content -->
+        <div id="member-settings-content">
+          <!-- Coins & Streak Dashboard -->
+          <div class="grid grid-cols-2 gap-3 bg-purple-950/30 p-3 rounded-lg border border-purple-500/10">
+            <div>
+              <p class="text-[9px] text-gray-400 font-semibold uppercase">💰 帳號虛擬幣</p>
+              <p id="user-coins-display" class="text-lg font-black text-yellow-400 mt-0.5">0 元</p>
             </div>
-            <!-- Slot 2 -->
-            <div class="flex gap-2">
-              <div class="flex-1">
-                <input type="text" id="preban-team-2" class="input-field py-1.5 text-xs text-center uppercase" placeholder="球隊 (如 LAL)" maxlength="3" />
-              </div>
-              <div class="flex-1">
-                <input type="text" id="preban-jersey-2" class="input-field py-1.5 text-xs text-center" placeholder="背號 (如 #23)" maxlength="5" />
-              </div>
-            </div>
-            <!-- Slot 3 -->
-            <div class="flex gap-2">
-              <div class="flex-1">
-                <input type="text" id="preban-team-3" class="input-field py-1.5 text-xs text-center uppercase" placeholder="球隊 (如 GSW)" maxlength="3" />
-              </div>
-              <div class="flex-1">
-                <input type="text" id="preban-jersey-3" class="input-field py-1.5 text-xs text-center" placeholder="背號 (如 #30)" maxlength="5" />
-              </div>
+            <div>
+              <p class="text-[9px] text-gray-400 font-semibold uppercase">📅 連續簽到進度</p>
+              <p id="user-streak-display" class="text-xs font-bold text-white mt-1">🔥 0 天</p>
             </div>
           </div>
-          <button onclick="window.__app.savePreBans()" class="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs rounded-lg shadow-md transition">
-            💾 儲存禁用設定
-          </button>
-        </div>
 
-        <!-- HOF Coach Dialogue Box -->
-        <div class="bg-black/45 border-l-4 border-yellow-500 p-3 rounded-r-lg space-y-1">
-          <p class="text-[9px] text-yellow-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-            <span>👨‍💼 總教練辦公室 (Legends HOF Coach Office)</span>
-          </p>
-          <p id="coach-settings-critique" class="text-xs text-gray-300 italic leading-relaxed">
-            "你一個人都沒禁用？是準備空手套白狼，還是對自己的垃圾防守太有自信了？"
-          </p>
+          <!-- 7-day sign-in progress bar -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-[9px] text-gray-400">
+              <span>簽到進度 (Day 1 - 7)</span>
+              <span class="text-yellow-400 font-bold">第7天加碼 +10 元</span>
+            </div>
+            <div class="flex justify-between gap-1" id="signin-streak-bar">
+              <!-- 7 bubbles generated by JS -->
+            </div>
+          </div>
+
+          <!-- Pre-ban player settings -->
+          <div class="space-y-3">
+            <p class="text-xs font-semibold text-gray-300">⚔️ 預先禁用球員 (上限 3 名，全明星 2 元/一般球員 1 元)</p>
+            <div class="space-y-2">
+              <!-- Slot 1 -->
+              <div class="flex gap-2">
+                <div class="flex-1">
+                  <input type="text" id="preban-team-1" class="input-field py-1.5 text-xs text-center uppercase" placeholder="球隊 (如 BOS)" maxlength="3" />
+                </div>
+                <div class="flex-1">
+                  <input type="text" id="preban-jersey-1" class="input-field py-1.5 text-xs text-center" placeholder="背號 (如 #0)" maxlength="5" />
+                </div>
+              </div>
+              <!-- Slot 2 -->
+              <div class="flex gap-2">
+                <div class="flex-1">
+                  <input type="text" id="preban-team-2" class="input-field py-1.5 text-xs text-center uppercase" placeholder="球隊 (如 LAL)" maxlength="3" />
+                </div>
+                <div class="flex-1">
+                  <input type="text" id="preban-jersey-2" class="input-field py-1.5 text-xs text-center" placeholder="背號 (如 #23)" maxlength="5" />
+                </div>
+              </div>
+              <!-- Slot 3 -->
+              <div class="flex gap-2">
+                <div class="flex-1">
+                  <input type="text" id="preban-team-3" class="input-field py-1.5 text-xs text-center uppercase" placeholder="球隊 (如 GSW)" maxlength="3" />
+                </div>
+                <div class="flex-1">
+                  <input type="text" id="preban-jersey-3" class="input-field py-1.5 text-xs text-center" placeholder="背號 (如 #30)" maxlength="5" />
+                </div>
+              </div>
+            </div>
+            <button onclick="window.__app.savePreBans()" class="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs rounded-lg shadow-md transition">
+              💾 儲存禁用設定
+            </button>
+          </div>
+
+          <!-- HOF Coach Dialogue Box -->
+          <div class="bg-black/45 border-l-4 border-yellow-500 p-3 rounded-r-lg space-y-1">
+            <p class="text-[9px] text-yellow-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <span>👨‍💼 總教練辦公室 (Legends HOF Coach Office)</span>
+            </p>
+            <p id="coach-settings-critique" class="text-xs text-gray-300 italic leading-relaxed">
+              "你一個人都沒禁用？是準備空手套白狼，還是對自己的垃圾防守太有自信了？"
+            </p>
+          </div>
+
+          <!-- Career Stats (生涯成就) -->
+          <div class="space-y-2 border-t border-purple-500/10 pt-3">
+            <p class="text-xs font-bold text-purple-300 uppercase tracking-wider">🏆 生涯成就 (Career Achievements)</p>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="bg-black/20 p-2 rounded border border-purple-500/5">
+                <span class="text-gray-400 block text-[9px] uppercase font-semibold">單人闖關 (PVE)</span>
+                <span id="stats-pve-games" class="font-bold text-white">0 場</span>
+                <span id="stats-pve-rate" class="text-purple-400 ml-1 text-[10px]">(勝率 0%)</span>
+              </div>
+              <div class="bg-black/20 p-2 rounded border border-purple-500/5">
+                <span class="text-gray-400 block text-[9px] uppercase font-semibold">線上對戰 (PVP)</span>
+                <span id="stats-pvp-games" class="font-bold text-white">0 場</span>
+                <span id="stats-pvp-rate" class="text-purple-400 ml-1 text-[10px]">(勝率 0%)</span>
+              </div>
+              <div class="bg-black/20 p-2 rounded border border-purple-500/5">
+                <span class="text-gray-400 block text-[9px] uppercase font-semibold">轉盤選秀 (Wheel)</span>
+                <span id="stats-wheel-games" class="font-bold text-white">0 場</span>
+                <span id="stats-wheel-rate" class="text-purple-400 ml-1 text-[10px]">(勝率 0%)</span>
+              </div>
+              <div class="bg-black/20 p-2 rounded border border-purple-500/5">
+                <span class="text-gray-400 block text-[9px] uppercase font-semibold">總體戰力指標</span>
+                <span id="stats-total-games" class="font-bold text-yellow-400">0 場</span>
+                <span id="stats-total-rate" class="text-yellow-400 ml-1 text-[10px]">(勝率 0%)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Highlights (高光時刻) -->
+          <div class="space-y-2 border-t border-purple-500/10 pt-3">
+            <p class="text-xs font-bold text-purple-300 uppercase tracking-wider">🌟 傳奇高光時刻 (Highlights)</p>
+            <div id="highlights-container" class="space-y-2 max-h-40 overflow-y-auto pr-1">
+              <p class="text-[10px] text-gray-500 italic">暫無 90分以上傳奇陣容存檔</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Play Mode Options -->
-      <div class="grid grid-cols-2 gap-4 mb-6">
+       <!-- Play Mode Options -->
+      <div class="grid grid-cols-2 gap-4 mb-4">
         <button onclick="window.__app.showPVEMap()" class="p-4 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-purple-500 hover:bg-purple-900/30 transition text-center flex flex-col items-center justify-center gap-2">
           <span class="text-3xl">🏆</span>
           <span class="font-bold text-sm text-white">單人闖關 (PVE)</span>
@@ -188,6 +246,11 @@
           <span class="text-[10px] text-gray-400">房號連線聯賽</span>
         </button>
       </div>
+
+      <!-- Leaderboard Button -->
+      <button onclick="window.__app.openLeaderboard()" class="w-full py-3 mb-6 bg-gradient-to-r from-cyan-600/60 to-blue-600/60 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs rounded-xl shadow-md transition border border-cyan-500/20 flex items-center justify-center gap-2">
+        <span>🌍</span> 查看全球排行榜 (Global Leaderboards)
+      </button>
 
       <!-- PVP Section (hidden by default) -->
       <div id="pvp-section" class="hidden border-t border-purple-950/50 pt-6">
@@ -591,7 +654,17 @@
   <!-- Daily Check-in Modal -->
   <div id="modal-checkin" class="modal-overlay hidden">
     <div class="glass-panel max-w-md w-full p-6 text-center relative modal-content">
-      <button onclick="window.__app.closeCheckInModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+      <!-- Guest Lock Overlay for Check-in -->
+      <div id="checkin-guest-lock" class="hidden absolute inset-0 bg-black/95 backdrop-blur-md z-20 flex flex-col items-center justify-center p-6 text-center rounded-xl">
+        <div class="text-4xl mb-3">🔒</div>
+        <p class="text-sm font-bold text-gray-300 mb-1">簽到福利僅限 Google 帳號會員使用</p>
+        <p class="text-[11px] text-gray-500 leading-relaxed mb-4">請點擊網頁頂部的官方 Google 登入按鈕，拉起真實的 Firebase 第三方安全授權，方可正式解鎖資料庫中的每日簽到福利、虛擬幣累積與帳號預先禁用球員之完整手遊功能。</p>
+        <button onclick="window.__app.closeCheckInModal(); window.__app.loginWithGoogle();" class="flex items-center justify-center gap-2 mx-auto bg-white text-gray-800 px-4 py-2 rounded-xl font-bold text-sm shadow-lg hover:bg-gray-50 transition">
+          立即登入解鎖
+        </button>
+      </div>
+
+      <button onclick="window.__app.closeCheckInModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl z-30">&times;</button>
       <div class="text-5xl mb-3 animate-bounce">🎁</div>
       <h3 class="font-display text-2xl font-black text-yellow-400 mb-1">每日簽到福利</h3>
       <p class="text-xs text-gray-400 mb-6">連續簽到 7 天可獲得海量積分加成！</p>
@@ -608,6 +681,47 @@
       <button id="btn-checkin-action" onclick="window.__app.claimCheckIn()" class="spin-btn w-full py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white font-bold rounded-xl shadow-lg transition">
         🪙 立即簽到領取獎勵
       </button>
+    </div>
+  </div>
+
+  <!-- Global Leaderboards Modal -->
+  <div id="modal-leaderboard" class="modal-overlay hidden">
+    <div class="glass-panel max-w-lg w-full p-6 text-center relative modal-content flex flex-col max-h-[85vh] border border-cyan-500/30">
+      <!-- Guest Lock Overlay for Leaderboard -->
+      <div id="leaderboard-guest-lock" class="hidden absolute inset-0 bg-black/95 backdrop-blur-md z-20 flex flex-col items-center justify-center p-6 text-center rounded-xl">
+        <div class="text-4xl mb-3">🔒</div>
+        <p class="text-sm font-bold text-gray-300 mb-1">排行榜競爭僅限 Google 帳號會員使用</p>
+        <p class="text-[11px] text-gray-500 leading-relaxed mb-4">請點擊網頁頂部的官方 Google 登入按鈕，拉起真實的 Firebase 第三方安全授權，方可正式解鎖資料庫中的每日簽到福利、虛擬幣累積、帳號預先禁用球員、生涯多維度勝率統計、90分以上傳奇陣容存檔與全球排行榜競爭之完整手遊功能。</p>
+        <button onclick="window.__app.closeLeaderboard(); window.__app.loginWithGoogle();" class="flex items-center justify-center gap-2 mx-auto bg-white text-gray-800 px-4 py-2 rounded-xl font-bold text-sm shadow-lg hover:bg-gray-50 transition">
+          立即登入解鎖
+        </button>
+      </div>
+
+      <button onclick="window.__app.closeLeaderboard()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl z-30">&times;</button>
+      <div class="text-4xl mb-2">🌍</div>
+      <h3 class="font-display text-2xl font-black text-cyan-400 mb-1">全球即時排行榜</h3>
+      <p class="text-xs text-gray-400 mb-4">與全球頂尖選秀經理人即時對決</p>
+
+      <!-- Leaderboard Tabs -->
+      <div class="flex border-b border-purple-950 mb-4 text-xs font-bold">
+        <button id="leaderboard-tab-winrate" onclick="window.__app.switchLeaderboardTab('win_rate')" class="flex-1 py-2 border-b-2 border-cyan-500 text-cyan-400">
+          🏆 勝率榜
+        </button>
+        <button id="leaderboard-tab-coins" onclick="window.__app.switchLeaderboardTab('virtual_currency')" class="flex-1 py-2 border-b-2 border-transparent text-gray-400">
+          💰 虛擬幣榜
+        </button>
+        <button id="leaderboard-tab-games" onclick="window.__app.switchLeaderboardTab('total_games')" class="flex-1 py-2 border-b-2 border-transparent text-gray-400">
+          🏀 場數榜
+        </button>
+        <button id="leaderboard-tab-pve" onclick="window.__app.switchLeaderboardTab('pve_clear_count')" class="flex-1 py-2 border-b-2 border-transparent text-gray-400">
+          ⚔️ PVE過關數榜
+        </button>
+      </div>
+
+      <!-- Leaderboard Ranks Container -->
+      <div id="leaderboard-list" class="flex-1 overflow-y-auto space-y-2 text-left pr-1 max-h-[45vh] min-h-[200px]">
+        <!-- Populated dynamically from Firestore -->
+      </div>
     </div>
   </div>
 

@@ -52,7 +52,7 @@ async function findOrCreateUser(profile) {
     
     // Migrate existing users to have the new fields if missing
     if (existing.virtual_currency === undefined) {
-      updateDoc.$set.virtual_currency = 10;
+      updateDoc.$set.virtual_currency = 0;
       updateDoc.$set.last_sign_in_date = null;
       updateDoc.$set.continuous_days = 0;
       updateDoc.$set.pve_cleared_stages = [];
@@ -73,7 +73,7 @@ async function findOrCreateUser(profile) {
     avatar: profile.avatar,
     provider: profile.provider,
     points: 100, // legacy points
-    virtual_currency: 10, // starting coins (generous default for testing)
+    virtual_currency: 0, // starting coins (0 per firebase spec)
     last_sign_in_date: null,
     continuous_days: 0,
     pve_cleared_stages: [],
@@ -148,7 +148,7 @@ async function performCheckIn(uid) {
         // Also sync old legacy fields
         lastCheckInDate: todayStr,
         checkInStreak: newStreak,
-        points: (user.points || 0) + coinsGained * 10
+        lastLoginAt: new Date()
       }
     }
   );
@@ -156,6 +156,7 @@ async function performCheckIn(uid) {
   const updatedUser = await collection.findOne({ uid });
   return { 
     success: true, 
+    message: '簽到成功！', 
     coinsGained, 
     streak: newStreak, 
     hasAllClearPassive,
@@ -167,6 +168,7 @@ async function incrementRookieGames(uid) {
   const database = await connectDB();
   const collection = database.collection('users');
   await collection.updateOne({ uid }, { $inc: { rookieGamesPlayed: 1 } });
+  return await collection.findOne({ uid });
 }
 
 async function updatePVEProgress(uid, nextLevelToUnlock) {
@@ -182,14 +184,15 @@ async function updatePVEProgress(uid, nextLevelToUnlock) {
   const clearedStages = user.pve_cleared_stages || [];
   const newUnlocked = Math.max(user.unlockedLevel || 1, nextLevelToUnlock);
 
-  const updateSet = { unlockedLevel: newUnlocked };
-  const updateDoc = { $set: updateSet };
+  const updateDoc = {
+    $set: { 
+      unlockedLevel: newUnlocked,
+      lastLoginAt: new Date()
+    }
+  };
 
   if (clearedLevel >= 1 && clearedLevel <= 60 && !clearedStages.includes(clearedLevel)) {
     firstClear = true;
-    // Bronze (1-15) = 1 coin
-    // Silver (16-30) = 2 coins
-    // Gold/Legend (31-60) = 3 coins
     if (clearedLevel <= 15) {
       coinsAwarded = 1;
     } else if (clearedLevel <= 30) {
@@ -197,7 +200,6 @@ async function updatePVEProgress(uid, nextLevelToUnlock) {
     } else {
       coinsAwarded = 3;
     }
-
     updateDoc.$push = { pve_cleared_stages: clearedLevel };
     updateDoc.$inc = { virtual_currency: coinsAwarded };
   }
@@ -220,6 +222,8 @@ module.exports = {
   findOrCreateUser,
   performCheckIn,
   incrementRookieGames,
-  updatePVEProgress
+  updatePVEProgress,
+  registerUserEmail,
+  loginUserEmail
 };
 

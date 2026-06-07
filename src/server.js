@@ -5,8 +5,25 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const dotenv = require('dotenv');
+const admin = require('firebase-admin');
 
 dotenv.config();
+
+// Initialize Firebase Admin with Service Account
+try {
+  const serviceAccountPath = path.join(__dirname, 'firebase-service-account.json');
+  if (fs.existsSync(serviceAccountPath)) {
+    const serviceAccount = require(serviceAccountPath);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log('✅ Firebase Admin initialized successfully');
+  } else {
+    console.warn('⚠️ firebase-service-account.json not found in src/');
+  }
+} catch (err) {
+  console.error('❌ Failed to initialize Firebase Admin:', err);
+}
 
 const {
   connectDB,
@@ -76,7 +93,14 @@ app.get('/healthz', (req, res) => {
 
 app.get('/api/config', (req, res) => {
   res.json({
-    hasGeminiKey: !!process.env.GEMINI_API_KEY
+    hasGeminiKey: !!process.env.GEMINI_API_KEY,
+    apiKey: process.env.FIREBASE_API_KEY,
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.FIREBASE_APP_ID,
+    measurementId: process.env.FIREBASE_MEASUREMENT_ID
   });
 });
 
@@ -331,6 +355,17 @@ async function processRoomPreBans(room) {
       { $set: { virtual_currency: balance } }
     );
 
+    try {
+      if (admin.apps.length) {
+        await admin.firestore().collection('global_leaderboards').doc(player.uid).set({
+          virtual_currency: balance
+        }, { merge: true });
+        console.log(`✅ Synced preban charge balance (${balance}) to Firestore for UID ${player.uid}`);
+      }
+    } catch (err) {
+      console.error('Error syncing preban charge balance to Firestore:', err);
+    }
+
     // Update Coach Critique on failure due to insufficient funds
     if (failedBans.length > 0) {
       const roasts = [
@@ -354,19 +389,63 @@ async function processRoomPreBans(room) {
   }
 }
 
-app.post('/api/auth/login', async (req, res) => {
+// ── /api/auth/firebase: Real Firebase Token Verification ──
+app.post('/api/auth/firebase', async (req, res) => {
   try {
-    const { uid, name, avatar, provider } = req.body;
-    if (!uid) {
-      return res.status(400).json({ error: 'Missing uid' });
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ error: '缺少 Firebase ID Token' });
     }
-    const user = await findOrCreateUser({ uid, name, avatar, provider });
+
+    // Verify the token with firebase-admin
+    let decodedToken;
+    try {
+      decodedToken = await admin.auth().verifyIdToken(idToken);
+    } catch (verifyErr) {
+      console.error('Firebase token verification failed:', verifyErr);
+      return res.status(401).json({ error: 'Firebase Token 驗證失敗，請重新登入。' });
+    }
+
+    const { uid, name, email, picture } = decodedToken;
+    const avatar = picture || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(uid)}`;
+    const displayName = name || (email ? email.split('@')[0] : '玩家');
+
+    // Find or create user in MongoDB
+    const user = await findOrCreateUser({
+      uid,
+      name: displayName,
+      avatar,
+      provider: 'google',
+      email: email || null
+    });
+
     res.json({ user });
   } catch (err) {
-    console.error('Error in /api/auth/login:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error in /api/auth/firebase:', err);
+    res.status(500).json({ error: '伺服器內部錯誤' });
   }
 });
+
+// ── /api/auth/guest: Guest Mode (no DB write) ──
+app.post('/api/auth/guest', (req, res) => {
+  const { name } = req.body;
+  const guestUser = {
+    uid: null,
+    name: name || '訪客玩家',
+    avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=guest_${Date.now()}`,
+    provider: 'guest',
+    isGuest: true,
+    virtual_currency: 0,
+    continuous_days: 0,
+    pve_cleared_stages: [],
+    pre_banned_players: [],
+    points: 0,
+    unlockedLevel: 1
+  };
+  res.json({ user: guestUser });
+});
+
+
 
 app.post('/api/users/preban', async (req, res) => {
   try {
@@ -421,6 +500,19 @@ app.post('/api/users/preban', async (req, res) => {
   }
 });
 
+async function syncUserVirtualCurrencyToFirestore(uid, coins) {
+  if (!admin.apps.length) return;
+  try {
+    const firestore = admin.firestore();
+    await firestore.collection('global_leaderboards').doc(uid).set({
+      virtual_currency: coins
+    }, { merge: true });
+    console.log(`✅ Synced virtual currency (${coins}) to Firestore for UID ${uid}`);
+  } catch (err) {
+    console.error(`❌ Error syncing virtual currency to Firestore for UID ${uid}:`, err);
+  }
+}
+
 app.post('/api/users/checkin', async (req, res) => {
   try {
     const { uid } = req.body;
@@ -428,6 +520,9 @@ app.post('/api/users/checkin', async (req, res) => {
       return res.status(400).json({ error: 'Missing uid' });
     }
     const checkinResult = await performCheckIn(uid);
+    if (checkinResult.success && checkinResult.user) {
+      await syncUserVirtualCurrencyToFirestore(uid, checkinResult.user.virtual_currency);
+    }
     res.json(checkinResult);
   } catch (err) {
     console.error('Error in /api/users/checkin:', err);
@@ -446,6 +541,19 @@ app.post('/api/users/pve/unlock', async (req, res) => {
       return res.status(400).json({ error: 'Missing uid or level' });
     }
     const result = await updatePVEProgress(uid, level);
+    if (result.success && result.user) {
+      await syncUserVirtualCurrencyToFirestore(uid, result.user.virtual_currency);
+      try {
+        if (admin.apps.length) {
+          const firestore = admin.firestore();
+          await firestore.collection('global_leaderboards').doc(uid).set({
+            pve_clear_count: result.user.pve_cleared_stages ? result.user.pve_cleared_stages.length : 0
+          }, { merge: true });
+        }
+      } catch (e) {
+        console.error('Error syncing pve clear count to Firestore:', e);
+      }
+    }
     res.json({ success: true, user: result.user, firstClear: result.firstClear, coinsAwarded: result.coinsAwarded });
   } catch (err) {
     console.error('Error in /api/users/pve/unlock:', err);
@@ -647,6 +755,19 @@ async function completeDraft(room) {
                   coinsAwarded: dbResult.coinsAwarded
                 };
               }
+
+              try {
+                if (admin.apps.length) {
+                  await admin.firestore().collection('global_leaderboards').doc(player.uid).set({
+                    virtual_currency: dbResult.user.virtual_currency || 0,
+                    pve_clear_count: dbResult.user.pve_cleared_stages ? dbResult.user.pve_cleared_stages.length : 0
+                  }, { merge: true });
+                  console.log(`✅ Synced PVE level ${room.levelId} cleared stats to Firestore for UID ${player.uid}`);
+                }
+              } catch (err) {
+                console.error('Error syncing PVE cleared stats to Firestore:', err);
+              }
+
               // Send the updated user back to the client
               io.to(player.socketId).emit('user_update', dbResult.user);
             }

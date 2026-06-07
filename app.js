@@ -32,9 +32,13 @@ function getModernEquivalent(abbr) {
 // Initialize Socket.io client
 const socket = io();
 
+const _savedProfile = (() => {
+  try { return JSON.parse(sessionStorage.getItem('nba_user_profile')); } catch { return null; }
+})();
+
 const state = {
   roomId: sessionStorage.getItem('nba_room_id') || null,
-  playerName: sessionStorage.getItem('nba_player_name') || null,
+  playerName: sessionStorage.getItem('nba_player_name') || (_savedProfile ? _savedProfile.name : null),
   isOwner: false,
   room: null,
   activeRosterView: 'normal', // 'normal' | 'legend'
@@ -43,8 +47,8 @@ const state = {
   selectedTeamRoster: [], // Current roster available for drafting in Pick phase
   selectedTeamLegends: [], // Legends list for Relocated franchises / Legend mode
   isEvaluating: false,
-  user: null,
-  unlockedLevel: parseInt(localStorage.getItem('pve_unlocked_level') || '1'),
+  user: _savedProfile || null,
+  unlockedLevel: _savedProfile ? (_savedProfile.unlockedLevel || 1) : parseInt(localStorage.getItem('pve_unlocked_level') || '1'),
   isPVE: false,
   currentPVELevelId: null,
   typewriterInterval: null,
@@ -278,6 +282,12 @@ socket.on('room_update', (room) => {
   } else if (room.phase === 'eval') {
     showScreen('screen-eval');
     updateEvalUI();
+    if (state.user && state.user.provider !== 'guest') {
+      if (state.processedRoomId !== room.id) {
+        state.processedRoomId = room.id;
+        handleGameEndStats(room);
+      }
+    }
   }
 });
 
@@ -1547,68 +1557,138 @@ function fireConfetti() {
   setTimeout(() => { container.innerHTML = ''; }, 3500);
 }
 
-// ── OAuth & PVE Campaign Mode Implementation ──
-async function loginWithGoogle() {
-  console.log('Initiating Google Login...');
-  const mockGoogleProfiles = [
-    { uid: 'google_1082739182', name: 'LeBron Fan 23', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80', provider: 'google' },
-    { uid: 'google_2910398271', name: 'Curry Cooker', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', provider: 'google' },
-    { uid: 'google_3019283719', name: 'KD EasyMoney', avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&auto=format&fit=crop&q=80', provider: 'google' }
-  ];
-  const nickname = prompt('【模擬 Google 登入】請輸入你的暱稱：', state.playerName || 'Google 玩家');
-  if (!nickname) return;
-  
-  const profile = mockGoogleProfiles[Math.floor(Math.random() * mockGoogleProfiles.length)];
-  profile.name = nickname;
-  
-  await sendLoginPayload(profile);
-}
+// ── Firebase Auth + Guest Mode ──────────────
+let _firebaseApp = null;
+let _firebaseAuth = null;
+let _firestoreDb = null;
 
-async function loginWithFacebook() {
-  console.log('Initiating Facebook Login...');
-  const mockFacebookProfiles = [
-    { uid: 'facebook_987654321', name: 'Mamba Mentality', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', provider: 'facebook' },
-    { uid: 'facebook_543216789', name: 'Joker MVP', avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=100&auto=format&fit=crop&q=80', provider: 'facebook' }
-  ];
-  const nickname = prompt('【模擬 Facebook 登入】請輸入你的暱稱：', state.playerName || 'FB 玩家');
-  if (!nickname) return;
-  
-  const profile = mockFacebookProfiles[Math.floor(Math.random() * mockFacebookProfiles.length)];
-  profile.name = nickname;
-  
-  await sendLoginPayload(profile);
-}
-
-async function sendLoginPayload(profile) {
+async function initFirebase() {
   try {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch('/api/config');
+    const config = await res.json();
+    if (config.apiKey && typeof firebase !== 'undefined') {
+      if (!_firebaseApp) {
+        _firebaseApp = firebase.initializeApp({
+          apiKey: config.apiKey,
+          authDomain: config.authDomain,
+          projectId: config.projectId,
+          storageBucket: config.storageBucket,
+          messagingSenderId: config.messagingSenderId,
+          appId: config.appId,
+          measurementId: config.measurementId
+        });
+      }
+      _firebaseAuth = firebase.auth();
+      _firestoreDb = firebase.firestore();
+      console.log('✅ Firebase client and Firestore initialized');
+    } else {
+      console.warn('⚠️ Firebase config not available or SDK not loaded');
+    }
+  } catch (err) {
+    console.error('Firebase init error:', err);
+  }
+}
+
+async function loginWithGoogle() {
+  if (!_firebaseAuth) {
+    showToast('⚠️ 正在初始化 Firebase，請稍後再試...');
+    await initFirebase();
+    if (!_firebaseAuth) {
+      showToast('❌ Firebase 尚未設定，請聯絡管理員。');
+      return;
+    }
+  }
+
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.addScope('profile');
+    provider.addScope('email');
+    const result = await _firebaseAuth.signInWithPopup(provider);
+    const idToken = await result.user.getIdToken();
+
+    const res = await fetch('/api/auth/firebase', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(profile)
+      body: JSON.stringify({ idToken })
     });
-    if (!res.ok) throw new Error('登入失敗');
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(`❌ 登入失敗：${data.error || '伺服器錯誤'}`);
+      return;
+    }
+
+    state.user = data.user;
+    loginSuccessActions();
+  } catch (err) {
+    if (err.code === 'auth/popup-closed-by-user') {
+      showToast('ℹ️ 已取消 Google 登入');
+    } else if (err.code === 'auth/popup-blocked') {
+      showToast('⚠️ 彈窗被封鎖，請允許此網站開啟彈窗後再試。');
+    } else {
+      console.error('Google login error:', err);
+      showToast(`❌ Google 登入失敗：${err.message}`);
+    }
+  }
+}
+
+async function loginAsGuest() {
+  const guestName = '訪客_' + Math.floor(Math.random() * 9000 + 1000);
+  try {
+    const res = await fetch('/api/auth/guest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: guestName })
+    });
     const data = await res.json();
     state.user = data.user;
-    
-    state.playerName = state.user.name;
-    sessionStorage.setItem('nba_player_name', state.playerName);
-    
+    state.playerName = guestName;
+    sessionStorage.setItem('nba_player_name', guestName);
+    // Guests do NOT get saved to sessionStorage nba_user_profile
+    const createNameEl = $('#create-player-name');
+    const joinNameEl = $('#join-player-name');
+    if (createNameEl) createNameEl.value = guestName;
+    if (joinNameEl) joinNameEl.value = guestName;
+    state.unlockedLevel = 1;
+    updateOAuthUI();
+    showToast(`👤 以訪客身份進入遊戲，進度不會儲存`);
+  } catch (err) {
+    console.error('Guest login error:', err);
+    showToast('❌ 訪客模式初始化失敗');
+  }
+}
+
+function loginSuccessActions() {
+  state.playerName = state.user.name;
+  sessionStorage.setItem('nba_player_name', state.playerName);
+  sessionStorage.setItem('nba_user_profile', JSON.stringify(state.user));
+
+  const createNameEl = $('#create-player-name');
+  const joinNameEl = $('#join-player-name');
+  if (createNameEl) createNameEl.value = state.playerName;
+  if (joinNameEl) joinNameEl.value = state.playerName;
+
+  state.unlockedLevel = state.user.unlockedLevel || 1;
+
+  updateOAuthUI();
+  showToast(`✅ 歡迎回來，${state.user.name}！`);
+  triggerCheckIn();
+}
+
+// Auto-restore UI if session already has a profile
+if (state.user) {
+  setTimeout(() => {
+    updateOAuthUI();
     const createNameEl = $('#create-player-name');
     const joinNameEl = $('#join-player-name');
     if (createNameEl) createNameEl.value = state.playerName;
     if (joinNameEl) joinNameEl.value = state.playerName;
-    
-    state.unlockedLevel = state.user.unlockedLevel || 1;
-    
-    updateOAuthUI();
-    showToast(`✅ 歡迎回來，${state.user.name}！`);
-    
-    triggerCheckIn();
-  } catch (err) {
-    console.error('Login error:', err);
-    showToast('❌ 登入失敗，請稍後重試。');
-  }
+  }, 100);
 }
+
+// Initialize Firebase on load
+initFirebase();
+
+
 
 function updateOAuthUI() {
   const loggedOutEl = $('#oauth-logged-out');
@@ -1619,64 +1699,87 @@ function updateOAuthUI() {
     loggedInEl.classList.remove('hidden');
     if (settingsPanel) settingsPanel.classList.remove('hidden');
     
-    $('#user-avatar').src = state.user.avatar;
-    $('#user-name').textContent = state.user.name;
-    $('#badge-streak').textContent = `🔥 ${state.user.continuous_days || 0}天`;
-    $('#user-points').textContent = `🪙 ${state.user.points || 0} 積分 | 💰 ${state.user.virtual_currency || 0} 元`;
+    const guestLock = $('#guest-lock-overlay');
+    const memberContent = $('#member-settings-content');
+    const checkinGuestLock = $('#checkin-guest-lock');
     
-    // Settings panel updates
-    const coinsDisplay = $('#user-coins-display');
-    const streakDisplay = $('#user-streak-display');
-    if (coinsDisplay) coinsDisplay.textContent = `${state.user.virtual_currency || 0} 元`;
-    if (streakDisplay) streakDisplay.textContent = `🔥 ${state.user.continuous_days || 0} 天`;
-    
-    // Generate sign-in streak progress bar (7 bubbles)
-    const streakBar = $('#signin-streak-bar');
-    if (streakBar) {
-      streakBar.innerHTML = '';
-      const currentStreak = state.user.continuous_days || 0;
-      const todayStr = new Date().toISOString().split('T')[0];
-      const isAlreadyCheckedIn = state.user.last_sign_in_date === todayStr;
+    if (state.user.provider === 'guest') {
+      if (guestLock) guestLock.classList.remove('hidden');
+      if (memberContent) memberContent.classList.add('hidden');
+      if (checkinGuestLock) checkinGuestLock.classList.remove('hidden');
       
-      for (let day = 1; day <= 7; day++) {
-        const bubble = document.createElement('div');
-        bubble.className = 'streak-bubble';
-        bubble.textContent = `D${day}`;
-        if (day <= currentStreak) {
-          bubble.classList.add('active');
+      $('#user-avatar').src = state.user.avatar;
+      $('#user-name').textContent = state.user.name;
+      $('#badge-streak').textContent = `🔥 0天`;
+      $('#user-points').textContent = `👤 訪客帳號`;
+    } else {
+      if (guestLock) guestLock.classList.add('hidden');
+      if (memberContent) memberContent.classList.remove('hidden');
+      if (checkinGuestLock) checkinGuestLock.classList.add('hidden');
+      
+      $('#user-avatar').src = state.user.avatar;
+      $('#user-name').textContent = state.user.name;
+      $('#badge-streak').textContent = `🔥 ${state.user.continuous_days || 0}天`;
+      $('#user-points').textContent = `🪙 ${state.user.points || 0} 積分 | 💰 ${state.user.virtual_currency || 0} 元`;
+      
+      // Settings panel updates
+      const coinsDisplay = $('#user-coins-display');
+      const streakDisplay = $('#user-streak-display');
+      if (coinsDisplay) coinsDisplay.textContent = `${state.user.virtual_currency || 0} 元`;
+      if (streakDisplay) streakDisplay.textContent = `🔥 ${state.user.continuous_days || 0} 天`;
+      
+      // Generate sign-in streak progress bar (7 bubbles)
+      const streakBar = $('#signin-streak-bar');
+      if (streakBar) {
+        streakBar.innerHTML = '';
+        const currentStreak = state.user.continuous_days || 0;
+        const todayStr = new Date().toISOString().split('T')[0];
+        const isAlreadyCheckedIn = state.user.last_sign_in_date === todayStr;
+        
+        for (let day = 1; day <= 7; day++) {
+          const bubble = document.createElement('div');
+          bubble.className = 'streak-bubble';
+          bubble.textContent = `D${day}`;
+          if (day <= currentStreak) {
+            bubble.classList.add('active');
+          }
+          if (day === currentStreak && isAlreadyCheckedIn) {
+            bubble.classList.add('today');
+          }
+          if (day === currentStreak + 1 && !isAlreadyCheckedIn) {
+            bubble.classList.add('today');
+          }
+          streakBar.appendChild(bubble);
         }
-        if (day === currentStreak && isAlreadyCheckedIn) {
-          bubble.classList.add('today');
-        }
-        if (day === currentStreak + 1 && !isAlreadyCheckedIn) {
-          bubble.classList.add('today');
-        }
-        streakBar.appendChild(bubble);
       }
-    }
 
-    // Populate pre-bans inputs
-    const prebans = state.user.pre_banned_players || [];
-    for (let i = 0; i < 3; i++) {
-      const teamInput = $(`#preban-team-${i+1}`);
-      const jerseyInput = $(`#preban-jersey-${i+1}`);
-      if (teamInput && (document.activeElement !== teamInput)) {
-        teamInput.value = (prebans[i] && prebans[i].team) || '';
+      // Populate pre-bans inputs
+      const prebans = state.user.pre_banned_players || [];
+      for (let i = 0; i < 3; i++) {
+        const teamInput = $(`#preban-team-${i+1}`);
+        const jerseyInput = $(`#preban-jersey-${i+1}`);
+        if (teamInput && (document.activeElement !== teamInput)) {
+          teamInput.value = (prebans[i] && prebans[i].team) || '';
+        }
+        if (jerseyInput && (document.activeElement !== jerseyInput)) {
+          jerseyInput.value = (prebans[i] && prebans[i].jersey) || '';
+        }
       }
-      if (jerseyInput && (document.activeElement !== jerseyInput)) {
-        jerseyInput.value = (prebans[i] && prebans[i].jersey) || '';
-      }
-    }
 
-    // Update coach critique
-    const critiqueEl = $('#coach-settings-critique');
-    if (critiqueEl) {
-      critiqueEl.textContent = state.user.coach_critique || '“你一個人都沒禁用？是準備空手套白狼，還是對自己的垃圾防守太有自信了？”';
-    }
-    
-    const pveProgressEl = $('#pve-user-progress');
-    if (pveProgressEl) {
-      pveProgressEl.textContent = `解鎖進度: ${state.unlockedLevel} / 60 關`;
+      // Update coach critique
+      const critiqueEl = $('#coach-settings-critique');
+      if (critiqueEl) {
+        critiqueEl.textContent = state.user.coach_critique || '“你一個人都沒禁用？是準備空手套白狼，還是對自己的垃圾防守太有自信了？”';
+      }
+      
+      const pveProgressEl = $('#pve-user-progress');
+      if (pveProgressEl) {
+        pveProgressEl.textContent = `解鎖進度: ${state.unlockedLevel} / 60 關`;
+      }
+
+      // Load Firestore career stats and highlights
+      loadCareerStats();
+      loadHighlights();
     }
   } else {
     loggedOutEl.classList.remove('hidden');
@@ -1689,6 +1792,7 @@ function logout() {
   state.user = null;
   state.playerName = 'Player 1';
   sessionStorage.removeItem('nba_player_name');
+  sessionStorage.removeItem('nba_user_profile');
   
   const createNameEl = $('#create-player-name');
   const joinNameEl = $('#join-player-name');
@@ -1710,8 +1814,351 @@ function logout() {
   showToast('👋 已成功登出。');
 }
 
+// ── Career Stats & Highlights & Leaderboard ──
+async function loadCareerStats() {
+  if (!state.user || state.user.provider === 'guest' || !_firestoreDb) return;
+  try {
+    const doc = await _firestoreDb.collection('users').doc(state.user.uid).get();
+    let data = doc.exists ? doc.data() : {};
+    
+    const pve_games = data.pve_games || 0;
+    const pve_wins = data.pve_wins || 0;
+    const pvp_games = data.pvp_games || 0;
+    const pvp_wins = data.pvp_wins || 0;
+    const wheel_games = data.wheel_games || 0;
+    const wheel_wins = data.wheel_wins || 0;
+
+    const total_games = pve_games + pvp_games + wheel_games;
+    const total_wins = pve_wins + pvp_wins + wheel_wins;
+    const total_rate = total_games > 0 ? Math.round((total_wins / total_games) * 100) : 0;
+    
+    const pve_rate = pve_games > 0 ? Math.round((pve_wins / pve_games) * 100) : 0;
+    const pvp_rate = pvp_games > 0 ? Math.round((pvp_wins / pvp_games) * 100) : 0;
+    const wheel_rate = wheel_games > 0 ? Math.round((wheel_wins / wheel_games) * 100) : 0;
+
+    const pveGamesEl = $('#stats-pve-games');
+    const pveRateEl = $('#stats-pve-rate');
+    const pvpGamesEl = $('#stats-pvp-games');
+    const pvpRateEl = $('#stats-pvp-rate');
+    const wheelGamesEl = $('#stats-wheel-games');
+    const wheelRateEl = $('#stats-wheel-rate');
+    const totalGamesEl = $('#stats-total-games');
+    const totalRateEl = $('#stats-total-rate');
+
+    if (pveGamesEl) pveGamesEl.textContent = `${pve_games} 場`;
+    if (pveRateEl) pveRateEl.textContent = `(勝率 ${pve_rate}%)`;
+    if (pvpGamesEl) pvpGamesEl.textContent = `${pvp_games} 場`;
+    if (pvpRateEl) pvpRateEl.textContent = `(勝率 ${pvp_rate}%)`;
+    if (wheelGamesEl) wheelGamesEl.textContent = `${wheel_games} 場`;
+    if (wheelRateEl) wheelRateEl.textContent = `(勝率 ${wheel_rate}%)`;
+    if (totalGamesEl) totalGamesEl.textContent = `${total_games} 場`;
+    if (totalRateEl) totalRateEl.textContent = `(勝率 ${total_rate}%)`;
+  } catch (err) {
+    console.error('Error loading career stats:', err);
+  }
+}
+
+async function loadHighlights() {
+  if (!state.user || state.user.provider === 'guest' || !_firestoreDb) return;
+  const container = $('#highlights-container');
+  if (!container) return;
+  
+  try {
+    const snapshot = await _firestoreDb.collection('users').doc(state.user.uid).collection('highlights').orderBy('timestamp', 'desc').limit(20).get();
+    container.innerHTML = '';
+    
+    if (snapshot.empty) {
+      container.innerHTML = '<p class="text-[10px] text-gray-500 italic">暫無 90分以上傳奇陣容存檔</p>';
+      return;
+    }
+    
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const card = document.createElement('div');
+      card.className = 'bg-purple-950/40 p-2 text-left rounded border border-purple-500/10 hover:border-purple-500/30 transition cursor-pointer space-y-1';
+      card.onclick = () => showHighlightDetails(data);
+      
+      const rosterStr = (data.roster || []).map(p => p.name).join('、');
+      card.innerHTML = `
+        <div class="flex justify-between items-center text-[9px]">
+          <span class="font-black text-yellow-400">🏆 傳奇得分: ${data.overall} 分</span>
+          <span class="bg-purple-900 text-purple-300 px-1 rounded">${data.year}年</span>
+        </div>
+        <p class="text-[9px] text-gray-300 truncate">${rosterStr}</p>
+      `;
+      container.appendChild(card);
+    });
+  } catch (err) {
+    console.error('Error loading highlights:', err);
+  }
+}
+
+async function saveHighlight(overall, roster, critique, year) {
+  if (!state.user || state.user.provider === 'guest' || !_firestoreDb) return;
+  try {
+    await _firestoreDb.collection('users').doc(state.user.uid).collection('highlights').add({
+      overall,
+      roster,
+      critique,
+      year,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast(`🌟 傳奇陣容存檔成功！已寫入 HOF 高光時刻 (總分 ${overall}分)。`);
+    loadHighlights();
+  } catch (err) {
+    console.error('Error saving highlight:', err);
+  }
+}
+
+function showHighlightDetails(data) {
+  showScreen('screen-eval');
+  const evalLoading = $('#eval-loading');
+  const evalActions = $('#eval-actions');
+  const btnReplay = $('#btn-replay');
+  const btnLeaveEval = $('#btn-leave-eval');
+  const resultDiv = $('#eval-result');
+
+  if (evalLoading) evalLoading.classList.add('hidden');
+  if (evalActions) evalActions.classList.add('hidden');
+  if (btnReplay) btnReplay.classList.add('hidden');
+  
+  if (btnLeaveEval) {
+    btnLeaveEval.classList.remove('hidden');
+    btnLeaveEval.onclick = () => showScreen('screen-setup');
+  }
+
+  if (resultDiv) {
+    resultDiv.innerHTML = '';
+    resultDiv.classList.remove('hidden');
+    
+    const rosterStr = (data.roster || []).map(p => {
+      return `* **${p.name}** (${p.position.join('/')}) [Team: ${p.team}] — PTS: ${p.pts}, TRB: ${p.trb}, AST: ${p.ast}`;
+    }).join('\n');
+
+    const content = `### 🌟 榮譽重播：總分 ${data.overall} 分傳奇高光
+  
+時空背景：西元 ${data.year} 年
+
+#### 🏀 傳奇陣容球員：
+${rosterStr}
+
+---
+
+#### 👨‍💼 總教練無情毒舌點評：
+${data.critique}`;
+    
+    resultDiv.innerHTML = window.marked.parse(content);
+  }
+}
+
+async function handleGameEndStats(room) {
+  if (!_firestoreDb || !state.user || state.user.provider === 'guest') return;
+  
+  const myName = state.playerName;
+  const isPVE = !!room.isPVE;
+  let isWin = false;
+  
+  if (isPVE) {
+    const player = room.players.find(p => p.socketId !== 'cpu_bot');
+    const cpu = room.players.find(p => p.socketId === 'cpu_bot');
+    if (player && cpu) {
+      const playerOverall = room.ratings[player.name]?.overall || 0;
+      const cpuOverall = room.ratings[cpu.name]?.overall || 0;
+      isWin = playerOverall > cpuOverall;
+    }
+  } else {
+    const maxOverall = Math.max(...room.players.map(p => room.ratings[p.name]?.overall || 0));
+    isWin = (room.ratings[myName]?.overall || 0) === maxOverall;
+  }
+  
+  try {
+    const userRef = _firestoreDb.collection('users').doc(state.user.uid);
+    const updateFields = {};
+    if (isPVE) {
+      updateFields.pve_games = firebase.firestore.FieldValue.increment(1);
+      if (isWin) updateFields.pve_wins = firebase.firestore.FieldValue.increment(1);
+    } else if (room.settings.mode === 'wheel' || room.settings.mode === 'legend_wheel') {
+      updateFields.wheel_games = firebase.firestore.FieldValue.increment(1);
+      if (isWin) updateFields.wheel_wins = firebase.firestore.FieldValue.increment(1);
+    } else {
+      updateFields.pvp_games = firebase.firestore.FieldValue.increment(1);
+      if (isWin) updateFields.pvp_wins = firebase.firestore.FieldValue.increment(1);
+    }
+    
+    await userRef.set(updateFields, { merge: true });
+    console.log('✅ Career stats updated in Firestore');
+    
+    const myRatingObj = room.ratings[myName];
+    if (myRatingObj && myRatingObj.overall >= 90) {
+      const myRoster = room.players.find(p => p.name === myName)?.roster || [];
+      setTimeout(() => {
+        const critique = state.room?.evalResult || room.evalResult || '無點評資料';
+        saveHighlight(myRatingObj.overall, myRoster, critique, room.settings.year || '跨時空');
+      }, 3000);
+    }
+    
+    setTimeout(() => {
+      syncLeaderboardData();
+      loadCareerStats();
+    }, 2000);
+    
+  } catch (err) {
+    console.error('Error handling game end stats:', err);
+  }
+}
+
+async function syncLeaderboardData() {
+  if (!state.user || state.user.provider === 'guest' || !_firestoreDb) return;
+  try {
+    const statsDoc = await _firestoreDb.collection('users').doc(state.user.uid).get();
+    const statsData = statsDoc.exists ? statsDoc.data() : {};
+    
+    const pve_games = statsData.pve_games || 0;
+    const pve_wins = statsData.pve_wins || 0;
+    const pvp_games = statsData.pvp_games || 0;
+    const pvp_wins = statsData.pvp_wins || 0;
+    const wheel_games = statsData.wheel_games || 0;
+    const wheel_wins = statsData.wheel_wins || 0;
+
+    const total_games = pve_games + pvp_games + wheel_games;
+    const total_wins = pve_wins + pvp_wins + wheel_wins;
+    const win_rate = total_games > 0 ? (total_wins / total_games) : 0;
+    
+    const pve_clear_count = state.user.pve_cleared_stages ? state.user.pve_cleared_stages.length : 0;
+
+    await _firestoreDb.collection('global_leaderboards').doc(state.user.uid).set({
+      uid: state.user.uid,
+      name: state.user.name || 'Anonymous',
+      avatar: state.user.avatar || '',
+      win_rate,
+      virtual_currency: state.user.virtual_currency || 0,
+      total_games,
+      pve_clear_count,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    console.log('✅ Leaderboard data synchronized');
+  } catch (err) {
+    console.error('Error syncing leaderboard data:', err);
+  }
+}
+
+let currentLeaderboardMetric = 'win_rate';
+
+async function openLeaderboard() {
+  const modal = $('#modal-leaderboard');
+  if (modal) modal.classList.remove('hidden');
+  
+  const guestLock = $('#leaderboard-guest-lock');
+  if (state.user && state.user.provider === 'guest') {
+    if (guestLock) guestLock.classList.remove('hidden');
+    return;
+  } else {
+    if (guestLock) guestLock.classList.add('hidden');
+  }
+  
+  switchLeaderboardTab('win_rate');
+}
+
+function closeLeaderboard() {
+  const modal = $('#modal-leaderboard');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function switchLeaderboardTab(metric) {
+  currentLeaderboardMetric = metric;
+  
+  const tabs = ['win_rate', 'virtual_currency', 'total_games', 'pve_clear_count'];
+  const tabIds = {
+    win_rate: 'winrate',
+    virtual_currency: 'coins',
+    total_games: 'games',
+    pve_clear_count: 'pve'
+  };
+  
+  tabs.forEach(t => {
+    const btn = $(`#leaderboard-tab-${tabIds[t]}`);
+    if (btn) {
+      if (t === metric) {
+        btn.className = 'flex-1 py-2 border-b-2 border-cyan-500 text-cyan-400';
+      } else {
+        btn.className = 'flex-1 py-2 border-b-2 border-transparent text-gray-400';
+      }
+    }
+  });
+  
+  const listEl = $('#leaderboard-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<div class="text-center py-6 text-gray-400 animate-pulse text-xs">⚡ 正在加載排行榜...</div>';
+  
+  try {
+    const snapshot = await _firestoreDb.collection('global_leaderboards')
+      .orderBy(metric, 'desc')
+      .limit(50)
+      .get();
+      
+    listEl.innerHTML = '';
+    if (snapshot.empty) {
+      listEl.innerHTML = '<p class="text-center text-gray-500 italic text-xs py-6">暫無排行榜數據</p>';
+      return;
+    }
+    
+    let rank = 1;
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const div = document.createElement('div');
+      
+      let valStr = '';
+      if (metric === 'win_rate') {
+        valStr = `勝率 ${Math.round((data.win_rate || 0) * 100)}%`;
+      } else if (metric === 'virtual_currency') {
+        valStr = `💰 ${data.virtual_currency || 0} 元`;
+      } else if (metric === 'total_games') {
+        valStr = `${data.total_games || 0} 場`;
+      } else if (metric === 'pve_clear_count') {
+        valStr = `⚔️ ${data.pve_clear_count || 0} 關`;
+      }
+      
+      const avatar = data.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(data.uid)}`;
+      const isMe = state.user && state.user.uid === data.uid;
+      
+      div.className = `flex items-center justify-between p-2.5 rounded-lg border ${isMe ? 'bg-cyan-950/20 border-cyan-500/40' : 'bg-purple-950/20 border-purple-500/5'} text-xs`;
+      
+      let rankBadge = `<span class="w-5 font-black text-gray-400">${rank}</span>`;
+      if (rank === 1) rankBadge = `<span class="w-5 text-lg">🥇</span>`;
+      else if (rank === 2) rankBadge = `<span class="w-5 text-lg">🥈</span>`;
+      else if (rank === 3) rankBadge = `<span class="w-5 text-lg">🥉</span>`;
+      
+      div.innerHTML = `
+        <div class="flex items-center gap-2">
+          ${rankBadge}
+          <img class="w-6 h-6 rounded-full border border-purple-500/20 bg-purple-950/60" src="${avatar}" alt="" />
+          <span class="font-bold text-gray-200 ${isMe ? 'text-cyan-300 font-extrabold' : ''}">${data.name}</span>
+        </div>
+        <span class="font-bold text-cyan-400">${valStr}</span>
+      `;
+      listEl.appendChild(div);
+      rank++;
+    });
+  } catch (err) {
+    console.error('Error fetching leaderboard:', err);
+    listEl.innerHTML = '<p class="text-center text-red-400 text-xs py-6">❌ 排行榜載入失敗，請稍後重試。</p>';
+  }
+}
+
+
 function triggerCheckIn() {
   if (!state.user) return;
+  
+  const checkinGuestLock = $('#checkin-guest-lock');
+  if (state.user.provider === 'guest') {
+    if (checkinGuestLock) checkinGuestLock.classList.remove('hidden');
+    const modal = $('#modal-checkin');
+    if (modal) modal.classList.remove('hidden');
+    return;
+  } else {
+    if (checkinGuestLock) checkinGuestLock.classList.add('hidden');
+  }
   
   const gridEl = $('#checkin-grid');
   gridEl.innerHTML = '';
@@ -1813,6 +2260,7 @@ async function claimCheckIn() {
       let passiveAlert = data.hasAllClearPassive ? " (包含全通關福利 +5 元)" : "";
       showToast(`🎁 簽到成功！獲得 💰 ${data.coinsGained} 元虛擬幣！${passiveAlert}`);
       fireConfetti();
+      setTimeout(() => { syncLeaderboardData(); }, 1000);
     } else {
       showToast(`⚠️ ${data.message || '簽到失敗'}`);
       if (btnActionEl) {
@@ -2043,6 +2491,7 @@ async function savePreBans() {
       state.user = data.user;
       updateOAuthUI();
       showToast('✅ 禁用設定儲存成功！已更新教練點評。');
+      setTimeout(() => { syncLeaderboardData(); }, 1000);
     }
   } catch (err) {
     console.error('Error saving pre-bans:', err);
@@ -2086,7 +2535,12 @@ window.__app = {
   goBackFromPVE,
   startPVEGame,
   showPVPForm,
-  savePreBans
+  savePreBans,
+  submitEmailAuth,
+  toggleRegisterMode,
+  openLeaderboard,
+  closeLeaderboard,
+  switchLeaderboardTab
 };
 
 // ── Setup Page Visibility Toggles ───────────
