@@ -1512,27 +1512,40 @@ let _firestoreDb = null;
 async function initFirebase() {
   try {
     const res = await fetch('/api/config');
-    const config = await res.json();
-    if (config.apiKey && typeof firebase !== 'undefined') {
-      if (!_firebaseApp) {
-        _firebaseApp = firebase.initializeApp({
-          apiKey: config.apiKey,
-          authDomain: config.authDomain,
-          projectId: config.projectId,
-          storageBucket: config.storageBucket,
-          messagingSenderId: config.messagingSenderId,
-          appId: config.appId,
-          measurementId: config.measurementId
-        });
-      }
-      _firebaseAuth = firebase.auth();
-      _firestoreDb = firebase.firestore();
-      console.log('✅ Firebase client and Firestore initialized');
-    } else {
-      console.warn('⚠️ Firebase config not available or SDK not loaded');
+    if (!res.ok) {
+      console.error('Fetch config failed:', res.status);
+      return;
     }
+    const config = await res.json();
+    
+    if (!config.apiKey) {
+      console.error('Firebase initialization aborted: config.apiKey is missing from backend.');
+      return;
+    }
+    
+    if (typeof firebase === 'undefined') {
+      console.error('Firebase initialization aborted: Firebase SDK is not loaded in window.');
+      return;
+    }
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp({
+        apiKey: config.apiKey,
+        authDomain: config.authDomain,
+        projectId: config.projectId,
+        storageBucket: config.storageBucket,
+        messagingSenderId: config.messagingSenderId,
+        appId: config.appId,
+        measurementId: config.measurementId
+      });
+    }
+    
+    _firebaseAuth = firebase.auth();
+    _firestoreDb = firebase.firestore();
+    console.log('✅ Firebase client and Firestore initialized successfully');
   } catch (err) {
     console.error('Firebase init error:', err);
+    _firebaseAuth = null;
   }
 }
 
@@ -1545,6 +1558,16 @@ async function loginWithGoogle() {
       return;
     }
   }
+  
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const result = await _firebaseAuth.signInWithPopup(provider);
+    console.log('Google login success:', result.user);
+  } catch (error) {
+    console.error('Google login error:', error);
+    showToast('❌ 登入失敗：' + error.message);
+  }
+}
 
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
