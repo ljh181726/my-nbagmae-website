@@ -461,6 +461,7 @@ function createRoom() {
   const decadeSelect = $('#create-decade');
   const allStarCapInput = $('#create-allstar-cap');
   const rookieFloorInput = $('#create-rookie-floor');
+  const selectBenchCheckbox = $('#create-select-bench');
 
   const playerName = nameInput.value.trim();
   if (!playerName) {
@@ -477,7 +478,8 @@ function createRoom() {
       blindSubmode: blindSubmodeSelect.value,
       decade: decadeSelect.value,
       allStarCap: parseInt(allStarCapInput.value) !== undefined ? parseInt(allStarCapInput.value) : 5,
-      rookieFloor: parseInt(rookieFloorInput.value) !== undefined ? parseInt(rookieFloorInput.value) : 0
+      rookieFloor: parseInt(rookieFloorInput.value) !== undefined ? parseInt(rookieFloorInput.value) : 0,
+      selectBench: selectBenchCheckbox ? selectBenchCheckbox.checked : false
     },
     playerName,
     uid: state.user ? state.user.uid : null
@@ -524,8 +526,6 @@ function updateLobbyUI() {
     legend_wheel: '🎪 傳奇隊史轉盤',
     '15usd': '💵 經典 15 元選秀',
     legend_15usd: '👑 歷史傳奇 15 元選秀',
-    salary_cap: '⚖️ 薪資上限挑戰模式',
-    salary_cap_legend: '🪐 薪資上限 + 傳奇球星模式',
     blind: '🕵️ 盲選數據模式'
   };
 
@@ -646,7 +646,8 @@ function updateDraftUI() {
 
   const pickBadge = $('#draft-pick-badge');
   const currentPickNum = Math.floor(room.draftIndex / room.players.length) + 1;
-  pickBadge.textContent = `${currentPickNum} / 5`;
+  const totalRounds = room.settings.selectBench ? 10 : 5;
+  pickBadge.textContent = `${currentPickNum} / ${totalRounds}`;
 
   // Draw snake draft order list
   const flowOrderText = $('#draft-flow-order');
@@ -760,7 +761,7 @@ function updateDraftUI() {
       // Yes! We can allow players to toggle in standard wheel mode too if they want legends, or we can just let them toggle. Let's make it visible for `salary_cap_legend` and `wheel`. That is extremely nice!
       
       const toggleContainer = $('#legend-toggle-container');
-      if (mode === 'salary_cap_legend' || mode === 'wheel') {
+      if (mode === 'legend_wheel') {
         toggleContainer.classList.remove('hidden');
         // Retrieve rosters and legends for the spun team
         fetchTeamRosterAndLegends(room.currentTeam.abbreviation);
@@ -834,12 +835,7 @@ function enterPickPhase() {
   $('#draft-wheel-phase').classList.add('hidden');
   $('#draft-pick-phase').classList.remove('hidden');
   
-  const room = state.room;
-  if (room.settings.mode === 'salary_cap_legend' || room.settings.mode === 'wheel') {
-    renderPickCards();
-  } else {
-    renderPickCards();
-  }
+  renderPickCards();
 }
 
 // ── Fetch Roster Pools via Sockets ──────────
@@ -881,8 +877,11 @@ function checkPlayerDraftEligibility(room, activePlayer, p, priceOrSalary) {
   const isDrafted = room.draftedIds.includes(p.name);
   if (isDrafted) return { isDisabled: true, isConstraintDisabled: false };
 
+  const mode = room.settings.mode;
+
   // Calculate constraints
-  const remainingPicks = 5 - activePlayer.roster.length;
+  const totalRounds = room.settings.selectBench ? 10 : 5;
+  const remainingPicks = totalRounds - activePlayer.roster.length;
   const currentRookies = activePlayer.roster.filter(pr => pr.is_rookie).length;
   const rookieFloor = room.settings.rookieFloor || 0;
   const rookieDeficit = rookieFloor - currentRookies;
@@ -902,10 +901,17 @@ function checkPlayerDraftEligibility(room, activePlayer, p, priceOrSalary) {
     return { isDisabled: true, isConstraintDisabled: true };
   }
 
+  // PVP Bench: Block All-Star picks in rounds 6-10 (roster.length >= 5) unless legend modes
+  const isLegendMode = mode === 'legend_wheel' || mode === 'legend_15usd';
+  if (room.settings.selectBench && activePlayer.roster.length >= 5 && !isLegendMode) {
+    if (p.is_allstar) {
+      return { isDisabled: true, isConstraintDisabled: true };
+    }
+  }
+
   // Check budget constraint (only for 15usd modes)
-  const mode = room.settings.mode;
   if (mode === '15usd' || mode === 'legend_15usd') {
-    const spent = activePlayer.roster.reduce((sum, pr) => sum + pr.salary, 0);
+    const spent = activePlayer.roster.reduce((sum, pr) => sum + (pr.price || pr.salary || 0), 0);
     const maxAffordable = (15 - spent) - (remainingPicks - 1);
     
     // Check if safety net is active
@@ -915,13 +921,6 @@ function checkPlayerDraftEligibility(room, activePlayer, p, priceOrSalary) {
     const isSafetyNetActive = (affordableCount < remainingPicks);
 
     if (!isSafetyNetActive && priceOrSalary > maxAffordable) {
-      return { isDisabled: true, isConstraintDisabled: false };
-    }
-  } else if (mode.includes('salary_cap')) {
-    // Salary cap mode budget
-    const teamCap = SALARY_CAPS[room.settings.year] || 154647000;
-    const spent = activePlayer.roster.reduce((sum, pr) => sum + pr.salary, 0);
-    if (spent + priceOrSalary > teamCap) {
       return { isDisabled: true, isConstraintDisabled: false };
     }
   }
@@ -952,7 +951,7 @@ function renderPickCards() {
     
     const card = document.createElement('button');
     card.className = 'player-btn relative flex flex-col items-center justify-between text-center min-h-[82px] py-3 px-2';
-    const eligible = checkPlayerDraftEligibility(room, activePlayer, p, p.salary || 0);
+    const eligible = checkPlayerDraftEligibility(room, activePlayer, p, p.price || p.salary || 0);
     let isDisabled = eligible.isDisabled || !isMyTurn;
     card.disabled = isDisabled;
     if (eligible.isConstraintDisabled) {
@@ -973,11 +972,6 @@ function renderPickCards() {
       </div>
     `;
 
-    const salaryCap = SALARY_CAPS[room.settings.year] || 154647000;
-    const salaryHTML = room.settings.mode.includes('salary_cap')
-      ? `<div class="text-[11px] font-bold text-yellow-500 mt-1">薪資: $${p.salary.toLocaleString()}</div>`
-      : '';
-
     card.innerHTML = `
       <div class="w-full">
         <div class="font-bold text-sm text-gray-200">${p.name}</div>
@@ -986,7 +980,6 @@ function renderPickCards() {
           ${posHTML} ${allStarBadge} ${rookieBadge}
         </div>
         ${statsHTML}
-        ${salaryHTML}
       </div>
       <div class="tooltip">
         <div class="font-bold mb-1">${p.name}</div>
@@ -995,7 +988,6 @@ function renderPickCards() {
         ${p.is_allstar ? '<div>🌟 全明星球員</div>' : ''}
         ${p.is_rookie ? '<div>👶 新秀合約</div>' : ''}
         <div>🏀 PTS: ${p.pts} / TRB: ${p.trb} / AST: ${p.ast}</div>
-        ${p.salary ? `<div>💰 薪水: $${p.salary.toLocaleString()}</div>` : ''}
       </div>
     `;
 
@@ -1012,7 +1004,7 @@ function renderPickCards() {
             trb: p.trb,
             ast: p.ast,
             position: p.position,
-            salary: p.salary,
+            price: p.price,
             is_allstar: p.is_allstar,
             is_rookie: p.is_rookie,
             isLegend: isLegend,
@@ -1258,16 +1250,12 @@ function renderRosterPanels() {
     if (player.isCPU) {
       extraHeaderHTML = `<span class="ml-auto text-xs font-bold text-red-400 bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20">💻 電腦挑戰者</span>`;
     } else if (mode === '15usd' || mode === 'legend_15usd') {
-      const spent = player.roster.reduce((sum, p) => sum + p.salary, 0);
+      const spent = player.roster.reduce((sum, p) => sum + (p.price || p.salary || 0), 0);
       const limit = room.settings.budget || 15;
       extraHeaderHTML = `<span class="ml-auto text-xs font-bold text-yellow-400 bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">預算: $${spent} / $${limit}</span>`;
-    } else if (mode === 'salary_cap' || mode === 'salary_cap_legend') {
-      const spent = player.roster.reduce((sum, p) => sum + p.salary, 0);
-      const cap = SALARY_CAPS[room.settings.year] || 154647000;
-      const pct = ((spent / cap) * 100).toFixed(0);
-      extraHeaderHTML = `<span class="ml-auto text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">薪資: $${(spent / 1000000).toFixed(1)}M / ${(cap / 1000000).toFixed(1)}M (${pct}%)</span>`;
     } else {
-      extraHeaderHTML = `<span class="ml-auto text-xs font-semibold px-2 py-1 rounded-lg bg-purple-950/50 text-purple-300 border border-purple-500/10">${player.roster.length} / 5</span>`;
+      const totalPicks = room.settings.selectBench ? 10 : 5;
+      extraHeaderHTML = `<span class="ml-auto text-xs font-semibold px-2 py-1 rounded-lg bg-purple-950/50 text-purple-300 border border-purple-500/10">${player.roster.length} / ${totalPicks}</span>`;
     }
 
     const header = `
@@ -1282,21 +1270,20 @@ function renderRosterPanels() {
     `;
 
     let slotsHTML = '';
-    for (let s = 0; s < 5; s++) {
+    const totalSlots = room.settings.selectBench ? 10 : 5;
+    for (let s = 0; s < totalSlots; s++) {
       if (s < player.roster.length) {
         const p = player.roster[s];
         const teamLogo = NBA_TEAMS.find(t => t.abbreviation === getModernEquivalent(p.team))?.logo || '🏀';
         
         const priceText = (!player.isCPU && (mode === '15usd' || mode === 'legend_15usd'))
-          ? `<span class="text-[10px] font-black text-yellow-400">$${p.salary}</span>`
-          : (!player.isCPU && mode.includes('salary_cap') && p.salary)
-          ? `<span class="text-[10px] text-yellow-500">$${(p.salary / 1000000).toFixed(1)}M</span>`
+          ? `<span class="text-[10px] font-black text-yellow-400">$${p.price || p.salary || 0}</span>`
           : '';
 
         slotsHTML += `
           <div class="roster-card py-2.5 px-3 mb-2 flex items-center justify-between border border-purple-950 bg-card/40">
             <div>
-              <div class="font-bold text-xs text-gray-200">${p.name}</div>
+              <div class="font-bold text-xs text-gray-200">${p.name} <span class="text-[9px] px-1 py-0.2 rounded bg-purple-950 border border-purple-800 text-purple-300 font-bold ml-1">${s < 5 ? '首發' : '替補'}</span></div>
               <div class="text-[10px] text-gray-500 mt-0.5">${teamLogo} ${p.team} · ${p.position.join('/')} ${p.peak_year ? `(${p.peak_year}年)` : ''}</div>
             </div>
             <div class="text-right flex flex-col items-end gap-0.5">
@@ -1306,7 +1293,7 @@ function renderRosterPanels() {
           </div>
         `;
       } else {
-        slotsHTML += `<div class="roster-slot-empty py-4 text-xs">Pick ${s + 1}</div>`;
+        slotsHTML += `<div class="roster-slot-empty py-4 text-xs font-semibold">${s < 5 ? '首發 (Starter)' : '替補 (Bench)'} Slot ${s + 1}</div>`;
       }
     }
 
@@ -1366,15 +1353,17 @@ function updateEvalUI() {
     if (player.isCPU) {
       statsSummaryHTML = `<div class="text-xs text-red-400 mt-1 font-semibold">💻 電腦關卡陣容</div>`;
     } else if (mode === '15usd' || mode === 'legend_15usd') {
-      const spent = player.roster.reduce((sum, p) => sum + p.salary, 0);
+      const spent = player.roster.reduce((sum, p) => sum + (p.price || p.salary || 0), 0);
       const limit = room.settings.budget || 15;
       statsSummaryHTML = `<div class="text-xs text-yellow-400 mt-1 font-semibold">總金額：$${spent} / $${limit}</div>`;
-    } else if (mode.includes('salary_cap')) {
-      const spent = player.roster.reduce((sum, p) => sum + p.salary, 0);
-      statsSummaryHTML = `<div class="text-xs text-yellow-500 mt-1 font-semibold">總薪資：$${spent.toLocaleString()}</div>`;
     }
 
-    const ratings = (room.ratings && room.ratings[player.name]) || { offense: 0, defense: 0, overall: 0 };
+    const rawRatings = (room.ratings && room.ratings[player.name]) || {};
+    const ratings = {
+      offense: isNaN(parseInt(rawRatings.offense)) ? 0 : parseInt(rawRatings.offense),
+      defense: isNaN(parseInt(rawRatings.defense)) ? 0 : parseInt(rawRatings.defense),
+      overall: isNaN(parseInt(rawRatings.overall)) ? 0 : parseInt(rawRatings.overall)
+    };
     
     function getRingHTML(score, label, strokeColor, key) {
       const radius = 20;
@@ -1449,17 +1438,18 @@ function updateEvalUI() {
     animationTargets.forEach(target => {
       const circle = document.getElementById(`ring-${target.id}`);
       const text = document.getElementById(`score-${target.id}`);
+      const scoreVal = isNaN(target.score) ? 0 : target.score;
       if (circle) {
         const circumference = 2 * Math.PI * 20;
-        circle.style.strokeDashoffset = circumference * (1 - target.score / 100);
+        circle.style.strokeDashoffset = circumference * (1 - scoreVal / 100);
       }
       if (text) {
         let curr = 0;
-        const step = Math.ceil(target.score / 30);
+        const step = Math.max(1, Math.ceil(scoreVal / 30));
         const interval = setInterval(() => {
           curr += step;
-          if (curr >= target.score) {
-            curr = target.score;
+          if (curr >= scoreVal) {
+            curr = scoreVal;
             clearInterval(interval);
           }
           text.textContent = curr;

@@ -270,10 +270,9 @@ async function loadRoomFromDB(roomId) {
   }
 }
 
-// Generate standard Snake Draft order (5 rounds)
-function generateSnakeDraftOrder(numPlayers) {
+// Generate standard Snake Draft order (configurable rounds)
+function generateSnakeDraftOrder(numPlayers, rounds = 5) {
   const order = [];
-  const rounds = 5;
   for (let r = 0; r < rounds; r++) {
     if (r % 2 === 0) {
       for (let p = 0; p < numPlayers; p++) order.push(p);
@@ -363,8 +362,7 @@ async function generateDynamic15UsdGrid(year, bannedPlayerNames = []) {
           team: player.team,
           is_allstar: !!player.is_allstar,
           is_rookie: !!player.is_rookie,
-          price: price,
-          salary: price
+          price: price
         });
       } else {
         grid.push({
@@ -376,8 +374,7 @@ async function generateDynamic15UsdGrid(year, bannedPlayerNames = []) {
           team: "FA",
           is_allstar: false,
           is_rookie: false,
-          price: price,
-          salary: price
+          price: price
         });
       }
     }
@@ -450,7 +447,6 @@ async function getFranchiseLegendsFromDB(modernTeamAbbr) {
           ast: p.ast,
           position: p.position,
           team: p.team,
-          salary: p.salary,
           is_allstar: true,
           is_rookie: !!p.is_rookie,
           is_legend: true,

@@ -166,11 +166,10 @@ async function executeEvaluation(room) {
     const lines = player.roster.map(p => {
       const yearStr = p.peak_year ? `[Season: ${p.peak_year}年]` : `[Season: ${year}年]`;
       const statsStr = `PTS: ${p.pts}, TRB: ${p.trb}, AST: ${p.ast}`;
-      const salaryStr = p.salary ? `Salary: $${p.salary.toLocaleString()}` : '';
       const rookieStr = p.is_rookie ? '[Rookie Contract]' : '';
       const allstarStr = p.is_allstar ? '[All-Star]' : '';
       const legendStr = p.is_legend ? `[Franchise Legend]` : '';
-      return `  - ${p.name} (${p.position.join('/')}) [Team: ${p.team}] ${yearStr} — ${statsStr} ${salaryStr} ${rookieStr} ${allstarStr} ${legendStr}`;
+      return `  - ${p.name} (${p.position.join('/')}) [Team: ${p.team}] ${yearStr} — ${statsStr} ${rookieStr} ${allstarStr} ${legendStr}`;
     }).join('\n');
     return `### 隊伍：${player.name}\n${lines}`;
   }).join('\n\n');
@@ -180,13 +179,13 @@ async function executeEvaluation(room) {
     return `### ${p.name} 的數據評分：進攻 ${r.offense || '--'}分 / 防守 ${r.defense || '--'}分 / 總評 ${r.overall || '--'}分`;
   }).join('\n');
 
-  const isLegendMode = mode === 'salary_cap_legend' || mode === 'legend_wheel';
+  const isLegendMode = mode === 'legend_wheel' || mode === 'legend_15usd';
 
   const isPVE = !!room.isPVE;
   const systemPrompt = `你是一個極度挑剔、說話辛辣的名人堂傳奇總教練（HOF Head Coach）。你必須使用「繁體中文」來評估多個選秀隊伍的時空對決，並判定勝負。
 ${isPVE ? `【極重要背景說明】：當前為 PVE 單人闖關第 ${room.levelId} 關！這場比賽的時空背景為西元 【${year} 年】。請你身歷其境於 【${year} 年】的 NBA 歷史背景與球風（例如 90 年代強調肉搏防守與中距離，2010 年代中後期強調三分空間與魔球），根據該年代的防守對抗強度、歷史球風特徵對玩家的選秀陣容進行精準、公正的歷史背景毒舌點評！\n` : ''}請嚴格根據以下基準進行評估：
-1. **標準年與盲選模式**：必須嚴格鎖定設定的年份：【${year} 年】！以該球員在該年份當季的真實數據、防守影響力和狀態評估，嚴禁將他過去或未來的榮譽或奪冠歷史納入。
-2. **傳奇/薪資上限傳奇模式**：必須以「球隊巔峰期基準」進行評估。你必須在評語中明確提及並解析此細節。
+1. **標準年與盲選模式**：必須嚴格鎖定設定的年份：【${year} 年】！以該球員在該年份當季的真實數據、防守影響力和狀態評估，嚴禁將他過去或未來的榮譽 or 奪冠歷史納入。
+2. **傳奇模式**：必須以「球隊巔峰期基準」進行評估。你必須在評語中明確提及並解析此細節。
 
 評估與教練點評規範：
 - **毒舌人設**：你是擁有無數冠軍戒指的名人堂教練，眼光極高，說話毫不客氣、犀利直接，充滿辛辣的體育吐槽（毒舌/Trash-talking）。絕對不准給予溫馨的安慰或空洞的鼓勵！

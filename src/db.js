@@ -5,6 +5,8 @@ const uri = process.env.MONGODB_URI;
 let client = null;
 let db = null;
 
+let isRosterUpdated = false;
+
 async function connectDB() {
   if (db) return db;
   
@@ -23,6 +25,30 @@ async function connectDB() {
     await client.connect();
     db = client.db('nba_draft_showdown');
     console.log('✅ Connected successfully to MongoDB Atlas database:', db.databaseName);
+
+    // One-time update for players database: trade Anthony Davis/Trae Young to WAS and purge salary
+    if (!isRosterUpdated) {
+      isRosterUpdated = true;
+      try {
+        const years = Array.from({ length: 50 }, (_, i) => 1977 + i);
+        await Promise.all(years.map(async (y) => {
+          const colName = `y${y}`;
+          const col = db.collection(colName);
+          await col.updateMany(
+            { name: { $in: ['Anthony Davis', 'Trae Young'] } },
+            { $set: { team: 'WAS' } }
+          );
+          await col.updateMany(
+            {},
+            { $unset: { salary: "" } }
+          );
+        }));
+        console.log('✅ MongoDB database players updated: Anthony Davis & Trae Young team set to WAS, salary field removed');
+      } catch (updateErr) {
+        console.error('⚠️ Failed to update database players:', updateErr);
+      }
+    }
+
     return db;
   } catch (err) {
     console.error('❌ MongoDB connection error:', err);
