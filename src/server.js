@@ -98,13 +98,13 @@ app.get('/healthz', (req, res) => {
 app.get('/api/config', (req, res) => {
   res.json({
     hasGeminiKey: !!(process.env.GEMINI_API_KEY),
-    apiKey: process.env.FIREBASE_API_KEY || "",
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN || "",
-    projectId: process.env.FIREBASE_PROJECT_ID || "",
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "",
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "",
-    appId: process.env.FIREBASE_APP_ID || "",
-    measurementId: process.env.FIREBASE_MEASUREMENT_ID || ""
+    apiKey: "AIzaSyBKb-USGbkJPBFvEnL73jCvpoiMi5mQa4g",
+    authDomain: "nba-game-200b7.firebaseapp.com",
+    projectId: "nba-game-200b7",
+    storageBucket: "nba-game-200b7.firebasestorage.app",
+    messagingSenderId: "666750308896",
+    appId: "1:666750308896:web:a43a7b7ff1c473abece245",
+    measurementId: "VNHXBXFQ9L"
   });
 });
 
