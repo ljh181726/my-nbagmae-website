@@ -44,12 +44,16 @@ function executeHeuristicEvaluation(room) {
   const summaries = room.players.map(player => {
     // Score based on stats: PTS + 1.2 * TRB + 1.5 * AST
     const score = player.roster.reduce((sum, p) => {
+      if (!p) return sum;
       return sum + (p.pts || 0) + 1.2 * (p.trb || 0) + 1.5 * (p.ast || 0);
     }, 0);
     return {
       name: player.name,
       score,
-      rosterStr: player.roster.map(p => `${p.name} (${p.peak_year || room.settings.year}年 ${p.pts}分/${p.trb}板/${p.ast}助)`).join('、')
+      rosterStr: player.roster.map(p => {
+        if (!p) return '[空缺 - 資金破產無簽約]';
+        return `${p.name} (${p.peak_year || room.settings.year}年 ${p.pts}分/${p.trb}板/${p.ast}助)`;
+      }).join('、')
     };
   });
 
@@ -88,6 +92,7 @@ async function executeBackupEvaluation(room) {
 
   const rosterSummaries = players.map(player => {
     const lines = player.roster.map(p => {
+      if (!p) return `  - [空缺 - 資金破產無簽約]`;
       const yStr = p.peak_year || year;
       return `  - ${p.name} (${yStr}年) [PTS: ${p.pts}, TRB: ${p.trb}, AST: ${p.ast}]`;
     }).join('\n');
@@ -104,8 +109,9 @@ async function executeBackupEvaluation(room) {
 ${isPVE ? `當前為 PVE 單人闖關第 ${room.levelId} 關，時空背景為西元 【${year} 年】。請身歷其境於該年代的歷史球風背景（例如 90 年代肉搏防守、2010 年代三分球）進行毒舌點評。` : `請嚴格根據房間設定的「基準年份」【${year} 年】（或球員巔峰期）的表現進行評估。`}
 【評語規則】：
 1. 必須參考以下提供的數據評分。若有隊伍總評低於 60 分，請無情地痛批他們（例如「這陣容簡直是防守提款機」或「進攻黑洞」）；若高於 90 分，給予肯定但語氣仍需保持嚴格的高標準（例如「這勉強能看，但防守還有一堆漏洞」）。
-2. 提供簡短但具體的戰術建議。
-3. 你的分析必須包含一個最終勝者 (WINNER) 及其勝出機率，以及一句毒舌熱辣觀點。`;
+2. 若發現陣容中包含空缺（[空缺 - 資金破產無簽約]）位置，你必須開啟最高檔位的毒舌嘲諷，狠狠羞辱該隊經理「預算失控導致球隊破產開天窗」、「連最低薪的垃圾合約人都簽不起」等愚蠢的經營手段！
+3. 提供簡短但具體的戰術建議。
+4. 你的分析必須包含一個最終勝者 (WINNER) 及其勝出機率，以及一句毒舌熱辣觀點。`;
 
   const prompt = `【數據評分】\n${ratingContext}\n\n【選秀陣容】\n\n${rosterSummaries}`;
 

@@ -1,5 +1,5 @@
 import { LuckyWheel } from './wheel.js';
-import { ACTIVE_5X5_GRIDS, LEGENDS_5X5_GRIDS, NBA_TEAMS, SALARY_CAPS } from './data.js';
+import { ACTIVE_5X5_GRIDS, LEGENDS_5X5_GRIDS, NBA_TEAMS } from './data.js';
 
 function dbToStdAbbr(abbr) {
   if (abbr === 'BRK') return 'BKN';
@@ -682,7 +682,7 @@ function updateDraftUI() {
     $('#draft-phase-label').style.color = 'var(--accent-hot)';
     renderBlindResume();
   } else {
-    // Wheel-based modes (wheel, salary_cap, salary_cap_legend)
+    // Wheel-based modes (wheel, legend_wheel)
     if (room.phase === 'draft' || room.phase === 'wheel') {
       wheelPhasePanel.classList.remove('hidden');
       $('#draft-phase-label').textContent = isMyTurn ? '輪到你，旋轉轉盤！' : '等待對手旋轉轉盤...';
@@ -716,50 +716,6 @@ function updateDraftUI() {
       $('#pick-team-logo').textContent = room.currentTeam.logo;
       $('#pick-team-name').textContent = room.currentTeam.name;
 
-      // Check if team legends selector toggle is available (Franchise Legends / Salary Cap Legend modes)
-      const isLegendMode = mode === 'salary_cap_legend' || mode === 'wheel' && room.settings.mode === 'wheel'; // Wait, standard wheel doesn't toggle legends unless chosen Legendary Franchise Mode.
-      
-      // We will check: is it Legendary Franchise Mode?
-      // Since Legendary Franchise Mode is represented by settings.mode === 'wheel' (wheel mode) OR settings.mode === 'salary_cap_legend', 
-      // but standard wheel has no legends. 
-      // Let's check: if mode is wheel, is it the Legendary Franchise Mode?
-      // Yes, in our settings we had: mode: 'wheel' | 'salary_cap_legend' | '15usd' | 'legend_15usd' etc.
-      // Wait, let's distinguish:
-      // - Standard Wheel: settings.mode = 'wheel'
-      // - Legendary Franchise Wheel: settings.mode = 'wheel' with a legend trigger? Or we had 'salary_cap_legend'?
-      // Wait! The server had options: settings.mode = 'wheel', '15usd', 'legend_15usd', 'salary_cap', 'salary_cap_legend', 'blind'.
-      // Wait, is there a "Legendary Franchise Wheel" mode distinct from "Standard Wheel"?
-      // The user says:
-      // "B. 傳奇球員模式 (Legendary Franchise Mode)
-      //  - 包含轉盤與 15 元兩種玩法。"
-      // So Legendary Franchise Mode has "15元傳奇版" (legend_15usd) and "傳奇轉盤" (which is legend wheel).
-      // Let's check: in `create-mode` options, we have:
-      // - `wheel`: 🎪 轉盤選秀模式
-      // - `legend_15usd`: 👑 歷史傳奇 15 元選秀
-      // - `salary_cap_legend`: 🪐 薪資上限 + 傳奇球星模式
-      // Wait, where is the "Legendary Franchise Wheel"?
-      // Let's add `legend_wheel` to the select option in `index.html` if it wasn't there. Ah! The select option in `index.html` is:
-      // - `wheel`: 🎪 轉盤選秀模式 (標準年)
-      // - `15usd`: 💵 經典 15 元選秀
-      // - `legend_15usd`: 👑 歷史傳奇 15 元選秀
-      // - `salary_cap`: ⚖️ 薪資上限挑戰模式
-      // - `salary_cap_legend`: 🪐 薪資上限 + 傳奇球星模式
-      // - `blind`: 🕵️ 盲選數據模式
-      // If the mode is `salary_cap_legend` OR `wheel` (if chosen legendary franchise?), let's support toggling legends.
-      // Wait, to support "Legendary Franchise Wheel", does standard `wheel` support legends?
-      // "轉盤轉到某球隊時，可以選擇「任何歷史上曾經待過該球隊的球員」"
-      // Wait, let's make it so that if mode is `salary_cap_legend` OR the mode is `wheel` (legend franchise wheel), we allow legends!
-      // Actually, if we allow toggling legends in `salary_cap_legend` and standard `wheel` if the user wants legends, or we can treat standard `wheel` as standard year, and we can add a specific `legend_wheel` mode to support "Legendary Franchise Wheel" mode!
-      // Yes! Let's check if the dropdown contains `legend_wheel`.
-      // The dropdown options are: `wheel`, `15usd`, `legend_15usd`, `salary_cap`, `salary_cap_legend`, `blind`.
-      // Wait! The dropdown says `wheel` (標準年) and `salary_cap_legend`. Let's support legends toggling in `salary_cap_legend` and if the mode is a legend mode.
-      // What if we support legends toggling in BOTH `salary_cap_legend` and standard `wheel`? That way, if it is a wheel mode, players can toggle between standard roster and historical legends.
-      // Yes, let's make the legend toggle container visible for `salary_cap_legend` and if the mode is a legendary franchise wheel mode.
-      // Wait, let's look at `index.html`: `legend-toggle-container` is hidden. We can make it visible if the mode is `salary_cap_legend` or if the mode is `wheel` but they want legends. Actually, let's check:
-      // If mode is `salary_cap_legend` or `wheel` (if chosen to include legends), we show the toggle!
-      // Let's enable the legend toggle for `salary_cap_legend` and `wheel` mode. Wait, for standard `wheel` mode, is it legendary?
-      // Yes! We can allow players to toggle in standard wheel mode too if they want legends, or we can just let them toggle. Let's make it visible for `salary_cap_legend` and `wheel`. That is extremely nice!
-      
       const toggleContainer = $('#legend-toggle-container');
       if (mode === 'legend_wheel') {
         toggleContainer.classList.remove('hidden');
@@ -873,7 +829,7 @@ function toggleRosterView(view) {
 }
 
 // ── Check Player Draft Eligibility ──────────
-function checkPlayerDraftEligibility(room, activePlayer, p, priceOrSalary) {
+function checkPlayerDraftEligibility(room, activePlayer, p) {
   const isDrafted = room.draftedIds.includes(p.name);
   if (isDrafted) return { isDisabled: true, isConstraintDisabled: false };
 
@@ -882,12 +838,12 @@ function checkPlayerDraftEligibility(room, activePlayer, p, priceOrSalary) {
   // Calculate constraints
   const totalRounds = room.settings.selectBench ? 10 : 5;
   const remainingPicks = totalRounds - activePlayer.roster.length;
-  const currentRookies = activePlayer.roster.filter(pr => pr.is_rookie).length;
+  const currentRookies = activePlayer.roster.filter(pr => pr && pr.is_rookie).length;
   const rookieFloor = room.settings.rookieFloor || 0;
   const rookieDeficit = rookieFloor - currentRookies;
   const mustPickRookie = rookieDeficit > 0 && remainingPicks <= rookieDeficit;
 
-  const currentAllStars = activePlayer.roster.filter(pr => pr.is_allstar).length;
+  const currentAllStars = activePlayer.roster.filter(pr => pr && pr.is_allstar).length;
   const allStarCap = room.settings.allStarCap !== undefined ? room.settings.allStarCap : 5;
   const cannotPickAllStar = currentAllStars >= allStarCap;
 
@@ -906,22 +862,6 @@ function checkPlayerDraftEligibility(room, activePlayer, p, priceOrSalary) {
   if (room.settings.selectBench && activePlayer.roster.length >= 5 && !isLegendMode) {
     if (p.is_allstar) {
       return { isDisabled: true, isConstraintDisabled: true };
-    }
-  }
-
-  // Check budget constraint (only for 15usd modes)
-  if (mode === '15usd' || mode === 'legend_15usd') {
-    const spent = activePlayer.roster.reduce((sum, pr) => sum + (pr.price || pr.salary || 0), 0);
-    const maxAffordable = (15 - spent) - (remainingPicks - 1);
-    
-    // Check if safety net is active
-    const gridsPool = mode === 'legend_15usd' ? LEGENDS_5X5_GRIDS : ACTIVE_5X5_GRIDS;
-    const gridData = room.dynamicGrid || (room.sheetIndex !== null ? gridsPool[room.sheetIndex] : null);
-    const affordableCount = gridData ? gridData.filter(pr => !room.draftedIds.includes(pr.name) && pr.price <= maxAffordable).length : 0;
-    const isSafetyNetActive = (affordableCount < remainingPicks);
-
-    if (!isSafetyNetActive && priceOrSalary > maxAffordable) {
-      return { isDisabled: true, isConstraintDisabled: false };
     }
   }
 
@@ -951,7 +891,7 @@ function renderPickCards() {
     
     const card = document.createElement('button');
     card.className = 'player-btn relative flex flex-col items-center justify-between text-center min-h-[82px] py-3 px-2';
-    const eligible = checkPlayerDraftEligibility(room, activePlayer, p, p.price || p.salary || 0);
+    const eligible = checkPlayerDraftEligibility(room, activePlayer, p);
     let isDisabled = eligible.isDisabled || !isMyTurn;
     card.disabled = isDisabled;
     if (eligible.isConstraintDisabled) {
@@ -1034,23 +974,12 @@ function render5x5Grid() {
 
   // Track budget
   const me = room.players.find(p => p.socketId === socket.id || p.name === state.playerName);
-  const spent = me ? me.roster.reduce((sum, p) => sum + p.salary, 0) : 0;
+  const spent = me ? me.roster.reduce((sum, p) => sum + (p ? (p.price || 0) : 0), 0) : 0;
   $('#grid-budget-display').textContent = `$${15 - spent} / $15`;
-
-  // Check safety net
-  const remainingPicks = me ? 5 - me.roster.length : 5;
-  const maxAffordable = (15 - spent) - (remainingPicks - 1);
-  const affordableCount = gridData.filter(pr => !room.draftedIds.includes(pr.name) && pr.price <= maxAffordable).length;
-  const isSafetyNetActive = (affordableCount < remainingPicks);
 
   const safetyAlert = $('#grid-safety-net-alert');
   if (safetyAlert) {
-    if (isSafetyNetActive && isMyTurn) {
-      safetyAlert.textContent = `⚠️ 剩餘低價球員不足，已啟動低保補貼機制（所有剩餘球員價格降為 $1）`;
-      safetyAlert.classList.remove('hidden');
-    } else {
-      safetyAlert.classList.add('hidden');
-    }
+    safetyAlert.classList.add('hidden');
   }
 
   const rowsContainer = $('#grid-rows-container');
@@ -1090,7 +1019,7 @@ function render5x5Grid() {
         return;
       }
 
-      const eligible = checkPlayerDraftEligibility(room, activePlayer, p, price);
+      const eligible = checkPlayerDraftEligibility(room, activePlayer, p);
       let isDisabled = eligible.isDisabled || !isMyTurn;
       btn.disabled = isDisabled;
       if (eligible.isConstraintDisabled) {
@@ -1250,7 +1179,7 @@ function renderRosterPanels() {
     if (player.isCPU) {
       extraHeaderHTML = `<span class="ml-auto text-xs font-bold text-red-400 bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20">💻 電腦挑戰者</span>`;
     } else if (mode === '15usd' || mode === 'legend_15usd') {
-      const spent = player.roster.reduce((sum, p) => sum + (p.price || p.salary || 0), 0);
+      const spent = player.roster.reduce((sum, p) => sum + (p ? (p.price || 0) : 0), 0);
       const limit = room.settings.budget || 15;
       extraHeaderHTML = `<span class="ml-auto text-xs font-bold text-yellow-400 bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">預算: $${spent} / $${limit}</span>`;
     } else {
@@ -1274,24 +1203,38 @@ function renderRosterPanels() {
     for (let s = 0; s < totalSlots; s++) {
       if (s < player.roster.length) {
         const p = player.roster[s];
-        const teamLogo = NBA_TEAMS.find(t => t.abbreviation === getModernEquivalent(p.team))?.logo || '🏀';
-        
-        const priceText = (!player.isCPU && (mode === '15usd' || mode === 'legend_15usd'))
-          ? `<span class="text-[10px] font-black text-yellow-400">$${p.price || p.salary || 0}</span>`
-          : '';
+        if (!p) {
+          slotsHTML += `
+            <div class="roster-card py-2.5 px-3 mb-2 flex items-center justify-between border border-gray-700 bg-gray-900/40 opacity-60">
+              <div>
+                <div class="font-bold text-xs text-gray-500">資金破產，無球員簽約 <span class="text-[9px] px-1 py-0.2 rounded bg-gray-950 border border-gray-800 text-gray-500 font-bold ml-1">${s < 5 ? '首發' : '替補'}</span></div>
+                <div class="text-[10px] text-gray-600 mt-0.5">💸 空缺 · --/--/--</div>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] text-gray-600">0.0/0.0/0.0</span>
+              </div>
+            </div>
+          `;
+        } else {
+          const teamLogo = NBA_TEAMS.find(t => t.abbreviation === getModernEquivalent(p.team))?.logo || '🏀';
+          
+          const priceText = (!player.isCPU && (mode === '15usd' || mode === 'legend_15usd'))
+            ? `<span class="text-[10px] font-black text-yellow-400">$${p.price || 0}</span>`
+            : '';
 
-        slotsHTML += `
-          <div class="roster-card py-2.5 px-3 mb-2 flex items-center justify-between border border-purple-950 bg-card/40">
-            <div>
-              <div class="font-bold text-xs text-gray-200">${p.name} <span class="text-[9px] px-1 py-0.2 rounded bg-purple-950 border border-purple-800 text-purple-300 font-bold ml-1">${s < 5 ? '首發' : '替補'}</span></div>
-              <div class="text-[10px] text-gray-500 mt-0.5">${teamLogo} ${p.team} · ${p.position.join('/')} ${p.peak_year ? `(${p.peak_year}年)` : ''}</div>
+          slotsHTML += `
+            <div class="roster-card py-2.5 px-3 mb-2 flex items-center justify-between border border-purple-950 bg-card/40">
+              <div>
+                <div class="font-bold text-xs text-gray-200">${p.name} <span class="text-[9px] px-1 py-0.2 rounded bg-purple-950 border border-purple-800 text-purple-300 font-bold ml-1">${s < 5 ? '首發' : '替補'}</span></div>
+                <div class="text-[10px] text-gray-500 mt-0.5">${teamLogo} ${p.team} · ${p.position.join('/')} ${p.peak_year ? `(${p.peak_year}年)` : ''}</div>
+              </div>
+              <div class="text-right flex flex-col items-end gap-0.5">
+                ${priceText}
+                <span class="text-[10px] text-gray-400">${p.pts}/${p.trb}/${p.ast}</span>
+              </div>
             </div>
-            <div class="text-right flex flex-col items-end gap-0.5">
-              ${priceText}
-              <span class="text-[10px] text-gray-400">${p.pts}/${p.trb}/${p.ast}</span>
-            </div>
-          </div>
-        `;
+          `;
+        }
       } else {
         slotsHTML += `<div class="roster-slot-empty py-4 text-xs font-semibold">${s < 5 ? '首發 (Starter)' : '替補 (Bench)'} Slot ${s + 1}</div>`;
       }
@@ -1353,7 +1296,7 @@ function updateEvalUI() {
     if (player.isCPU) {
       statsSummaryHTML = `<div class="text-xs text-red-400 mt-1 font-semibold">💻 電腦關卡陣容</div>`;
     } else if (mode === '15usd' || mode === 'legend_15usd') {
-      const spent = player.roster.reduce((sum, p) => sum + (p.price || p.salary || 0), 0);
+      const spent = player.roster.reduce((sum, p) => sum + (p ? (p.price || 0) : 0), 0);
       const limit = room.settings.budget || 15;
       statsSummaryHTML = `<div class="text-xs text-yellow-400 mt-1 font-semibold">總金額：$${spent} / $${limit}</div>`;
     }
@@ -1413,6 +1356,20 @@ function updateEvalUI() {
         ${ratingsHTML}
         <div class="space-y-2.5">
           ${player.roster.map(p => {
+            if (!p) {
+              return `
+                <div class="roster-card py-2.5 px-3 border border-gray-700 bg-gray-900/40 opacity-60">
+                  <div class="flex items-center justify-between mb-0.5">
+                    <span class="font-bold text-xs text-gray-500">資金破產，無球員簽約</span>
+                    <span class="text-[10px] text-gray-600">💸 空缺</span>
+                  </div>
+                  <div class="text-[10px] text-gray-600 flex justify-between">
+                    <span>--</span>
+                    <span>場均: 0.0 / 0.0 / 0.0</span>
+                  </div>
+                </div>
+              `;
+            }
             const logo = NBA_TEAMS.find(t => t.abbreviation === getModernEquivalent(p.team))?.logo || '🏀';
             return `
               <div class="roster-card py-2.5 px-3 border border-purple-950 bg-card/40">
@@ -2414,8 +2371,6 @@ function getModeChineseName(mode) {
     'legend_wheel': '傳奇隊史轉盤',
     '15usd': '經典 15 元選秀',
     'legend_15usd': '歷史傳奇 15 元選秀',
-    'salary_cap': '薪資上限模式',
-    'salary_cap_legend': '薪資上限+傳奇球星',
     'blind': '盲選模式'
   };
   return map[mode] || mode;
@@ -2561,10 +2516,10 @@ function updateSetupVisibility() {
     yearSliderContainer.classList.remove('hidden');
   }
 
-  // Wheel constraint sliders (shown for wheel, legend_wheel, salary_cap, salary_cap_legend)
+  // Wheel constraint sliders (shown for wheel, legend_wheel)
   const wheelConstraintSliders = $('#wheel-constraint-sliders');
   if (wheelConstraintSliders) {
-    if (mode === 'wheel' || mode === 'legend_wheel' || mode === 'salary_cap' || mode === 'salary_cap_legend') {
+    if (mode === 'wheel' || mode === 'legend_wheel') {
       wheelConstraintSliders.classList.remove('hidden');
     } else {
       wheelConstraintSliders.classList.add('hidden');

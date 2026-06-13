@@ -661,15 +661,16 @@ function calcRatings(roster) {
   const n = roster.length;
   
   // Offense: PTS, AST are primary. All-Star bonus.
-  const totalPts = roster.reduce((s, p) => s + safeNum(p.pts), 0) / n;
-  const totalAst = roster.reduce((s, p) => s + safeNum(p.ast), 0) / n;
-  const allStarBonus = roster.filter(p => p.is_allstar).length * 2;
+  const totalPts = roster.reduce((s, p) => s + (p ? safeNum(p.pts) : 0), 0) / n;
+  const totalAst = roster.reduce((s, p) => s + (p ? safeNum(p.ast) : 0), 0) / n;
+  const allStarBonus = roster.filter(p => p && p.is_allstar).length * 2;
   const offenseRaw = (totalPts / 30) * 70 + (totalAst / 8) * 20 + allStarBonus;
   let offense = Math.min(100, Math.max(30, Math.round(offenseRaw)));
   if (isNaN(offense)) offense = 30;
 
   // Defense: TRB is primary. Guard positions get deflection bonus from AST and partial rebounds.
   const playerDefScores = roster.map(p => {
+    if (!p) return 0;
     const isBig = p.position && (p.position.includes('C') || p.position.includes('PF'));
     const isPerimeter = p.position && (p.position.includes('PG') || p.position.includes('SG'));
     
@@ -695,14 +696,14 @@ function calcRatings(roster) {
   // Chemistry: position balance
   const positionsRepresented = new Set();
   roster.forEach(p => {
-    if (p.position) {
+    if (p && p.position) {
       p.position.forEach(pos => positionsRepresented.add(pos));
     }
   });
   const balanceBonus = Math.min(10, positionsRepresented.size * 2);
 
   // All-star chemistry bonus
-  const allStarCount = roster.filter(p => p.is_allstar).length;
+  const allStarCount = roster.filter(p => p && p.is_allstar).length;
   const chemistryBonus = Math.min(10, allStarCount * 2);
 
   const overallRaw = (offense * 0.55 + defense * 0.40) + balanceBonus + chemistryBonus;
@@ -830,29 +831,20 @@ async function triggerAFKPenalty(roomId) {
         }
       }
       
-      const spent = activePlayer.roster.reduce((sum, p) => sum + (p.price || 0), 0);
+      const spent = activePlayer.roster.reduce((sum, p) => sum + (p ? (p.price || 0) : 0), 0);
       const remainingBudget = 15 - spent;
-      const maxAffordable = remainingBudget - (remainingPicks - 1);
       
       if (availableGridPlayers && availableGridPlayers.length > 0) {
-        const affordableCount = availableGridPlayers.filter(p => !room.draftedIds.includes(p.name) && p.price <= maxAffordable).length;
-        const isSafetyNetActive = (affordableCount < remainingPicks);
-
-        let candidates = [];
-        if (isSafetyNetActive) {
-          candidates = availableGridPlayers.filter(p => !room.draftedIds.includes(p.name));
-        } else {
-          candidates = availableGridPlayers.filter(p => !room.draftedIds.includes(p.name) && p.price <= maxAffordable);
-        }
+        let candidates = availableGridPlayers.filter(p => !room.draftedIds.includes(p.name));
 
         // Constraints
         const rookieFloor = room.settings.rookieFloor || 0;
-        const currentRookies = activePlayer.roster.filter(p => p.is_rookie).length;
+        const currentRookies = activePlayer.roster.filter(p => p && p.is_rookie).length;
         const rookieDeficit = rookieFloor - currentRookies;
         const mustPickRookie = rookieDeficit > 0 && remainingPicks <= rookieDeficit;
 
         const allStarCap = room.settings.allStarCap !== undefined ? room.settings.allStarCap : 5;
-        const currentAllStars = activePlayer.roster.filter(p => p.is_allstar).length;
+        const currentAllStars = activePlayer.roster.filter(p => p && p.is_allstar).length;
         const cannotPickAllStar = currentAllStars >= allStarCap;
 
         let filtered = candidates;
@@ -875,9 +867,12 @@ async function triggerAFKPenalty(roomId) {
         penaltyCandidates.sort((a, b) => getOverallStats(a) - getOverallStats(b));
 
         if (penaltyCandidates.length > 0) {
-          selectedPlayer = { ...penaltyCandidates[0] };
-          if (isSafetyNetActive) {
-            selectedPlayer.price = 1;
+          const worstPlayer = penaltyCandidates[0];
+          // Check if budget allows this player's price. If not, selectedPlayer = null
+          if (worstPlayer.price <= remainingBudget) {
+            selectedPlayer = { ...worstPlayer };
+          } else {
+            selectedPlayer = null;
           }
         }
       }
@@ -947,12 +942,12 @@ async function triggerAFKPenalty(roomId) {
 
         // P1 Constraints
         const rookieFloor = room.settings.rookieFloor || 0;
-        const currentRookies = activePlayer.roster.filter(p => p.is_rookie).length;
+        const currentRookies = activePlayer.roster.filter(p => p && p.is_rookie).length;
         const rookieDeficit = rookieFloor - currentRookies;
         const mustPickRookie = rookieDeficit > 0 && remainingPicks <= rookieDeficit;
 
         const allStarCap = room.settings.allStarCap !== undefined ? room.settings.allStarCap : 5;
-        const currentAllStars = activePlayer.roster.filter(p => p.is_allstar).length;
+        const currentAllStars = activePlayer.roster.filter(p => p && p.is_allstar).length;
         const cannotPickAllStar = currentAllStars >= allStarCap;
 
         let filtered = available;
@@ -985,8 +980,8 @@ async function triggerAFKPenalty(roomId) {
       }
     }
 
-    // 3. Fallback to any random player in case team is empty or too low to afford anyone
-    if (!selectedPlayer) {
+    // 3. Fallback to any random player in case team is empty or too low to afford anyone (disabled for 15usd modes)
+    if (!selectedPlayer && mode !== '15usd' && mode !== 'legend_15usd') {
       console.log(`⚠️ Empty pool fallback for Room ${roomId}`);
       let generalPool = await getYearPlayers(room.settings.year || 2026);
       
@@ -999,12 +994,12 @@ async function triggerAFKPenalty(roomId) {
 
       // P1 Constraints
       const rookieFloor = room.settings.rookieFloor || 0;
-      const currentRookies = activePlayer.roster.filter(p => p.is_rookie).length;
+      const currentRookies = activePlayer.roster.filter(p => p && p.is_rookie).length;
       const rookieDeficit = rookieFloor - currentRookies;
       const mustPickRookie = rookieDeficit > 0 && remainingPicks <= rookieDeficit;
 
       const allStarCap = room.settings.allStarCap !== undefined ? room.settings.allStarCap : 5;
-      const currentAllStars = activePlayer.roster.filter(p => p.is_allstar).length;
+      const currentAllStars = activePlayer.roster.filter(p => p && p.is_allstar).length;
       const cannotPickAllStar = currentAllStars >= allStarCap;
 
       let filtered = available;
@@ -1066,6 +1061,14 @@ async function triggerAFKPenalty(roomId) {
           blindId: selectedPlayer.blindId
         });
       }
+    } else {
+      activePlayer.roster.push(null);
+      io.to(roomId).emit('afk_penalty_trigger', {
+        playerName: activePlayer.name,
+        teamName: "無",
+        playerNameAssigned: "資金破產，無球員簽約",
+        logo: "💸"
+      });
     }
   } catch (err) {
     console.error(`❌ AFK penalty processing failed for Room ${roomId}:`, err);
@@ -1666,162 +1669,152 @@ io.on('connection', (socket) => {
 
     let draftedPlayerDoc = null;
 
-    if (mode === '15usd' || mode === 'legend_15usd') {
-      // Hardcoded 5x5 Grid Draft: selection has name, price, pts, trb, ast, position, team
-      draftedPlayerDoc = {
-        name: playerSelection.name,
-        pts: playerSelection.pts,
-        trb: playerSelection.trb,
-        ast: playerSelection.ast,
-        position: playerSelection.positions || playerSelection.position || ['G'],
-        team: playerSelection.team,
-        price: playerSelection.price, // Map $ price tier
-        is_allstar: !!playerSelection.is_allstar,
-        is_rookie: !!playerSelection.is_rookie
-      };
+      let isBankrupt = false;
+      if (mode === '15usd' || mode === 'legend_15usd') {
+        const currentSpent = activePlayer.roster.reduce((sum, p) => sum + (p ? (p.price || 0) : 0), 0);
+        const budget = 15 - currentSpent;
 
-      // Check budget with P2 dynamic budget prevention and safety net
-      const currentSpent = activePlayer.roster.reduce((sum, p) => sum + (p.price || 0), 0);
-      const totalRounds = room.settings.selectBench ? 10 : 5;
-      const remainingPicks = totalRounds - activePlayer.roster.length;
-      const budget = 15 - currentSpent;
-      const maxAffordable = budget - (remainingPicks - 1);
+        if (playerSelection.price > budget) {
+          isBankrupt = true;
+          draftedPlayerDoc = null;
+        } else {
+          draftedPlayerDoc = {
+            name: playerSelection.name,
+            pts: playerSelection.pts,
+            trb: playerSelection.trb,
+            ast: playerSelection.ast,
+            position: playerSelection.positions || playerSelection.position || ['G'],
+            team: playerSelection.team,
+            price: playerSelection.price, // Map $ price tier
+            is_allstar: !!playerSelection.is_allstar,
+            is_rookie: !!playerSelection.is_rookie
+          };
 
-      // Check if safety net is active
-      const gridsPool = mode === 'legend_15usd' ? LEGENDS_5X5_GRIDS : ACTIVE_5X5_GRIDS;
-      const gridData = room.dynamicGrid || gridsPool[room.sheetIndex];
-      const affordableCount = gridData ? gridData.filter(pr => !room.draftedIds.includes(pr.name) && pr.price <= maxAffordable).length : 0;
-      const isSafetyNetActive = (affordableCount < remainingPicks);
+          if (room.draftedIds.includes(draftedPlayerDoc.name)) {
+            socket.emit('error_message', '該球員已被其他人選走！');
+            return;
+          }
+        }
+      } else if (mode === 'blind') {
+        // Blind mode selection: selection is the blindId
+        const poolItem = room.blindPool.find(p => p.blindId === playerSelection.blindId);
+        if (!poolItem) {
+          socket.emit('error_message', '無效的盲選卡片！');
+          return;
+        }
 
-      if (isSafetyNetActive) {
-        draftedPlayerDoc.price = 1;
+        if (room.draftedIds.includes(poolItem.realName)) {
+          socket.emit('error_message', '此球員已在盲選中被揭曉選走！');
+          return;
+        }
+
+        draftedPlayerDoc = {
+          name: poolItem.realName,
+          pts: poolItem.pts,
+          trb: poolItem.trb,
+          ast: poolItem.ast,
+          position: poolItem.position,
+          team: poolItem.realTeam,
+          is_allstar: poolItem.is_allstar,
+          is_rookie: poolItem.is_rookie,
+          year: poolItem.realYear,
+          peak_year: poolItem.realYear
+        };
+
+        // Tell players who was just revealed!
+        io.to(roomId).emit('blind_reveal', {
+          playerName: activePlayer.name,
+          realName: draftedPlayerDoc.name,
+          realTeam: draftedPlayerDoc.team,
+          blindId: poolItem.blindId
+        });
+
       } else {
-        if (draftedPlayerDoc.price > maxAffordable) {
-          socket.emit('error_message', `預算超出限制！為了保證後續選秀（每人至少 $1），此輪最高只能選擇 $${maxAffordable} 的球員。`);
+        // Wheel Modes (Roster database)
+        const isLegendPick = !!playerSelection.isLegend;
+        
+        if (isLegendPick) {
+          // Load peak stats from legends pool
+          draftedPlayerDoc = {
+            name: playerSelection.name,
+            pts: playerSelection.pts,
+            trb: playerSelection.trb,
+            ast: playerSelection.ast,
+            position: playerSelection.position,
+            team: playerSelection.team,
+            is_allstar: !!playerSelection.is_allstar,
+            is_rookie: !!playerSelection.is_rookie,
+            is_legend: true,
+            peak_year: playerSelection.year
+          };
+        } else {
+          // Standard database load
+          const yearPlayers = await getYearPlayers(year);
+          const match = yearPlayers.find(p => p.name === playerSelection.name && p.team === playerSelection.team);
+          if (!match) {
+            socket.emit('error_message', '找不到選取的球員！');
+            return;
+          }
+          draftedPlayerDoc = {
+            name: match.name,
+            pts: match.pts,
+            trb: match.trb,
+            ast: match.ast,
+            position: match.position,
+            team: match.team,
+            is_allstar: match.is_allstar,
+            is_rookie: match.is_rookie
+          };
+        }
+
+        if (room.draftedIds.includes(draftedPlayerDoc.name)) {
+          socket.emit('error_message', '該球員已被其他人選走！');
           return;
         }
       }
 
-      if (room.draftedIds.includes(draftedPlayerDoc.name)) {
-        socket.emit('error_message', '該球員已被其他人選走！');
+      if (!draftedPlayerDoc && !isBankrupt) {
+        socket.emit('error_message', '無效的球員選擇！');
         return;
       }
 
-    } else if (mode === 'blind') {
-      // Blind mode selection: selection is the blindId
-      const poolItem = room.blindPool.find(p => p.blindId === playerSelection.blindId);
-      if (!poolItem) {
-        socket.emit('error_message', '無效的盲選卡片！');
-        return;
-      }
+      if (draftedPlayerDoc) {
+        // P1 Constraints (All-Star Cap and Rookie Floor)
+        const totalRounds = room.settings.selectBench ? 10 : 5;
+        const remainingPicks = totalRounds - activePlayer.roster.length;
+        const currentRookies = activePlayer.roster.filter(p => p && p.is_rookie).length;
+        const rookieFloor = room.settings.rookieFloor || 0;
+        const rookieDeficit = rookieFloor - currentRookies;
+        const mustPickRookie = rookieDeficit > 0 && remainingPicks <= rookieDeficit;
 
-      if (room.draftedIds.includes(poolItem.realName)) {
-        socket.emit('error_message', '此球員已在盲選中被揭曉選走！');
-        return;
-      }
-
-      draftedPlayerDoc = {
-        name: poolItem.realName,
-        pts: poolItem.pts,
-        trb: poolItem.trb,
-        ast: poolItem.ast,
-        position: poolItem.position,
-        team: poolItem.realTeam,
-        is_allstar: poolItem.is_allstar,
-        is_rookie: poolItem.is_rookie,
-        year: poolItem.realYear,
-        peak_year: poolItem.realYear
-      };
-
-      // Tell players who was just revealed!
-      io.to(roomId).emit('blind_reveal', {
-        playerName: activePlayer.name,
-        realName: draftedPlayerDoc.name,
-        realTeam: draftedPlayerDoc.team,
-        blindId: poolItem.blindId
-      });
-
-    } else {
-      // Wheel Modes (Roster database)
-      const isLegendPick = !!playerSelection.isLegend;
-      
-      if (isLegendPick) {
-        // Load peak stats from legends pool
-        draftedPlayerDoc = {
-          name: playerSelection.name,
-          pts: playerSelection.pts,
-          trb: playerSelection.trb,
-          ast: playerSelection.ast,
-          position: playerSelection.position,
-          team: playerSelection.team,
-          is_allstar: !!playerSelection.is_allstar,
-          is_rookie: !!playerSelection.is_rookie,
-          is_legend: true,
-          peak_year: playerSelection.year
-        };
-      } else {
-        // Standard database load
-        const yearPlayers = await getYearPlayers(year);
-        const match = yearPlayers.find(p => p.name === playerSelection.name && p.team === playerSelection.team);
-        if (!match) {
-          socket.emit('error_message', '找不到選取的球員！');
+        if (mustPickRookie && !draftedPlayerDoc.is_rookie) {
+          socket.emit('error_message', `你還需要選擇 ${rookieDeficit} 位新秀，剩餘選秀次數不足，本次必須選擇新秀！`);
           return;
         }
-        draftedPlayerDoc = {
-          name: match.name,
-          pts: match.pts,
-          trb: match.trb,
-          ast: match.ast,
-          position: match.position,
-          team: match.team,
-          is_allstar: match.is_allstar,
-          is_rookie: match.is_rookie
-        };
+
+        const currentAllStars = activePlayer.roster.filter(p => p && p.is_allstar).length;
+        const allStarCap = room.settings.allStarCap !== undefined ? room.settings.allStarCap : 5;
+        if (draftedPlayerDoc.is_allstar && currentAllStars >= allStarCap) {
+          socket.emit('error_message', `你的全明星名額已達上限 (${allStarCap} 人)！`);
+          return;
+        }
+
+        // PVP Bench: Block All-Star picks in rounds 6-10 (roster.length >= 5) unless legend modes
+        const isLegendMode = mode === 'legend_wheel' || mode === 'legend_15usd';
+        if (room.settings.selectBench && activePlayer.roster.length >= 5 && !isLegendMode) {
+          if (draftedPlayerDoc.is_allstar) {
+            socket.emit('error_message', '替補輪次 (第 6-10 輪) 只能選擇非明星球員！');
+            return;
+          }
+        }
+
+        // Push selection
+        activePlayer.roster.push(draftedPlayerDoc);
+        room.draftedIds.push(draftedPlayerDoc.name);
+      } else {
+        // Bankrupt empty slot
+        activePlayer.roster.push(null);
       }
-
-      if (room.draftedIds.includes(draftedPlayerDoc.name)) {
-        socket.emit('error_message', '該球員已被其他人選走！');
-        return;
-      }
-    }
-
-    if (!draftedPlayerDoc) {
-      socket.emit('error_message', '無效的球員選擇！');
-      return;
-    }
-
-    // P1 Constraints (All-Star Cap and Rookie Floor)
-    const totalRounds = room.settings.selectBench ? 10 : 5;
-    const remainingPicks = totalRounds - activePlayer.roster.length;
-    const currentRookies = activePlayer.roster.filter(p => p.is_rookie).length;
-    const rookieFloor = room.settings.rookieFloor || 0;
-    const rookieDeficit = rookieFloor - currentRookies;
-    const mustPickRookie = rookieDeficit > 0 && remainingPicks <= rookieDeficit;
-
-    if (mustPickRookie && !draftedPlayerDoc.is_rookie) {
-      socket.emit('error_message', `你還需要選擇 ${rookieDeficit} 位新秀，剩餘選秀次數不足，本次必須選擇新秀！`);
-      return;
-    }
-
-    const currentAllStars = activePlayer.roster.filter(p => p.is_allstar).length;
-    const allStarCap = room.settings.allStarCap !== undefined ? room.settings.allStarCap : 5;
-    if (draftedPlayerDoc.is_allstar && currentAllStars >= allStarCap) {
-      socket.emit('error_message', `你的全明星名額已達上限 (${allStarCap} 人)！`);
-      return;
-    }
-
-    // PVP Bench: Block All-Star picks in rounds 6-10 (roster.length >= 5) unless legend modes
-    const isLegendMode = mode === 'legend_wheel' || mode === 'legend_15usd';
-    if (room.settings.selectBench && activePlayer.roster.length >= 5 && !isLegendMode) {
-      if (draftedPlayerDoc.is_allstar) {
-        socket.emit('error_message', '替補輪次 (第 6-10 輪) 只能選擇非明星球員！');
-        return;
-      }
-    }
-
-    // Push selection
-    activePlayer.roster.push(draftedPlayerDoc);
-    room.draftedIds.push(draftedPlayerDoc.name);
 
     // Clear turn timer
     clearRoomTurnTimer(roomId);
