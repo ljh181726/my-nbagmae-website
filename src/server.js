@@ -23,7 +23,7 @@ try {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
-    console.log('✅ Firebase Admin initialized via service account JSON environment variable');
+    console.log('✅ Firebase Admin initialized via service account JSON env');
   } else if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
     admin.initializeApp({
       credential: admin.credential.cert({
@@ -32,9 +32,12 @@ try {
         privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
       })
     });
-    console.log('✅ Firebase Admin initialized via individual environment variables');
+    console.log('✅ Firebase Admin initialized via individual env');
   } else {
-    console.warn('⚠️ firebase-service-account.json not found in src/ and environment variables not set');
+    admin.initializeApp({
+      projectId: process.env.FIREBASE_PROJECT_ID || "nba-game-200b7"
+    });
+    console.log('🚀 Firebase Admin initialized via Fallback Project ID');
   }
 } catch (err) {
   console.error('❌ Failed to initialize Firebase Admin:', err);
