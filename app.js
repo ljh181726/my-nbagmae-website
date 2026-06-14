@@ -1561,18 +1561,9 @@ async function loginWithGoogle() {
   
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
-    const result = await _firebaseAuth.signInWithPopup(provider);
-    console.log('Google login success:', result.user);
-  } catch (error) {
-    console.error('Google login error:', error);
-    showToast('❌ 登入失敗：' + error.message);
-  }
-}
-
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
+    
     const result = await _firebaseAuth.signInWithPopup(provider);
     const idToken = await result.user.getIdToken();
 
@@ -1581,6 +1572,7 @@ async function loginWithGoogle() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken })
     });
+    
     const data = await res.json();
     if (!res.ok) {
       showToast(`❌ 登入失敗：${data.error || '伺服器錯誤'}`);
