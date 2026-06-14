@@ -1899,6 +1899,167 @@ io.on('connection', (socket) => {
     const room = activeRooms.get(roomId);
     if (!room) return;
 
+    // Clear timers
+    clearRoomTurnTimer(roomId);
+
+    // Clear rosters and remove CPU bots
+    room.players = room.players.filter(p => !p.isCPU);
+    room.players.forEach(p => {
+      p.roster = [];
+    });
+
+    if (room.isPVE) {
+      // Increment levelId up to 60
+      room.levelId = Math.min(60, (room.levelId || 1) + 1);
+
+      room.phase = 'draft';
+      room.roomState = 'DRAFTING';
+      room.draftIndex = 0;
+      room.draftedIds = [];
+      room.currentTeam = null;
+      room.blindPool = [];
+      room.evalResult = null;
+      room.ratings = null;
+      room.dynamicGrid = null;
+      room.sheetIndex = null;
+      room.availableTeams = [];
+      room.currentTurnPlayerId = null;
+      room.turnExpiresAt = null;
+      room.pveWin = null;
+      room.pveFirstClearAward = null;
+
+      const levelConfig = PVE_LEVELS[room.levelId - 1];
+      if (levelConfig) {
+        room.settings.mode = levelConfig.mode;
+
+        // Parse year from cpuTeamName
+        const matchYear = levelConfig.cpuTeamName.match(/^(\d{4})/);
+        const levelYear = matchYear ? parseInt(matchYear[1]) : 2026;
+        room.settings.year = levelYear;
+
+        if (levelConfig.restrictions) {
+          room.settings.allStarCap = levelConfig.restrictions.allStarCap !== undefined ? levelConfig.restrictions.allStarCap : 5;
+          room.settings.rookieFloor = levelConfig.restrictions.rookieFloor !== undefined ? levelConfig.restrictions.rookieFloor : 0;
+          room.settings.budget = levelConfig.restrictions.budget !== undefined ? levelConfig.restrictions.budget : 15;
+        } else {
+          room.settings.allStarCap = 5;
+          room.settings.rookieFloor = 0;
+          room.settings.budget = 15;
+        }
+      }
+      const totalRounds = room.settings.selectBench ? 10 : 5;
+      room.draftOrder = Array(totalRounds).fill(0);
+
+      const year = room.settings.year;
+      const mode = room.settings.mode;
+
+      let playersPool = [];
+      if (mode === 'blind' && room.settings.blindSubmode === 'decade') {
+        const decade = room.settings.decade || '1990s';
+        let startYear, endYear;
+        if (decade === '1980s') { startYear = 1980; endYear = 1989; }
+        else if (decade === '1990s') { startYear = 1990; endYear = 1999; }
+        else if (decade === '2000s') { startYear = 2000; endYear = 2009; }
+        else if (decade === '2010s') { startYear = 2010; endYear = 2019; }
+        else if (decade === '2020s') { startYear = 2020; endYear = 2026; }
+        else { startYear = 1990; endYear = 1999; }
+
+        try {
+          const years = [];
+          for (let y = startYear; y <= endYear; y++) years.push(y);
+          const allYearsPlayers = await Promise.all(years.map(y => getYearPlayers(y)));
+          playersPool = allYearsPlayers.flat();
+        } catch (err) {
+          console.error(err);
+        }
+      } else if (mode === 'wheel' || mode === 'blind' || mode === '15usd') {
+        playersPool = await getYearPlayers(year);
+      }
+
+      if (mode === '15usd') {
+        try {
+          room.dynamicGrid = await generateDynamic15UsdGrid(year, room.bannedPlayerNames);
+          room.sheetIndex = null;
+        } catch (err) {
+          console.error(err);
+        }
+      } else if (mode === 'legend_15usd') {
+        room.sheetIndex = Math.floor(Math.random() * 40);
+        room.dynamicGrid = null;
+      } else if (mode === 'blind') {
+        const allowedPlayers = playersPool.filter(p => {
+          if (room.settings.banAllStars && p.is_allstar) return false;
+          if (room.settings.rookieOnly && !p.is_rookie) return false;
+          return true;
+        });
+
+        const sampleSize = room.players.length * 5;
+        const shuffled = [...allowedPlayers];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        const rawSample = shuffled.slice(0, sampleSize);
+
+        room.blindPool = rawSample.map((p, idx) => ({
+          blindId: `B-${idx}`,
+          pts: p.pts,
+          trb: p.trb,
+          ast: p.ast,
+          position: p.position,
+          is_allstar: p.is_allstar,
+          is_rookie: p.is_rookie,
+          decade: room.settings.blindSubmode === 'decade' ? `${Math.floor(p.year / 10) * 10}s` : null,
+          realName: p.name,
+          realTeam: p.team,
+          realYear: p.year
+        }));
+      } else {
+        if (mode === 'legend_wheel') {
+          room.availableTeams = [...MODERN_TEAMS];
+        } else {
+          const teamsSet = new Set(playersPool.map(p => p.team).filter(t => t && !t.endsWith('TM')));
+          room.availableTeams = Array.from(teamsSet).map(abbr => {
+            const meta = HISTORICAL_TEAMS_META[abbr];
+            if (meta) {
+              return {
+                abbreviation: abbr,
+                name: meta.name,
+                logo: meta.logo || '🏀',
+                primaryColor: meta.primaryColor || '#4b5563',
+                secondaryColor: meta.secondaryColor || '#9ca3af'
+              };
+            }
+            const standardAbbr = getModernEquivalent(abbr);
+            const modern = MODERN_TEAMS.find(t => t.abbreviation === standardAbbr);
+            if (modern) {
+              return {
+                ...modern,
+                abbreviation: abbr
+              };
+            }
+            return {
+              abbreviation: abbr,
+              name: abbr,
+              logo: '🏀',
+              primaryColor: '#4b5563',
+              secondaryColor: '#9ca3af'
+            };
+          });
+        }
+      }
+
+      const activePlayerIdx = room.draftOrder[0];
+      const activePlayer = room.players[activePlayerIdx];
+      room.currentTurnPlayerId = activePlayer ? activePlayer.socketId : null;
+
+      await saveRoomToDB(roomId, room);
+      io.to(roomId).emit('game_started', room);
+      broadcastRoomUpdate(roomId);
+      startRoomTurnTimer(roomId);
+      return;
+    }
+
     // Reset room phase and state
     room.phase = 'lobby';
     room.roomState = 'LOBBY';
@@ -1914,15 +2075,6 @@ io.on('connection', (socket) => {
     room.availableTeams = [];
     room.currentTurnPlayerId = null;
     room.turnExpiresAt = null;
-
-    // Clear timers
-    clearRoomTurnTimer(roomId);
-
-    // Clear rosters and remove CPU bots
-    room.players = room.players.filter(p => !p.isCPU);
-    room.players.forEach(p => {
-      p.roster = [];
-    });
 
     await saveRoomToDB(roomId, room);
     broadcastRoomUpdate(roomId);

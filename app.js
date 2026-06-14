@@ -392,7 +392,14 @@ socket.on('eval_result', (evaluationText) => {
   
   const btnReplay = $('#btn-replay');
   const btnLeaveEval = $('#btn-leave-eval');
-  if (btnReplay) btnReplay.classList.add('hidden');
+  if (btnReplay) {
+    btnReplay.classList.add('hidden');
+    if (state.room && state.room.isPVE) {
+      btnReplay.innerHTML = '➡️ 前往下一關';
+    } else {
+      btnReplay.innerHTML = '🔄 重啟下一局選秀';
+    }
+  }
   if (btnLeaveEval) btnLeaveEval.classList.add('hidden');
 
   if (state.typewriterInterval) {
@@ -1419,6 +1426,14 @@ function updateEvalUI() {
   const evalResult = $('#eval-result');
   const btnReplay = $('#btn-replay');
   const btnLeaveEval = $('#btn-leave-eval');
+
+  if (btnReplay) {
+    if (room.isPVE) {
+      btnReplay.innerHTML = '➡️ 前往下一關';
+    } else {
+      btnReplay.innerHTML = '🔄 重啟下一局選秀';
+    }
+  }
 
   if (room.evalResult) {
     evalActions.classList.add('hidden');
