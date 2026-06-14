@@ -277,6 +277,7 @@ function generateCoachCritiqueForPrebans(preBannedPlayers) {
 
 // Process room pre-bans when draft begins
 async function processRoomPreBans(room) {
+  if (room.isPVE) return;
   room.bannedPlayerNames = room.bannedPlayerNames || [];
   room.preBanResults = room.preBanResults || {};
 
