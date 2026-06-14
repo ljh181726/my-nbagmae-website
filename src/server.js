@@ -226,7 +226,7 @@ function lookupPlayerByTeamAndJersey(teamAbbr, jersey) {
     { name: "Wilt Chamberlain", team: "PHI", jersey: "13", isAllStar: true },
     { name: "Wilt Chamberlain", team: "LAL", jersey: "13", isAllStar: true }
   ];
-  
+
   const leg = legendsList.find(l => l.team === teamAbbr && l.jersey === jersey);
   if (leg) {
     return { name: leg.name, isAllStar: leg.isAllStar };
@@ -241,12 +241,12 @@ function generateCoachCritiqueForPrebans(preBannedPlayers) {
   let benchesCount = 0;
   let starsNames = [];
   let benchesNames = [];
-  
+
   for (const pb of preBannedPlayers) {
     if (!pb.team || !pb.jersey) continue;
     const jerseyNum = pb.jersey.replace('#', '');
     const playerInfo = lookupPlayerByTeamAndJersey(pb.team, jerseyNum);
-    
+
     if (playerInfo.isAllStar) {
       starsCount++;
       starsNames.push(playerInfo.name);
@@ -255,21 +255,21 @@ function generateCoachCritiqueForPrebans(preBannedPlayers) {
       benchesNames.push(playerInfo.name || `${pb.team} #${jerseyNum}`);
     }
   }
-  
+
   if (starsCount === 0 && benchesCount === 0) {
     return "你一個人都沒禁用？是準備空手套白狼，還是對自己的垃圾防守太有自信了？別怪我沒警告你，上了場被射穿了可別哭鼻子！";
   }
-  
+
   if (starsCount > 0 && benchesCount === 0) {
     const namesStr = starsNames.join('、');
     return `算你聰明，把 ${namesStr} 禁掉，不然你今天又要被射穿了。防守這些怪物確實得動動腦子。`;
   }
-  
+
   if (benchesCount > 0 && starsCount === 0) {
     const namesStr = benchesNames.join('、');
     return `你竟然花了虛擬幣去禁一個像 ${namesStr} 這樣的板凳角色？看來你的腦袋跟你的防守一樣需要修理。你是在逗我笑嗎？`;
   }
-  
+
   const starsStr = starsNames.join('、');
   const benchesStr = benchesNames.join('、');
   return `禁用 ${starsStr} 還算有點戰術眼光，但你禁用 ${benchesStr} 是什麼操作？難道你怕他們坐在板凳上把對方的開水喝光嗎？`;
@@ -307,7 +307,7 @@ async function processRoomPreBans(room) {
       const match = allPlayers.find(p => {
         const pTeam = p.team || '';
         return pTeam.toUpperCase() === targetTeamAbbr.toUpperCase() &&
-               getPlayerJerseyNumber(p.name, p.team) === jerseyNum;
+          getPlayerJerseyNumber(p.name, p.team) === jerseyNum;
       });
 
       if (match) {
@@ -454,51 +454,69 @@ app.post('/api/auth/guest', (req, res) => {
 
 
 
+app.get('/api/users/profile', async (req, res) => {
+  try {
+    const { uid } = req.query;
+    if (!uid) {
+      return res.status(400).json({ error: 'Missing uid' });
+    }
+    const db = await connectDB();
+    const user = await db.collection('users').findOne({ uid });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ user });
+  } catch (err) {
+    console.error('Error in /api/users/profile:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.post('/api/users/preban', async (req, res) => {
   try {
     const { uid, pre_banned_players } = req.body;
     if (!uid || !Array.isArray(pre_banned_players) || pre_banned_players.length !== 3) {
       return res.status(400).json({ error: 'Invalid payload' });
     }
-    
+
     const validated = [];
     const teamRegex = /^[A-Za-z]{3}$/;
     const jerseyRegex = /^#\d+$/;
-    
+
     for (const pb of pre_banned_players) {
       if (!pb.team && !pb.jersey) {
         validated.push({ team: '', jersey: '' });
       } else {
         const teamNormalized = pb.team.trim().toUpperCase();
         const jerseyNormalized = pb.jersey.trim();
-        
+
         if (!teamRegex.test(teamNormalized) || !jerseyRegex.test(jerseyNormalized)) {
           return res.status(400).json({ error: '輸入格式有誤！球隊必須為三字英文代碼 (如 BOS)，背號必須包含井字號 (如 #0)。' });
         }
-        
+
         validated.push({ team: teamNormalized, jersey: jerseyNormalized });
       }
     }
-    
+
     const db = await connectDB();
     const collection = db.collection('users');
     const user = await collection.findOne({ uid });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     const critique = generateCoachCritiqueForPrebans(validated);
-    
+
     await collection.updateOne(
       { uid },
-      { 
-        $set: { 
+      {
+        $set: {
           pre_banned_players: validated,
           coach_critique: critique
-        } 
+        }
       }
     );
-    
+
     const updatedUser = await collection.findOne({ uid });
     res.json({ success: true, user: updatedUser });
   } catch (err) {
@@ -627,7 +645,7 @@ function startRoomTurnTimer(roomId) {
   const activePlayerIdx = room.draftOrder[room.draftIndex];
   const activePlayer = room.players[activePlayerIdx];
   let turnDuration = 30000;
-  
+
   if (activePlayer && activePlayer.uid && activePlayer.rookieGamesPlayed < 5) {
     turnDuration = 60000;
     console.log(`⏳ Rookie timer active for ${activePlayer.name}: 60 seconds`);
@@ -662,7 +680,7 @@ function calcRatings(roster) {
   if (!roster || roster.length === 0) return { offense: 0, defense: 0, overall: 0 };
 
   const n = roster.length;
-  
+
   // Offense: PTS, AST are primary. All-Star bonus.
   const totalPts = roster.reduce((s, p) => s + (p ? safeNum(p.pts) : 0), 0) / n;
   const totalAst = roster.reduce((s, p) => s + (p ? safeNum(p.ast) : 0), 0) / n;
@@ -676,7 +694,7 @@ function calcRatings(roster) {
     if (!p) return 0;
     const isBig = p.position && (p.position.includes('C') || p.position.includes('PF'));
     const isPerimeter = p.position && (p.position.includes('PG') || p.position.includes('SG'));
-    
+
     let base = 50; // base defensive rating
     if (isBig) {
       base += safeNum(p.trb) * 4.5;
@@ -685,12 +703,12 @@ function calcRatings(roster) {
     } else { // SF or others
       base += safeNum(p.trb) * 3.0 + safeNum(p.ast) * 1.5;
     }
-    
+
     if (p.is_allstar) base += 5;
     const defScore = Math.min(99, Math.max(40, base));
     return isNaN(defScore) ? 40 : defScore;
   });
-  
+
   const defenseRaw = playerDefScores.reduce((s, val) => s + val, 0) / n;
   let defense = Math.min(100, Math.max(30, Math.round(defenseRaw)));
   if (isNaN(defense)) defense = 30;
@@ -720,7 +738,7 @@ function calcRatings(roster) {
 async function completeDraft(room) {
   room.phase = 'eval';
   room.roomState = 'GAME_OVER';
-  
+
   if (room.isPVE) {
     const levelConfig = PVE_LEVELS[room.levelId - 1];
     if (levelConfig) {
@@ -759,7 +777,7 @@ async function completeDraft(room) {
         const playerOverall = room.ratings[player.name].overall;
         const cpuOverall = room.ratings[cpu.name].overall;
         room.pveWin = playerOverall > cpuOverall;
-        
+
         if (room.pveWin) {
           console.log(`🏆 Player won PVE level ${room.levelId}! Unlocking next level...`);
           if (player.uid) {
@@ -794,7 +812,7 @@ async function completeDraft(room) {
   } catch (err) {
     console.error('Error updating stats/progress on draft completion:', err);
   }
-  
+
   console.log(`🏁 Draft completed for room ${room.id}. Entering evaluation...`);
   clearRoomTurnTimer(room.id);
 }
@@ -833,10 +851,10 @@ async function triggerAFKPenalty(roomId) {
           availableGridPlayers = gridsPool[room.sheetIndex];
         }
       }
-      
+
       const spent = activePlayer.roster.reduce((sum, p) => sum + (p ? (p.price || 0) : 0), 0);
       const remainingBudget = 15 - spent;
-      
+
       if (availableGridPlayers && availableGridPlayers.length > 0) {
         let candidates = availableGridPlayers.filter(p => !room.draftedIds.includes(p.name));
 
@@ -885,7 +903,7 @@ async function triggerAFKPenalty(roomId) {
         let candidates = room.blindPool.filter(p => !room.draftedIds.includes(p.realName));
         let penaltyCandidates = candidates.filter(p => !p.is_allstar);
         if (penaltyCandidates.length === 0) penaltyCandidates = candidates;
-        
+
         // PVP Bench: Block All-Star picks in rounds 6-10 (roster.length >= 5)
         if (room.settings.selectBench && activePlayer.roster.length >= 5) {
           penaltyCandidates = penaltyCandidates.filter(p => !p.is_allstar);
@@ -913,7 +931,7 @@ async function triggerAFKPenalty(roomId) {
     } else {
       // Wheel-based modes
       let rolledTeam = room.currentTeam;
-      
+
       if (!rolledTeam && room.availableTeams && room.availableTeams.length > 0) {
         const idx = Math.floor(Math.random() * room.availableTeams.length);
         rolledTeam = room.availableTeams[idx];
@@ -987,7 +1005,7 @@ async function triggerAFKPenalty(roomId) {
     if (!selectedPlayer && mode !== '15usd' && mode !== 'legend_15usd') {
       console.log(`⚠️ Empty pool fallback for Room ${roomId}`);
       let generalPool = await getYearPlayers(room.settings.year || 2026);
-      
+
       let available = generalPool.filter(p => {
         if (room.draftedIds.includes(p.name)) return false;
         if (room.settings.banAllStars && p.is_allstar) return false;
@@ -1090,7 +1108,7 @@ async function triggerAFKPenalty(roomId) {
     const nextPlayerIdx = room.draftOrder[room.draftIndex];
     const nextPlayer = room.players[nextPlayerIdx];
     room.currentTurnPlayerId = nextPlayer ? nextPlayer.socketId : null;
-    
+
     // Start timer for the next turn
     startRoomTurnTimer(roomId);
   }
@@ -1334,12 +1352,12 @@ io.on('connection', (socket) => {
       const levelConfig = PVE_LEVELS[room.levelId - 1];
       if (levelConfig) {
         room.settings.mode = levelConfig.mode;
-        
+
         // Parse year from cpuTeamName
         const matchYear = levelConfig.cpuTeamName.match(/^(\d{4})/);
         const levelYear = matchYear ? parseInt(matchYear[1]) : 2026;
         room.settings.year = levelYear;
-        
+
         if (levelConfig.restrictions) {
           room.settings.allStarCap = levelConfig.restrictions.allStarCap !== undefined ? levelConfig.restrictions.allStarCap : 5;
           room.settings.rookieFloor = levelConfig.restrictions.rookieFloor !== undefined ? levelConfig.restrictions.rookieFloor : 0;
@@ -1571,7 +1589,7 @@ io.on('connection', (socket) => {
     for (let attempt = 0; attempt < 10; attempt++) {
       const idx = Math.floor(Math.random() * room.availableTeams.length);
       const tempTeam = room.availableTeams[idx];
-      
+
       if (mode === 'legend_15usd' || mode === '15usd') {
         break;
       }
@@ -1670,7 +1688,7 @@ io.on('connection', (socket) => {
       const mode = room.settings.mode;
       const year = room.settings.year;
 
-    let draftedPlayerDoc = null;
+      let draftedPlayerDoc = null;
 
       let isBankrupt = false;
       if (mode === '15usd' || mode === 'legend_15usd') {
@@ -1735,7 +1753,7 @@ io.on('connection', (socket) => {
       } else {
         // Wheel Modes (Roster database)
         const isLegendPick = !!playerSelection.isLegend;
-        
+
         if (isLegendPick) {
           // Load peak stats from legends pool
           draftedPlayerDoc = {
@@ -1819,28 +1837,28 @@ io.on('connection', (socket) => {
         activePlayer.roster.push(null);
       }
 
-    // Clear turn timer
-    clearRoomTurnTimer(roomId);
+      // Clear turn timer
+      clearRoomTurnTimer(roomId);
 
-    // Move to next turn
-    room.draftIndex++;
-    room.currentTeam = null;
+      // Move to next turn
+      room.draftIndex++;
+      room.currentTeam = null;
 
-    if (room.draftIndex >= room.draftOrder.length) {
-      await completeDraft(room);
-    } else {
-      room.phase = 'wheel';
-      room.roomState = 'DRAFTING';
-      const nextPlayerIdx = room.draftOrder[room.draftIndex];
-      const nextPlayer = room.players[nextPlayerIdx];
-      room.currentTurnPlayerId = nextPlayer ? nextPlayer.socketId : null;
-      
-      // Start timer for the next turn
-      startRoomTurnTimer(roomId);
-    }
+      if (room.draftIndex >= room.draftOrder.length) {
+        await completeDraft(room);
+      } else {
+        room.phase = 'wheel';
+        room.roomState = 'DRAFTING';
+        const nextPlayerIdx = room.draftOrder[room.draftIndex];
+        const nextPlayer = room.players[nextPlayerIdx];
+        room.currentTurnPlayerId = nextPlayer ? nextPlayer.socketId : null;
 
-    await saveRoomToDB(roomId, room);
-    broadcastRoomUpdate(roomId);
+        // Start timer for the next turn
+        startRoomTurnTimer(roomId);
+      }
+
+      await saveRoomToDB(roomId, room);
+      broadcastRoomUpdate(roomId);
     } catch (err) {
       console.error('Error in draft_player_request:', err);
       socket.emit('error_message', '處理選秀時伺服器發生錯誤！');
@@ -1861,10 +1879,10 @@ io.on('connection', (socket) => {
     try {
       console.log(`🤖 Queuing Gemini AI evaluation for Room ${roomId}...`);
       const evaluationText = await queueEvaluation(room);
-      
+
       room.evalResult = evaluationText;
       await saveRoomToDB(roomId, room);
-      
+
       io.to(roomId).emit('eval_result', evaluationText);
       broadcastRoomUpdate(roomId);
       console.log(`✅ Room ${roomId} evaluation complete.`);
@@ -1993,7 +2011,7 @@ io.on('connection', (socket) => {
 
       await saveRoomToDB(roomId, room);
       broadcastRoomUpdate(roomId);
-      
+
       // Let others know someone left
       io.to(roomId).emit('error_message', `👋 玩家 ${playerName} 已離開房間。`);
     }
@@ -2002,7 +2020,7 @@ io.on('connection', (socket) => {
   // 12. Disconnect Event
   socket.on('disconnect', async () => {
     console.log(`🔌 Client disconnected: ${socket.id}`);
-    
+
     // Find rooms containing the player and mark them as offline
     for (const [roomId, room] of activeRooms.entries()) {
       const player = room.players.find(p => p.socketId === socket.id);

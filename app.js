@@ -1645,6 +1645,24 @@ if (state.user) {
     if (createNameEl) createNameEl.value = state.playerName;
     if (joinNameEl) joinNameEl.value = state.playerName;
   }, 100);
+
+  // Sync profile from backend database to get the latest virtual currency and PVE stages
+  if (state.user.uid && state.user.provider !== 'guest') {
+    fetch(`/api/users/profile?uid=${state.user.uid}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.user) {
+          state.user = data.user;
+          state.playerName = data.user.name;
+          sessionStorage.setItem('nba_player_name', state.playerName);
+          sessionStorage.setItem('nba_user_profile', JSON.stringify(state.user));
+          state.unlockedLevel = data.user.unlockedLevel || 1;
+          updateOAuthUI();
+          triggerCheckIn();
+        }
+      })
+      .catch(err => console.error('Failed to sync profile on reload:', err));
+  }
 }
 
 // Initialize Firebase and UI on load
@@ -1658,6 +1676,9 @@ function updateOAuthUI() {
   const loggedInEl = $('#oauth-logged-in');
   const settingsPanel = $('#account-settings-panel');
   if (state.user) {
+    if (state.user.provider !== 'guest') {
+      sessionStorage.setItem('nba_user_profile', JSON.stringify(state.user));
+    }
     loggedOutEl.classList.add('hidden');
     loggedInEl.classList.remove('hidden');
     if (settingsPanel) settingsPanel.classList.remove('hidden');
